@@ -1,0 +1,19 @@
+# ai-workspace root is local-only — never commit it as an umbrella repo.
+# This .gitignore is defense-in-depth: deny everything, then whitelist only the
+# workspace meta files and the .claude/ tooling below.
+
+*
+
+!.gitignore
+!README.md
+!CLAUDE.md
+!CLAUDE.template.md
+!CONTEXT.template.md
+!HANDBOOK.md
+!PROJECTS.md
+!.claude/
+!.claude/**
+
+# Generated, local-only dashboard output. The generator script stays tracked
+# (it's whitelisted above via .claude/**); this regenerated HTML is not.
+.claude/dashboard/dashboard.html

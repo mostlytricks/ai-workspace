@@ -1,0 +1,239 @@
+# AI Workspace — Handbook
+
+Human-facing guide for working in `ai-workspace/`. The agent's operating rules live in `CLAUDE.md` (loaded into every agent session); this file is for **you** — open it when you need a walkthrough, a slash-command lookup, or to clarify terminology.
+
+---
+
+## Quick start — "I want to..."
+
+| I want to... | Use |
+|---|---|
+| Create a brand-new project | `/init-project <name>` ([Workflow 1](#workflow-1--create-a-brand-new-project) is the manual fallback) |
+| Bring in a project that already lives elsewhere on disk | [Workflow 2](#workflow-2--bring-in-an-existing-project-from-elsewhere) |
+| Graduate an experiment from `incubator/` to `active/` | `/promote <name>` ([Workflow 3](#workflow-3--promote-from-incubator) is the manual fallback) |
+| Move a project between tiers | `mv <tier>/<name> <other-tier>/` (instant — see [storage model](#storage-model)) |
+| See status across all projects | `/triage` |
+| Know what exists right now | Read `PROJECTS.md` |
+
+---
+
+## Slash commands
+
+Run from the `ai-workspace/` root in Claude Code.
+
+| Command | What it does |
+|---|---|
+| `/init-project <name>` | Scaffold a brand-new project end-to-end: creates `repos/<name>/`, junctions it into `active/`, copies both templates, runs `git init`, adds a row to `PROJECTS.md`. |
+| `/promote <name>` | Graduate `incubator/<name>` into a real project: moves it into `repos/<name>/`, junctions into `active/`, runs `git init` if missing, copies missing templates (preserves existing), adds a row to `PROJECTS.md`. |
+| `/triage` | Survey `active/` + `dormant/`, read each `CONTEXT.md`, flag stale projects (>14 days), unfilled stencils, bloated files needing a prune, and index drift — produce a one-page status report. Read-only by default. |
+
+---
+
+## Storage model
+
+```
+ai-workspace/
+├── repos/                  ← real files (.git, .venv, node_modules) live here
+│   ├── my-api/
+│   ├── agent-ui/
+│   └── ...
+│
+├── active/
+│   └── my-api    ─→ junction → repos/my-api
+├── dormant/
+│   └── old-x     ─→ junction → repos/old-x
+├── archive/
+│   └── done-y    ─→ junction → repos/done-y
+└── incubator/
+    └── prototype-z         ← real folder (no junction; ephemeral)
+```
+
+Tier folders are **views**, not storage. A project's tier = which junction folder it appears in. Moving between tiers (`mv active/x dormant/`) renames a ~1KB pointer — instant, never touches `node_modules` or `.venv`.
+
+`incubator/` is the exception: real folders, not junctions. Graduation to `active/` means `mv`-ing into `repos/` first (see [Workflow 3](#workflow-3--promote-from-incubator)).
+
+---
+
+## Decision: where should a project's real files live?
+
+```
+Is the project already at a real path I can't (or don't want to) change?
+├── No  → repos/<name>/        ← default. Workflow 1 or 3.
+└── Yes → keep external path   ← Workflow 2b (junction in place)
+```
+
+Keep the external path when:
+- IDE workspace files reference it (`.code-workspace`, JetBrains `.idea/`)
+- CI runners or build scripts hardcode the path
+- The project lives on a different drive
+
+Otherwise prefer `repos/`. Same-drive `mv` is metadata-only and instant, so bringing in an existing same-drive project (Workflow 2a) is cheap.
+
+---
+
+## Workflow 1 — Create a brand-new project
+
+**Easy way:** `/init-project <name>` from the workspace root. Done.
+
+**Manual way:**
+
+1. Pick a `<name>` (kebab-case, no spaces).
+2. Create the real folder under `repos/`.
+3. Junction it into `active/`.
+4. Copy both templates into the project.
+5. `cd` into it and `git init`.
+6. Add a row to `PROJECTS.md` under `## active/`.
+
+**PowerShell:**
+```powershell
+$name = "<name>"
+New-Item -ItemType Directory -Path "repos\$name" | Out-Null
+New-Item -ItemType Junction   -Path "active\$name" -Target "repos\$name" | Out-Null
+Copy-Item CLAUDE.template.md  "repos\$name\CLAUDE.md"
+Copy-Item CONTEXT.template.md "repos\$name\CONTEXT.md"
+Set-Location "active\$name"
+git init
+```
+
+**Bash (Git Bash on Windows):**
+```bash
+name="<name>"
+mkdir -p "repos/$name"
+cmd //c "mklink /J active\\$name repos\\$name"
+cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
+cp CONTEXT.template.md "repos/$name/CONTEXT.md"
+cd "active/$name"
+git init
+```
+
+After scaffolding: edit `CLAUDE.md` (stack, run/test commands, conventions), `CONTEXT.md` (initial Next Step), and `PROJECTS.md`.
+
+---
+
+## Workflow 2 — Bring in an existing project from elsewhere
+
+The project already exists at some path on disk. Two sub-flows — pick using the [decision tree above](#decision-where-should-a-projects-real-files-live).
+
+### 2a — Move into `repos/`, then junction
+
+1. Purge build artifacts at the source (`node_modules`, `.venv`, `target`, `build`).
+2. `mv` the project folder into `repos/<name>/`.
+3. Junction it into `active/<name>`.
+4. Add `CLAUDE.md` and `CONTEXT.md` if missing — **don't overwrite** existing files.
+5. Reinstall dependencies inside the project.
+6. Add a row to `PROJECTS.md`.
+
+**PowerShell:**
+```powershell
+$src  = "C:\path\to\old-thing"
+$name = "old-thing"
+Remove-Item -Recurse -Force "$src\node_modules","$src\.venv","$src\target","$src\build" -ErrorAction SilentlyContinue
+Move-Item   $src "repos\$name"
+New-Item    -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
+if (-not (Test-Path "repos\$name\CLAUDE.md"))  { Copy-Item CLAUDE.template.md  "repos\$name\CLAUDE.md" }
+if (-not (Test-Path "repos\$name\CONTEXT.md")) { Copy-Item CONTEXT.template.md "repos\$name\CONTEXT.md" }
+Set-Location "active\$name"
+# reinstall deps, then edit ../../PROJECTS.md
+```
+
+**Bash:**
+```bash
+src="C:/path/to/old-thing"
+name="old-thing"
+rm -rf "$src/node_modules" "$src/.venv" "$src/target" "$src/build"
+mv "$src" "repos/$name"
+cmd //c "mklink /J active\\$name repos\\$name"
+[ -f "repos/$name/CLAUDE.md" ]  || cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
+[ -f "repos/$name/CONTEXT.md" ] || cp CONTEXT.template.md "repos/$name/CONTEXT.md"
+cd "active/$name"
+# reinstall deps, then edit ../../PROJECTS.md
+```
+
+### 2b — Junction in place (leave the project where it lives)
+
+1. Junction the external path directly into `active/<name>` (skip `repos/`).
+2. Add `CLAUDE.md` and `CONTEXT.md` at the external path if missing.
+3. Add a `PROJECTS.md` row; mark the row as **external** so future-you remembers where the real files are.
+
+**PowerShell:**
+```powershell
+$src  = "C:\path\to\old-thing"
+$name = "old-thing"
+New-Item -ItemType Junction -Path "active\$name" -Target $src | Out-Null
+if (-not (Test-Path "$src\CLAUDE.md"))  { Copy-Item CLAUDE.template.md  "$src\CLAUDE.md" }
+if (-not (Test-Path "$src\CONTEXT.md")) { Copy-Item CONTEXT.template.md "$src\CONTEXT.md" }
+```
+
+**Bash:**
+```bash
+src="C:/path/to/old-thing"
+name="old-thing"
+cmd //c "mklink /J active\\$name $src"
+[ -f "$src/CLAUDE.md" ]  || cp CLAUDE.template.md  "$src/CLAUDE.md"
+[ -f "$src/CONTEXT.md" ] || cp CONTEXT.template.md "$src/CONTEXT.md"
+```
+
+---
+
+## Workflow 3 — Promote from `incubator/`
+
+**Easy way:** `/promote <name>` from the workspace root. Done.
+
+**Manual way:** when an experiment proves itself worth keeping.
+
+1. Move the incubator folder into `repos/<name>/`.
+2. Junction it into `active/<name>`.
+3. `git init` if it isn't already a git repo.
+4. Copy missing templates (incubator projects typically lack them).
+5. Fill in `CLAUDE.md` (stable identity) and `CONTEXT.md` (current state + Next Step).
+6. Add a row to `PROJECTS.md`.
+
+**PowerShell:**
+```powershell
+$name = "<name>"
+Move-Item "incubator\$name" "repos\$name"
+New-Item -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
+Set-Location "active\$name"
+if (-not (Test-Path ".git"))       { git init }
+if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\CLAUDE.template.md  CLAUDE.md }
+if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\CONTEXT.template.md CONTEXT.md }
+```
+
+**Bash:**
+```bash
+name="<name>"
+mv "incubator/$name" "repos/$name"
+cmd //c "mklink /J active\\$name repos\\$name"
+cd "active/$name"
+[ -d ".git" ]       || git init
+[ -f "CLAUDE.md" ]  || cp ../../CLAUDE.template.md  CLAUDE.md
+[ -f "CONTEXT.md" ] || cp ../../CONTEXT.template.md CONTEXT.md
+```
+
+---
+
+## Glossary
+
+- **Junction** — Windows directory pointer (`mklink /J`, or PowerShell `New-Item -ItemType Junction`). Same-volume only. No admin or Developer Mode required. We use junctions, not symbolic links, throughout the tier folders.
+- **Symbolic link (symlink)** — `mklink /D` on Windows; `ln -s` on POSIX. On Windows requires admin or Developer Mode. Crosses volumes; has full POSIX semantics under WSL. Use only when junctions aren't enough.
+- **Tier** — one of `active/`, `dormant/`, `archive/`. A project's tier = which tier folder its junction lives in.
+- **View vs storage** — `repos/` is **storage** (real files). Tier folders are **views** (junctions). Moving a project between views doesn't touch storage.
+- **Repo vs project** — used interchangeably here. Each project under `repos/` is its own independent git repository with its own remote.
+- **Root** — the `ai-workspace/` directory itself. Never `git init` here; it's a local-only management layer.
+- **Workspace-level `CLAUDE.md`** — the agent operating manual at the workspace root. Auto-loaded every agent session. Contains rules and invariants only.
+- **Project-level `CLAUDE.md`** — per-project stable identity file (`repos/<name>/CLAUDE.md`). Stack, run commands, conventions. Auto-loaded when an agent opens at that project.
+- **`CONTEXT.md`** — per-project mutable handoff file. Completed / Current State / Next Step. Updated every session. A **rolling snapshot of now, not a log** — keep it small (Completed = last 1–2 sessions; prune when >~6 Completed bullets or >~80 lines). git history is the changelog, so pruning loses nothing. See workspace `CLAUDE.md` §6.
+- **`PROJECTS.md`** — workspace-level project index at the root. Source of truth for which tier each project lives in.
+- **`HANDBOOK.md`** — this file. Human-facing guide. Not auto-loaded into agent context.
+- **Stale** — for `active/` projects, untouched >14 days. `/triage` flags these. Very stale (>30 days) should probably move to `dormant/`.
+- **Orphan** — a folder under `repos/` with no junction in any tier. `/triage` flags these too.
+- **Stencil** — a `CONTEXT.md` copied from the template but never filled in (still has `YYYY-MM-DD` / `<project name>` placeholders). Listed as active but holds no real state. `/triage` flags these as top priority.
+- **Bloated** — a `CONTEXT.md` that has outgrown its snapshot role (>~6 Completed bullets or >~80 lines). Needs pruning, not clearing — git history keeps the old versions. `/triage` flags these.
+
+---
+
+## See also
+
+- `CLAUDE.md` — agent operating manual (rules and invariants).
+- `PROJECTS.md` — current project index.
+- `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project` and `/triage` do).
