@@ -18,6 +18,9 @@ import sys
 from datetime import date
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from link_project import make_link                     # noqa: E402  (sibling helper)
+
 SCRIPT_DIR = Path(__file__).resolve().parent          # .claude/scripts
 WORKSPACE_ROOT = SCRIPT_DIR.parent.parent             # ai-workspace/
 TIERS = ("repos", "active", "dormant", "archive", "incubator")
@@ -60,10 +63,12 @@ def run(cmd, cwd=WORKSPACE_ROOT, **kw):
 
 def scaffold(name):
     (WORKSPACE_ROOT / "repos" / name).mkdir(parents=True, exist_ok=False)
-    # Junction via cmd's mklink. Passing argv (not a shell string) means no
-    # bash/MSYS quoting can corrupt the name — the bug that bit us before.
-    run(["cmd", "/c", "mklink", "/J",
-         f"active\\{name}", f"repos\\{name}"])
+    # Junction (Windows) / symlink (POSIX) via the shared helper — argv-driven,
+    # so no bash/MSYS/cmd quoting can corrupt the name (the bug that bit us before).
+    try:
+        make_link(WORKSPACE_ROOT / "active" / name, WORKSPACE_ROOT / "repos" / name)
+    except OSError as e:
+        fail(f"could not link active/{name} -> repos/{name}: {e}", code=2)
     for out_name, tpl in TEMPLATES.items():
         (WORKSPACE_ROOT / "repos" / name / out_name).write_text(
             tpl.read_text(encoding="utf-8"), encoding="utf-8")

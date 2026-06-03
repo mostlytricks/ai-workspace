@@ -23,11 +23,15 @@ Run from the workspace root. Default to Bash (Git Bash on Windows); if Bash isn'
 ```bash
 name="$ARGUMENTS"
 mv "incubator/$name" "repos/$name"
-cmd //c "mklink /J active\\$name repos\\$name"
+python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
 (cd "repos/$name" && { [ -d ".git" ] || git init -q; })
 [ -f "repos/$name/CLAUDE.md" ]  || cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
 [ -f "repos/$name/CONTEXT.md" ] || cp CONTEXT.template.md "repos/$name/CONTEXT.md"
 ```
+
+> Use the `link_project.py` helper, **not** `cmd //c "mklink /J active\\$name …"` — that Git-Bash
+> form silently eats the `$name` variable and creates a bogus `active$name` junction. If `python`
+> isn't found, fall back to the PowerShell block below (its `New-Item -ItemType Junction` is also safe).
 
 **PowerShell equivalent (if Bash unavailable):**
 ```powershell

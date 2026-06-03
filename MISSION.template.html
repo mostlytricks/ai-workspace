@@ -1,0 +1,175 @@
+<!doctype html>
+<!--
+  MISSION.template.html — the durable "why" doc (one of the four clocks; see workspace CLAUDE.md §6).
+  Copy to repos/<project>/MISSION.html and fill the <!-- FILL --> spots. Delete these comments as you go.
+  This is the SLOWEST-changing doc: purpose + principles + non-goals that should survive refactors.
+  It is read in a browser by you, and by an agent when pointed at it (it does NOT auto-load — CLAUDE.md does).
+  Theme = the shared warm-terminal doc theme; see DOC_THEME.md at the workspace root.
+  Maintenance: edit only when the mission or a durable principle actually changes. In-flight state → CONTEXT.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><!-- FILL: Project --> — Project mission</title>
+<style>
+  :root {
+    --bg:#0f1413; --panel:#171d1c; --panel-2:#1d2423; --line:#2a3331;
+    --text-hi:#eef2f1; --text:#cbd3d1; --text-mid:#94a09d; --faint:#69736f;
+    --accent:#62a89f; --accent-d:#4f978e; --blue:#7ea6c4; --amber:#d9b27a; --red:#d98c7a;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:920px; margin:0 auto; padding:56px 28px 120px; }
+  header.top { margin-bottom:14px; }
+  .logo { display:inline-flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .logo .sq {
+    width:13px; height:13px; border-radius:3px; background:var(--accent);
+    box-shadow:0 0 12px rgba(98,168,159,.40);
+  }
+  .logo .k { font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:.04em; }
+  h1 {
+    font-size:30px; line-height:1.2; margin:4px 0 6px;
+    color:var(--text-hi); font-weight:650; letter-spacing:-.01em;
+  }
+  .lede { color:var(--text-mid); font-size:16px; margin:0 0 8px; }
+  h2 {
+    font-size:20px; color:var(--text-hi); margin:52px 0 14px; font-weight:620;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h2 .n { color:var(--accent); font-family:var(--mono); font-size:14px; margin-right:10px; }
+  h3 { font-size:15px; color:var(--text-hi); margin:26px 0 8px; font-weight:620; }
+  p { margin:10px 0; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  strong { color:var(--text-hi); font-weight:620; }
+  code {
+    font-family:var(--mono); font-size:.86em; color:var(--accent);
+    background:var(--panel-2); border:1px solid var(--line); padding:1px 6px; border-radius:5px;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; overflow-x:auto; margin:16px 0;
+    font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--text-mid);
+  }
+  pre b { color:var(--accent); font-weight:600; }
+  pre .c { color:var(--faint); }
+  .toc {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 20px; margin:22px 0 0;
+  }
+  .toc ol { margin:0; columns:2; column-gap:32px; font-size:13.5px; }
+  .toc a { color:var(--text-mid); }
+  .toc a:hover { color:var(--accent); }
+  .note {
+    border-left:3px solid var(--accent); background:var(--panel);
+    border-radius:0 8px 8px 0; padding:12px 16px; margin:18px 0; font-size:14px;
+  }
+  .note.warn { border-left-color:var(--amber); }
+  .note .lbl { font-weight:620; color:var(--text-hi); }
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--faint); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+  tbody tr:hover { background:rgba(255,255,255,.014); }
+  ul, ol { margin:10px 0; padding-left:22px; }
+  li { margin:5px 0; }
+  footer {
+    margin-top:70px; padding-top:18px; border-top:1px solid var(--line);
+    color:var(--faint); font-size:12.5px;
+  }
+  @media (max-width:680px){ .toc ol { columns:1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="sq"></span><span class="k"><!-- FILL: project-slug --></span></div>
+    <h1>Project mission</h1>
+    <!-- lede = the ONE sentence that re-orients you. Keep it sharp; the dashboard reads it verbatim. -->
+    <p class="lede"><!-- FILL: one-line north star — what this is and who it serves. --></p>
+    <p style="color:var(--faint);font-size:13px;margin-top:4px">Read before <code>IMPLEMENTATION_PLAN.md</code> (the roadmap), then hand work to the agent through <code>CLAUDE.md</code> and the rolling <code>CONTEXT.md</code>.</p>
+    <div class="toc"><ol>
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#staging">Why this first</a></li>
+      <li><a href="#principles">Product principles</a></li>
+      <li><a href="#architecture">Architecture principle</a></li>
+      <li><a href="#pipeline">Planning pipeline</a></li>
+      <li><a href="#non-goals">Current non-goals</a></li>
+    </ol></div>
+  </header>
+
+  <h2 id="mission"><span class="n">01</span>Mission</h2>
+  <!-- The durable purpose. What becomes true in the world if this succeeds. Not features — outcome. -->
+  <p><strong><!-- FILL: one-sentence mission. --></strong> <!-- FILL: 2-3 sentences expanding it: the problem, who it's for, the calm it creates. --></p>
+  <pre><b>north star</b>: <!-- FILL: the end state -->
+<b>first wedge</b>: <!-- FILL: the narrow thing you're nailing first -->
+<b>later shape</b>: <!-- FILL: what it generalizes into --></pre>
+
+  <div class="note">
+    <span class="lbl">Staged, not confused.</span> <!-- FILL: one line — why you start narrow without that being the whole ambition. -->
+  </div>
+
+  <h2 id="staging"><span class="n">02</span>Why This First</h2>
+  <!-- Why the first wedge is the RIGHT first wedge: it surfaces the hardest real problems early. -->
+  <p><!-- FILL: the reasoning. --></p>
+  <table>
+    <thead><tr><th>Stage</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>Now</code></td><td><!-- FILL --></td></tr>
+      <tr><td><code>Next</code></td><td><!-- FILL --></td></tr>
+      <tr><td><code>Later</code></td><td><!-- FILL --></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="principles"><span class="n">03</span>Product Principles</h2>
+  <!-- The handful of commitments that should win arguments during a refactor. 4-6 is plenty. -->
+  <ul>
+    <li><strong><!-- FILL: principle --></strong> <!-- FILL: what it means in practice. --></li>
+    <li><strong><!-- FILL --></strong> <!-- FILL --></li>
+    <li><strong><!-- FILL --></strong> <!-- FILL --></li>
+  </ul>
+
+  <h2 id="architecture"><span class="n">04</span>Architecture Principle</h2>
+  <!-- The ONE structural idea that bridges the first wedge to the full mission. Optional but powerful.
+       Delete this section if the project has no single load-bearing architectural commitment yet. -->
+  <p><!-- FILL: the seam / shared shape / invariant that every feature should extend rather than bypass. --></p>
+  <pre><!-- FILL: optional ASCII diagram. Use <b>green</b> and .c faint spans for highlights. --></pre>
+
+  <h2 id="pipeline"><span class="n">05</span>Planning Pipeline</h2>
+  <p>The four project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time.</p>
+  <table>
+    <thead><tr><th>Document</th><th>Job</th><th>Changes</th></tr></thead>
+    <tbody>
+      <tr><td><code>MISSION.html</code></td><td>Why: north star, principles, non-goals that survive refactors.</td><td>rarely</td></tr>
+      <tr><td><code>CLAUDE.md</code></td><td>How: repo identity, stack, constraints, entry points, how the agent should behave here.</td><td>on refactors</td></tr>
+      <tr><td><code>IMPLEMENTATION_PLAN.md</code></td><td>What/next: phase roadmap, locked decisions, the verification gate, open questions.</td><td>per phase</td></tr>
+      <tr><td><code>CONTEXT.md</code></td><td>Now: current state, last 1-2 sessions, the immediate next step.</td><td>per session</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="non-goals"><span class="n">06</span>Current Non-Goals</h2>
+  <!-- The most valuable section for keeping an agent on-mission. State what you are deliberately NOT doing.
+       /triage and /mission check recent work against these to flag drift. -->
+  <ul>
+    <li><!-- FILL: a thing you are deliberately not building yet, and (briefly) why. --></li>
+    <li><!-- FILL --></li>
+    <li><!-- FILL --></li>
+  </ul>
+
+  <div class="note warn">
+    <span class="lbl">Maintenance rule.</span> Update this file only when the mission or a durable principle changes. Use <code>CONTEXT.md</code> for in-flight state and <code>IMPLEMENTATION_PLAN.md</code> for phase-by-phase execution.
+  </div>
+
+  <footer>
+    <!-- FILL: project --> · project mission · stable source for purpose before roadmap, agent guidelines, and rolling context.
+  </footer>
+</div>
+</body>
+</html>

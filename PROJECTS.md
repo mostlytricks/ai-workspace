@@ -11,11 +11,12 @@ Source of truth for what exists in this workspace and which tier each project li
 _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column should be the same as the project's CONTEXT.md → Next Step, in one line._
 
 - antigravity-based-project-plan-methodology | Node/TS CLI (commander, tsx)        | 2026-05-24 | add unit tests for the Task-Lock Safeguard in src/commands/task.ts; then commit untracked CONTEXT.md
+- antigravity--pptx-template-manager          | Python (google-adk + python-pptx)   | 2026-06-03 | just activated; make the initial commit (13 untracked files, .gitignore already correct) after a `test_generation.py` smoke run
 - claude-interactive-panel-20260516           | Node/TS workspaces (server+client)  | 2026-05-21 | verify + commit in-flight server/src/sections.ts related-topics change (+ fill CLAUDE.md, commit CONTEXT.md)
 - local-llmstxt-server                        | Node/TS (Fastify + Vite/React)      | 2026-05-30 | review `modifycation-plan--docs-split.md` and decide execute / defer / close
 - meta-project-manager                        | Markdown convention (orchestration) | 2026-05-26 | onboard first managed project; revise templates from real use
 - multi-system-maintenance-agent-system       | Claude Code subagents + git + JSONL | 2026-05-31 | Phases 0-6 done (build complete, standalone). Next: attach a real service + wire read-only DB MCP
-- agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-05-31 | git-init-commit the initial implementation (nothing committed yet)
+- agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-06-03 | multi-Claude orchestrator: Phase 6→10 arc pushed to origin (github.com/mostlytricks/agent-view-desktop, feat/orchestration @ 51e7a17) — session mgr + tool policy, ~/.flux plugin, transcript viewer, flux tools + shared memory, supervisor spawn/await workers, Overview dashboard + handoff, memory persistence + theme system. Phase 11 (Tier 3 resume = "Take control ▶" fork-resumes an external transcript live) built on top, UNCOMMITTED. Next: live smoke test, then commit. See IMPLEMENTATION_PLAN.md
 
 ## incubator/
 

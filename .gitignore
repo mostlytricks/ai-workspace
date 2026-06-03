@@ -1,19 +1,34 @@
 # ai-workspace root is local-only — never commit it as an umbrella repo.
 # This .gitignore is defense-in-depth: deny everything, then whitelist only the
-# workspace meta files and the .claude/ tooling below.
+# workspace meta files and the .claude/ tooling below. The whitelist IS the
+# portable skeleton — exactly what gets replicated when you set the workspace up
+# in another local runtime; the tiers (repos/active/dormant/archive/incubator)
+# are machine-local and stay denied by the `*` rule above.
 
 *
 
+# --- root meta files (the skeleton) ---
 !.gitignore
 !README.md
 !CLAUDE.md
-!CLAUDE.template.md
-!CONTEXT.template.md
+!MISSION.html
 !HANDBOOK.md
 !PROJECTS.md
+
+# --- per-project stencils + shared doc theme ---
+!CLAUDE.template.md
+!CONTEXT.template.md
+!MISSION.template.html
+!IMPLEMENTATION_PLAN.template.md
+!DOC_THEME.md
+
+# --- workspace tooling (commands, scripts, dashboard generator) ---
 !.claude/
 !.claude/**
 
 # Generated, local-only dashboard output. The generator script stays tracked
 # (it's whitelisted above via .claude/**); this regenerated HTML is not.
 .claude/dashboard/dashboard.html
+
+# Python bytecode from the helper scripts — never part of the tracked skeleton.
+.claude/**/__pycache__/

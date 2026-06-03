@@ -11,7 +11,8 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 2. **For each project, read** (in this order, skip what's missing):
    - `CONTEXT.md` → grab `Last touched`, Current State, Next Step. Also note its **line count** and the **number of bullets under `## Completed`** (you'll need these for the bloat + stencil checks).
    - `CLAUDE.md` → grab the one-line description and stack (only if needed for the report).
-   - If neither exists, mark the project as **uninitialized**.
+   - `MISSION.html` and `IMPLEMENTATION_PLAN.md` → only if present (the optional four-doc pipeline, CLAUDE.md §6). Note the current phase from the plan and the Non-Goals list from the mission — you'll need them for the drift check.
+   - If neither `CONTEXT.md` nor `CLAUDE.md` exists, mark the project as **uninitialized**.
 
 3. **Compute staleness** for `active/` projects:
    - Compare `Last touched` to today's date (provided by the environment).
@@ -36,7 +37,13 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - Flag entries in `repos/` that have no junction in any tier — these are orphans (storage with no view), unless `PROJECTS.md` lists them under "Not surfaced in a tier (intentional)".
    - Flag projects junctioned into more than one tier at once — only one tier per project.
 
-7. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
+7. **Doc-pipeline drift** (only for projects that adopted the optional four-doc pipeline — have `MISSION.html` and/or `IMPLEMENTATION_PLAN.md`):
+   - **Non-goal drift:** does anything in CONTEXT.md Completed / Current State push toward something MISSION lists under Current Non-Goals? Flag it — this is the highest-value catch.
+   - **Phase contradiction:** the plan tags a phase `done` but CONTEXT implies it isn't (or CONTEXT claims work the plan still marks `todo`).
+   - **Missing mission doc:** an ambitious-looking active project (multi-phase plan, long-lived, several entry points) that has `CLAUDE.md` + `CONTEXT.md` but **no** `MISSION.html` — suggest adopting the pipeline. Don't flag small/young projects; the two-doc setup is correct for them.
+   - **Stale plan:** `IMPLEMENTATION_PLAN.md` "last updated" date far behind CONTEXT.md `Last touched` — the roadmap probably lies.
+
+8. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
 
 ```
 # Workspace Triage — <today's date>
@@ -60,13 +67,19 @@ Projects on disk with no CONTEXT.md. Either initialize them or move to archive/.
 PROJECTS.md disagrees with disk. Reconcile:
 - <description of each mismatch>
 
+## Doc-pipeline drift
+Only for projects on the four-doc pipeline. Omit if none.
+- 🎯 <name> | NON-GOAL DRIFT — recent work touches "<non-goal>" from MISSION
+- 🔀 <name> | PHASE MISMATCH — plan says Phase N done, CONTEXT says otherwise
+- 📄 <name> | no MISSION.html on an ambitious project — consider adopting the pipeline
+
 ## Recommended actions
 A short numbered list of the 3-5 most important triage moves the user should make this week. Be specific — name projects and the action (fill stencil / prune / demote / archive / fix index row).
 ```
 
 A single project can carry more than one flag (e.g. stale *and* bloated). List it once under the most severe status and mention the secondary flag inline.
 
-8. **Do not modify any files** unless the user asks. This command is read-only by default. If the user follows up with "fix the drift," "prune X," or "demote X," then make the edits.
+9. **Do not modify any files** unless the user asks. This command is read-only by default. If the user follows up with "fix the drift," "prune X," or "demote X," then make the edits.
 
 ## Notes
 

@@ -10,19 +10,24 @@ Always open the agent at this root, never one level deeper. When a project subdi
 
 ```text
 ai-workspace/
-├── CLAUDE.md              # This file. Rules for agents.
-├── HANDBOOK.md            # Human-facing guide: workflows, slash commands, glossary.
-├── PROJECTS.md            # Index of all projects across tiers.
-├── CLAUDE.template.md     # Per-project stable-identity stencil.
-├── CONTEXT.template.md    # Per-project session-handoff stencil.
-├── .gitignore             # Defense-in-depth against accidental git init at root.
-├── .claude/commands/      # Workspace-level slash commands.
+├── CLAUDE.md                       # This file. Rules for agents.
+├── MISSION.html                    # The workspace's own north star — the durable why behind these rules.
+├── HANDBOOK.md                     # Human-facing guide: workflows, slash commands, glossary.
+├── PROJECTS.md                     # Index of all projects across tiers.
+├── CLAUDE.template.md              # Per-project stable-identity stencil.
+├── CONTEXT.template.md             # Per-project session-handoff stencil.
+├── MISSION.template.html           # Per-project "why" stencil (optional four-doc pipeline, §6).
+├── IMPLEMENTATION_PLAN.template.md # Per-project "what/next" stencil (optional four-doc pipeline, §6).
+├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs.
+├── .gitignore                      # Defense-in-depth against accidental git init at root.
+├── .claude/commands/               # Workspace-level slash commands.
+├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py).
 │
-├── repos/                 # CANONICAL storage. Real project files live here.
-├── incubator/             # Ephemeral real folders. No junctions.
-├── active/                # Junctions → repos/. Touched <30 days.
-├── dormant/               # Junctions → repos/. Paused; CONTEXT.md must name a resume blocker.
-└── archive/               # Junctions → repos/. Done. Read-only.
+├── repos/                          # CANONICAL storage. Real project files live here.
+├── incubator/                      # Ephemeral real folders. No junctions.
+├── active/                         # Junctions → repos/. Touched <30 days.
+├── dormant/                        # Junctions → repos/. Paused; CONTEXT.md must name a resume blocker.
+└── archive/                        # Junctions → repos/. Done. Read-only.
 ```
 
 **Routing:**
@@ -55,6 +60,7 @@ A project's real files live in **one of two places**:
 **Invariants:**
 - Tier folders (`active/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. `incubator/` is the exception: real folders.
 - Use junctions, not symbolic links. Junctions need no admin or Developer Mode on Windows. Use `mklink /D` only when crossing drives or needing full POSIX semantics under WSL.
+- **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` and `/promote` both use it.
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
 - Never use File Explorer drag-drop to move folders containing `node_modules` or `.venv` — it sometimes performs file-by-file copies and thrashes the disk. Use `mv` (bash) or `Move-Item` (PowerShell).
 
@@ -111,6 +117,19 @@ Refresh rules (apply on every update):
 - **Prune trigger:** if Completed exceeds ~6 bullets or the file exceeds ~80 lines, trim before you finish. `/triage` flags files that cross these thresholds.
 - **Never clear to zero.** A project moving to `archive/` freezes its CONTEXT.md as the final-state record (per *Skip both* above).
 
+**Optional: the full four-doc pipeline (ambitious `active/` projects only).**
+
+The two mandatory files cover identity and now. A project with a real arc — multi-phase, long-lived, easy to lose the thread on — may add two more, giving **four docs that change at four different rates**:
+
+| Doc | Question | Changes | Format |
+|---|---|---|---|
+| `MISSION.html` | **Why** — north star, principles, non-goals | rarely | HTML (browser-read; copy `MISSION.template.html`, theme in `DOC_THEME.md`) |
+| `CLAUDE.md` | **How** — identity, stack, constraints | on refactors | Markdown (auto-loads) |
+| `IMPLEMENTATION_PLAN.md` | **What/next** — phases, locked decisions, the gate | per phase | Markdown (agent edits it; copy `IMPLEMENTATION_PLAN.template.md`) |
+| `CONTEXT.md` | **Now** — state + single next step | per session | Markdown (auto-loads) |
+
+This is **opt-in**, not mandated — most projects (and all `incubator/`/`dormant/` ones) stay on the two-doc rule; the overhead only pays off when you keep losing the mission across sessions or projects. `MISSION.html` is HTML because it's a stable thing you *read*; `IMPLEMENTATION_PLAN.md` is Markdown because it changes every phase and the agent edits it. Boundary to keep: PLAN holds the multi-phase arc, CONTEXT holds only *now* — don't duplicate. `/mission <project>` re-orients off these four; `/triage` flags drift between them. See HANDBOOK "Adopt the full doc pipeline" for the how.
+
 ---
 
 ## 7. Cross-Project Tooling
@@ -118,5 +137,6 @@ Refresh rules (apply on every update):
 - **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change.
 - **`/init-project <name>`** scaffolds a brand-new project end-to-end (Workflow 1 in HANDBOOK): creates `repos/<name>/`, junctions into `active/`, copies both templates, runs `git init`, adds a `PROJECTS.md` row. Use instead of running §3-referenced commands by hand.
 - **`/promote <name>`** graduates an incubator project to active (Workflow 3 in HANDBOOK): `mv incubator/<name> repos/<name>`, junctions into `active/`, runs `git init` only if missing, copies templates only if missing (never overwrites), adds a `PROJECTS.md` row.
-- **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and orphans — producing a one-page report. Read-only by default. Use weekly.
+- **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc), and orphans — producing a one-page report. Read-only by default. Use weekly.
+- **`/mission <project>`** re-orients on a single project: reads its four docs (per the optional pipeline in §6) and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.
 - **`HANDBOOK.md`** is the human-facing guide — workflows, slash command cheat sheet, glossary. Not auto-loaded; agents may read it when explicitly asked.
