@@ -11,7 +11,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 2. **For each project, read** (in this order, skip what's missing):
    - `CONTEXT.md` → grab `Last touched`, Current State, Next Step. Also note its **line count** and the **number of bullets under `## Completed`** (you'll need these for the bloat + stencil checks).
    - `CLAUDE.md` → grab the one-line description and stack (only if needed for the report).
-   - `MISSION.html` and `IMPLEMENTATION_PLAN.md` → only if present (the optional four-doc pipeline, CLAUDE.md §6). Note the current phase from the plan and the Non-Goals list from the mission — you'll need them for the drift check.
+   - `MISSION.html`, `IMPLEMENTATION_PLAN.md`, and `ARCHITECTURE.html` → only if present (the optional four-doc pipeline + fifth doc, CLAUDE.md §6). Note the current phase from the plan and the Non-Goals list from the mission — you'll need them for the drift check. If `MISSION.html` is present, also skim it against `CLAUDE.md` for the **doc-collision** check (step 7).
    - If neither `CONTEXT.md` nor `CLAUDE.md` exists, mark the project as **uninitialized**.
 
 3. **Compute staleness** for `active/` projects:
@@ -42,6 +42,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - **Phase contradiction:** the plan tags a phase `done` but CONTEXT implies it isn't (or CONTEXT claims work the plan still marks `todo`).
    - **Missing mission doc:** an ambitious-looking active project (multi-phase plan, long-lived, several entry points) that has `CLAUDE.md` + `CONTEXT.md` but **no** `MISSION.html` — suggest adopting the pipeline. Don't flag small/young projects; the two-doc setup is correct for them.
    - **Stale plan:** `IMPLEMENTATION_PLAN.md` "last updated" date far behind CONTEXT.md `Last touched` — the roadmap probably lies.
+   - **Doc collision:** the same fact is *stated* in two docs that don't own it (per the §6 ownership rule) — most often the architectural seam or the one-line description appearing in **both** `MISSION.html` and `CLAUDE.md`, or a non-goal duplicated as a constraint. Flag it so the non-owner can be turned into a reference (MISSION owns *why*/the principle; CLAUDE.md owns *how*/the mechanics). Verbatim-or-near duplication is the signal; a brief pointer like "preserve the seam (MISSION §04)" is correct and not a collision.
 
 8. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
 
@@ -72,6 +73,7 @@ Only for projects on the four-doc pipeline. Omit if none.
 - 🎯 <name> | NON-GOAL DRIFT — recent work touches "<non-goal>" from MISSION
 - 🔀 <name> | PHASE MISMATCH — plan says Phase N done, CONTEXT says otherwise
 - 📄 <name> | no MISSION.html on an ambitious project — consider adopting the pipeline
+- 🔁 <name> | DOC COLLISION — "<fact>" restated in MISSION + CLAUDE.md; make the non-owner a reference
 
 ## Recommended actions
 A short numbered list of the 3-5 most important triage moves the user should make this week. Be specific — name projects and the action (fill stencil / prune / demote / archive / fix index row).

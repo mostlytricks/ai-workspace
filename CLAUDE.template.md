@@ -50,6 +50,11 @@ Coverage expectations or "no tests yet" — be honest.
 - Where the route/controller layer lives.
 - Where shared types/schemas live.
 
+<!-- This is the lightweight architecture map and the default home for "how it's built".
+     If the project grows an ARCHITECTURE.html (workspace CLAUDE.md §6), that file becomes the
+     canonical "how it's built" — keep this section a pointer to it rather than duplicating boundaries. -->
+- The architectural seam, if any: state the *mechanics* here (which file/type is the boundary) and link the *principle* to `MISSION.html` — don't restate it. One concern, one home.
+
 ## Git
 
 - Remote: `<url>`

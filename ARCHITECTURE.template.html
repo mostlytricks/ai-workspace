@@ -1,0 +1,177 @@
+<!doctype html>
+<!--
+  ARCHITECTURE.template.html — the optional fifth doc: "how the system is BUILT".
+  Copy to repos/<project>/ARCHITECTURE.html and fill the <!-- FILL --> spots. Delete these comments as you go.
+  This is the canonical home for component boundaries, the load-bearing seam, and data contracts.
+  Add it ONLY when "how it's built" outgrows CLAUDE.md's Entry Points (multiple services, non-obvious
+  data flow, several contributors). Most projects don't need it — a file map in CLAUDE.md is enough.
+  Doc ownership (workspace CLAUDE.md §6): the WHY lives in MISSION.html, WHAT/next in IMPLEMENTATION_PLAN.md,
+  NOW in CONTEXT.md. This file does not restate those — it links to them. Read in a browser.
+  Theme = the shared muted-teal doc theme; see DOC_THEME.md at the workspace root.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><!-- FILL: Project --> — System architecture</title>
+<style>
+  :root {
+    --bg:#0f1413; --panel:#171d1c; --panel-2:#1d2423; --line:#2a3331;
+    --text-hi:#eef2f1; --text:#cbd3d1; --text-mid:#94a09d; --faint:#69736f;
+    --accent:#62a89f; --accent-d:#4f978e; --blue:#7ea6c4; --amber:#d9b27a; --red:#d98c7a;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:920px; margin:0 auto; padding:56px 28px 120px; }
+  header.top { margin-bottom:14px; }
+  .logo { display:inline-flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .logo .sq {
+    width:13px; height:13px; border-radius:3px; background:var(--accent);
+    box-shadow:0 0 12px rgba(98,168,159,.40);
+  }
+  .logo .k { font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:.04em; }
+  h1 {
+    font-size:30px; line-height:1.2; margin:4px 0 6px;
+    color:var(--text-hi); font-weight:650; letter-spacing:-.01em;
+  }
+  .lede { color:var(--text-mid); font-size:16px; margin:0 0 8px; }
+  h2 {
+    font-size:20px; color:var(--text-hi); margin:52px 0 14px; font-weight:620;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h2 .n { color:var(--accent); font-family:var(--mono); font-size:14px; margin-right:10px; }
+  h3 { font-size:15px; color:var(--text-hi); margin:26px 0 8px; font-weight:620; }
+  p { margin:10px 0; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  strong { color:var(--text-hi); font-weight:620; }
+  code {
+    font-family:var(--mono); font-size:.86em; color:var(--accent);
+    background:var(--panel-2); border:1px solid var(--line); padding:1px 6px; border-radius:5px;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; overflow-x:auto; margin:16px 0;
+    font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--text-mid);
+  }
+  pre b { color:var(--accent); font-weight:600; }
+  pre .c { color:var(--faint); }
+  pre .a { color:var(--accent); }
+  pre .b { color:var(--blue); }
+  .toc {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 20px; margin:22px 0 0;
+  }
+  .toc ol { margin:0; columns:2; column-gap:32px; font-size:13.5px; }
+  .toc a { color:var(--text-mid); }
+  .toc a:hover { color:var(--accent); }
+  .note {
+    border-left:3px solid var(--accent); background:var(--panel);
+    border-radius:0 8px 8px 0; padding:12px 16px; margin:18px 0; font-size:14px;
+  }
+  .note.warn { border-left-color:var(--amber); }
+  .note.red { border-left-color:var(--red); }
+  .note .lbl { font-weight:620; color:var(--text-hi); }
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--faint); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+  td code { font-size:.9em; }
+  tbody tr:hover { background:rgba(255,255,255,.014); }
+  ul, ol { margin:10px 0; padding-left:22px; }
+  li { margin:5px 0; }
+  footer {
+    margin-top:70px; padding-top:18px; border-top:1px solid var(--line);
+    color:var(--faint); font-size:12.5px;
+  }
+  @media (max-width:680px){ .toc ol { columns:1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="sq"></span><span class="k"><!-- FILL: project-slug --> · architecture</span></div>
+    <h1>System architecture</h1>
+    <!-- lede = one sentence a new contributor reads to know how the pieces fit. -->
+    <p class="lede"><!-- FILL: how this system is built — the parts, the seams, and the contracts between them. --></p>
+    <p style="color:var(--faint);font-size:13px;margin-top:4px">The canonical <em>how it's built</em>. The <strong>why</strong> lives in <code>MISSION.html</code>; <strong>what's next</strong> in <code>IMPLEMENTATION_PLAN.md</code>; <strong>now</strong> in <code>CONTEXT.md</code>. This file links to those — it does not restate them.</p>
+    <div class="toc"><ol>
+      <li><a href="#glance">System at a glance</a></li>
+      <li><a href="#seam">The load-bearing seam</a></li>
+      <li><a href="#components">Components &amp; boundaries</a></li>
+      <li><a href="#contracts">Data &amp; contracts</a></li>
+      <li><a href="#build">Build · run · deploy</a></li>
+      <li><a href="#decisions">Key decisions &amp; tradeoffs</a></li>
+    </ol></div>
+  </header>
+
+  <h2 id="glance"><span class="n">01</span>System at a Glance</h2>
+  <!-- The one diagram that orients someone in 30 seconds: the major parts and how data flows between them. -->
+  <p><!-- FILL: 2-3 sentences — the shape of the system and the path a request/job takes through it. --></p>
+  <pre><span class="c"># FILL: component / data-flow map — use <b>accent</b> for the load-bearing piece, <span class="b">.b</span> for actors.</span>
+   client / input
+        |
+        v
+   <b>core component</b>        <span class="c">the seam — see §02</span>
+        |
+        v
+   output / store</pre>
+
+  <h2 id="seam"><span class="n">02</span>The Load-Bearing Seam</h2>
+  <!-- The single structural invariant every feature should extend rather than bypass.
+       MISSION.html owns the one-sentence PRINCIPLE; this section owns the MECHANICS (files, types, the gotcha).
+       Link back instead of re-describing the principle. -->
+  <p>The invariant: <strong><!-- FILL: the seam — e.g. "everything reduces to one Session shape" / "the JSON spec is the only interface". --></strong> (the durable principle is stated in <code>MISSION.html</code> §04).</p>
+  <p><!-- FILL: how the seam is realized in code — which type/file/schema is the boundary, and what breaks if you route around it. --></p>
+
+  <h2 id="components"><span class="n">03</span>Components &amp; Boundaries</h2>
+  <!-- One row per major part. "Talks to" + "Where" make the boundaries explicit. -->
+  <table>
+    <thead><tr><th>Component</th><th>Responsibility</th><th>Talks to</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td><!-- FILL --></td><td><!-- FILL --></td><td><!-- FILL --></td><td><code><!-- FILL: path --></code></td></tr>
+      <tr><td><!-- FILL --></td><td><!-- FILL --></td><td><!-- FILL --></td><td><code><!-- FILL --></code></td></tr>
+      <tr><td><!-- FILL --></td><td><!-- FILL --></td><td><!-- FILL --></td><td><code><!-- FILL --></code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="contracts"><span class="n">04</span>Data &amp; Contracts</h2>
+  <!-- The shapes that cross boundaries: schemas, the source-of-truth contract file, ports/base-URLs, auth flow.
+       For multi-SERVICE projects this is the CONTRACT.md / GLOBAL_RULES.md surface (workspace CLAUDE.md §5). -->
+  <ul>
+    <li><strong>Contract source of truth:</strong> <!-- FILL: which file/schema defines the shape everything agrees on (e.g. DESIGN.md §3, an OpenAPI file, a shared types package). --></li>
+    <li><strong>Boundaries / ports:</strong> <!-- FILL: ports, base URLs, queues, or file handoffs between parts. --></li>
+    <li><strong>Mutation loop:</strong> <!-- FILL: the order you change things when the contract changes (e.g. schema first → regenerate types → update clients). --></li>
+  </ul>
+
+  <h2 id="build"><span class="n">05</span>Build · Run · Deploy Shape</h2>
+  <!-- The structural assembly, NOT the command list — exact commands live in CLAUDE.md "Run". -->
+  <p><!-- FILL: how the system is assembled and where it runs — build steps, processes/services, what's generated vs source, deploy target. Point to CLAUDE.md "Run" for the exact commands. --></p>
+
+  <h2 id="decisions"><span class="n">06</span>Key Decisions &amp; Tradeoffs</h2>
+  <!-- Durable structural choices and WHY — the ones a future contributor would otherwise re-litigate.
+       Phase-scoped "locked decisions" belong in IMPLEMENTATION_PLAN.md; the load-bearing structural ones live here. -->
+  <table>
+    <thead><tr><th>Decision</th><th>Why</th><th>Tradeoff accepted</th></tr></thead>
+    <tbody>
+      <tr><td><!-- FILL --></td><td><!-- FILL --></td><td><!-- FILL --></td></tr>
+      <tr><td><!-- FILL --></td><td><!-- FILL --></td><td><!-- FILL --></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    <span class="lbl">Maintenance rule.</span> Update this file on real structural changes (a new component, a moved boundary, a changed contract). It owns <em>how it's built</em> only — keep the <em>why</em> in <code>MISSION.html</code>, <em>what's next</em> in <code>IMPLEMENTATION_PLAN.md</code>, and <em>now</em> in <code>CONTEXT.md</code>. One concern, one home.
+  </div>
+
+  <footer>
+    <!-- FILL: project --> · system architecture · the canonical "how it's built" — components, seams, and contracts.
+  </footer>
+</div>
+</body>
+</html>

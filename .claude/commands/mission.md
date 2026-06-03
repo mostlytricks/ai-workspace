@@ -15,6 +15,7 @@ The argument is a project name (matches a folder under `active/`, `dormant/`, `i
    - `CLAUDE.md` → identity, stack, constraints, entry points.
    - `IMPLEMENTATION_PLAN.md` (or `.html`) → current phase, locked decisions, the gate, and any **Open Questions** section.
    - `CONTEXT.md` → current state + the immediate next step + `Last touched`.
+   - `ARCHITECTURE.html` (only if present — the optional fifth doc) → the load-bearing seam's mechanics, component boundaries, and data contracts.
 
 3. **Print the re-orientation** in this exact shape (keep it to one screen):
 
@@ -44,6 +45,7 @@ Questions worth asking the agent
    - **Principle vs reality** — a stated product principle that the current state seems to bend.
    - **Stalled next step** — if `Next Step` has been the same across the last couple of sessions (check `git log -p CONTEXT.md` if useful), ask what's blocking it.
    - **Phase/state contradiction** — the plan says a phase is done but CONTEXT implies it isn't (or vice versa).
+   - **Doc collision** — the architectural seam or the one-line description is restated in both MISSION and CLAUDE.md (per the §6 ownership rule). Ask whether the non-owner should become a reference before the two copies drift apart.
 
    Prefer 3-5 questions, each naming the specific doc/decision/file it came from so the user can act immediately. A question the user can't act on is noise — cut it.
 

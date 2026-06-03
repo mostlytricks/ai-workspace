@@ -143,14 +143,15 @@
   <pre><!-- FILL: optional ASCII diagram. Use <b>green</b> and .c faint spans for highlights. --></pre>
 
   <h2 id="pipeline"><span class="n">05</span>Planning Pipeline</h2>
-  <p>The four project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time.</p>
+  <p>The project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time. <strong>One concern, one home:</strong> each doc owns its column; if another doc needs a fact, it links here rather than restating it.</p>
   <table>
-    <thead><tr><th>Document</th><th>Job</th><th>Changes</th></tr></thead>
+    <thead><tr><th>Document</th><th>Job (what it owns)</th><th>Changes</th></tr></thead>
     <tbody>
       <tr><td><code>MISSION.html</code></td><td>Why: north star, principles, non-goals that survive refactors.</td><td>rarely</td></tr>
       <tr><td><code>CLAUDE.md</code></td><td>How: repo identity, stack, constraints, entry points, how the agent should behave here.</td><td>on refactors</td></tr>
       <tr><td><code>IMPLEMENTATION_PLAN.md</code></td><td>What/next: phase roadmap, locked decisions, the verification gate, open questions.</td><td>per phase</td></tr>
       <tr><td><code>CONTEXT.md</code></td><td>Now: current state, last 1-2 sessions, the immediate next step.</td><td>per session</td></tr>
+      <tr><td><code>ARCHITECTURE.html</code> <span style="color:var(--faint)">(optional)</span></td><td>How it's built: component boundaries, the seam's mechanics, data contracts. Add only when "how it's built" outgrows CLAUDE.md's entry points.</td><td>on structural change</td></tr>
     </tbody>
   </table>
 

@@ -5,8 +5,8 @@ architecture / design page you want rendered in a browser). A dark, professional
 cool-neutral near-black canvas, muted-teal accent, JetBrains Mono for code. Self-contained,
 zero dependencies — copy the skeleton, paste the stylesheet, fill the sections.
 
-`MISSION.template.html` already ships with this theme inline. Use this file when you're
-hand-rolling a *new* HTML doc and want it to match.
+`MISSION.template.html` and `ARCHITECTURE.template.html` already ship with this theme inline.
+Use this file when you're hand-rolling a *new* HTML doc and want it to match.
 
 > Markdown docs (`CLAUDE.md`, `CONTEXT.md`, `IMPLEMENTATION_PLAN.md`) don't use this — they
 > render wherever the agent reads them. The theme is only for browser-read HTML.

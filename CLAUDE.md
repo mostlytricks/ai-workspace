@@ -18,6 +18,7 @@ ai-workspace/
 ├── CONTEXT.template.md             # Per-project session-handoff stencil.
 ├── MISSION.template.html           # Per-project "why" stencil (optional four-doc pipeline, §6).
 ├── IMPLEMENTATION_PLAN.template.md # Per-project "what/next" stencil (optional four-doc pipeline, §6).
+├── ARCHITECTURE.template.html      # Per-project "how it's built" stencil (optional fifth doc, §6).
 ├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs.
 ├── .gitignore                      # Defense-in-depth against accidental git init at root.
 ├── .claude/commands/               # Workspace-level slash commands.
@@ -130,6 +131,22 @@ The two mandatory files cover identity and now. A project with a real arc — mu
 
 This is **opt-in**, not mandated — most projects (and all `incubator/`/`dormant/` ones) stay on the two-doc rule; the overhead only pays off when you keep losing the mission across sessions or projects. `MISSION.html` is HTML because it's a stable thing you *read*; `IMPLEMENTATION_PLAN.md` is Markdown because it changes every phase and the agent edits it. Boundary to keep: PLAN holds the multi-phase arc, CONTEXT holds only *now* — don't duplicate. `/mission <project>` re-orients off these four; `/triage` flags drift between them. See HANDBOOK "Adopt the full doc pipeline" for the how.
 
+**Doc ownership — one concern, one home (reference, don't restate).**
+
+These docs answer *different* questions, so they shouldn't *collide* — but the same fact written in two of them eventually drifts into two *different* facts. The rule: every concern has exactly **one canonical owner**; any other doc that needs it **links to the owner rather than restating it**.
+
+| Concern | Owner | The test |
+|---|---|---|
+| Why it exists · principles · strategic non-goals | **MISSION.html** | "would breaking this betray the mission?" |
+| Identity · stack · run/test · entry points · gotchas · secrets | **CLAUDE.md** | "would breaking this fail a build or leak a secret?" |
+| Phases · locked decisions · the gate | **IMPLEMENTATION_PLAN.md** | "is this about *what's next*?" |
+| Current state · the single next step | **CONTEXT.md** | "is this only true *right now*?" |
+| How it's built · seams · data contracts | **CLAUDE.md** Entry Points — or **ARCHITECTURE.html** when it outgrows a file map | "would a new contributor need this to navigate the code?" |
+
+The overlap to watch is the **architectural seam**. MISSION owns the one-sentence *principle* ("everything reduces to one Session shape" / "the JSON deck-spec is the interface"); CLAUDE.md (or ARCHITECTURE.html) owns the *mechanics* (which files, the gotcha) and points back — *"preserve the seam (MISSION §04)"* — instead of re-describing it. Same for non-goals vs constraints: a strategic "we don't do X" lives in MISSION; the operational "doing X breaks the build" lives in CLAUDE.md.
+
+**Optional fifth doc — `ARCHITECTURE.html` (how it's built).** Most projects describe their architecture adequately in CLAUDE.md's *Entry Points* (a file map) plus the one-line seam in MISSION — leave it there. A project whose "how it's built" genuinely outgrows a file map — multiple services, non-obvious data flow, several contributors — may add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme in `DOC_THEME.md`) as the canonical home for component boundaries, the seam's mechanics, data contracts, and build/deploy shape. It is **recognized only when present** (like MISSION.html — `/mission` reads it, `/triage` checks it) and **never mandated**; don't add it where a file map already serves. For cross-service contracts specifically, §5's `CONTRACT.md`/`GLOBAL_RULES.md` is this same idea living at the service boundary.
+
 ---
 
 ## 7. Cross-Project Tooling
@@ -137,6 +154,6 @@ This is **opt-in**, not mandated — most projects (and all `incubator/`/`dorman
 - **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change.
 - **`/init-project <name>`** scaffolds a brand-new project end-to-end (Workflow 1 in HANDBOOK): creates `repos/<name>/`, junctions into `active/`, copies both templates, runs `git init`, adds a `PROJECTS.md` row. Use instead of running §3-referenced commands by hand.
 - **`/promote <name>`** graduates an incubator project to active (Workflow 3 in HANDBOOK): `mv incubator/<name> repos/<name>`, junctions into `active/`, runs `git init` only if missing, copies templates only if missing (never overwrites), adds a `PROJECTS.md` row.
-- **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc), and orphans — producing a one-page report. Read-only by default. Use weekly.
-- **`/mission <project>`** re-orients on a single project: reads its four docs (per the optional pipeline in §6) and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.
+- **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc, and **doc collisions** — the same fact restated across MISSION and CLAUDE.md, per the §6 ownership rule), and orphans — producing a one-page report. Read-only by default. Use weekly.
+- **`/mission <project>`** re-orients on a single project: reads its four docs — plus `ARCHITECTURE.html` if present (per the optional pipeline in §6) — and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.
 - **`HANDBOOK.md`** is the human-facing guide — workflows, slash command cheat sheet, glossary. Not auto-loaded; agents may read it when explicitly asked.

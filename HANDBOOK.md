@@ -27,8 +27,8 @@ Run from the `ai-workspace/` root in Claude Code.
 |---|---|
 | `/init-project <name>` | Scaffold a brand-new project end-to-end: creates `repos/<name>/`, junctions it into `active/`, copies both templates, runs `git init`, adds a row to `PROJECTS.md`. |
 | `/promote <name>` | Graduate `incubator/<name>` into a real project: moves it into `repos/<name>/`, junctions into `active/`, runs `git init` if missing, copies missing templates (preserves existing), adds a row to `PROJECTS.md`. |
-| `/triage` | Survey `active/` + `dormant/`, read each `CONTEXT.md`, flag stale projects (>14 days), unfilled stencils, bloated files needing a prune, index drift, and doc-pipeline drift — produce a one-page status report. Read-only by default. |
-| `/mission <name>` | Re-orient on one project: read its four docs and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
+| `/triage` | Survey `active/` + `dormant/`, read each `CONTEXT.md`, flag stale projects (>14 days), unfilled stencils, bloated files needing a prune, index drift, and doc-pipeline drift (incl. doc collisions — a fact restated across MISSION + CLAUDE.md) — produce a one-page status report. Read-only by default. |
+| `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
 | `/dashboard` | One-screen status across all four tiers; active projects on the full pipeline also show their mission + current phase. Regenerates the visual HTML dashboard. |
 
 ---
@@ -45,6 +45,10 @@ Every project carries two files: `CLAUDE.md` (stable identity) and `CONTEXT.md` 
 | `CONTEXT.md` | **Now** — state + the one next step | per session | Markdown — auto-loads into the agent |
 
 It's **opt-in**. Most projects don't need it; the overhead only pays off when the mission keeps slipping out of view. `/mission` reads these four to re-orient you; `/triage` flags when they contradict each other.
+
+**One concern, one home.** These docs answer different questions, so they shouldn't collide — but a fact written in two of them drifts into two different facts. Each concern has one canonical owner; another doc that needs it *links* rather than restates. Why → `MISSION.html`; how-to-behave/stack/secrets → `CLAUDE.md`; what's-next → `IMPLEMENTATION_PLAN.md`; now → `CONTEXT.md`. The classic overlap is the architectural seam: MISSION owns the one-line *principle*, CLAUDE.md owns the *mechanics* and points back. `/triage` flags collisions (the same fact restated across docs).
+
+**Optional fifth doc — `ARCHITECTURE.html`.** When "how it's built" outgrows CLAUDE.md's Entry Points (multiple services, non-obvious data flow, several contributors), add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme via `DOC_THEME.md`) as the canonical home for component boundaries, the seam's mechanics, and data contracts. Recognized when present (`/mission` reads it, `/triage` checks it), never mandated — a file map in CLAUDE.md is enough for most projects.
 
 ---
 
@@ -274,6 +278,8 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
 - **`MISSION.html`** — optional per-project "why" doc: north star, principles, non-goals. The slowest-changing of the four docs; read in a browser. Copy from `MISSION.template.html`. Part of the [four-doc pipeline](#the-four-doc-pipeline-optional).
 - **`IMPLEMENTATION_PLAN.md`** — optional per-project "what/next" doc: phase roadmap, locked decisions, the verification gate, open questions. Changes per phase; the agent edits it. Copy from `IMPLEMENTATION_PLAN.template.md`. The multi-phase arc lives here; `CONTEXT.md` holds only *now*.
 - **Four-doc pipeline** — the optional `MISSION.html` + `CLAUDE.md` + `IMPLEMENTATION_PLAN.md` + `CONTEXT.md` set, ordered by how often each changes (rarely → per-session). Opt-in for ambitious `active/` projects. See workspace `CLAUDE.md` §6.
+- **`ARCHITECTURE.html`** — optional per-project *fifth* doc: the canonical "how it's built" (component boundaries, the seam's mechanics, data contracts, build/deploy shape). Add only when "how it's built" outgrows CLAUDE.md's Entry Points. Browser-read; copy from `ARCHITECTURE.template.html`, styled via `DOC_THEME.md`. Recognized when present, never mandated. See workspace `CLAUDE.md` §6.
+- **Doc ownership** — the rule that each concern has one canonical owner doc; other docs *link* to it rather than restate it (why → MISSION, how → CLAUDE.md, what/next → PLAN, now → CONTEXT, how-it's-built → CLAUDE.md/ARCHITECTURE.html). Prevents the same fact drifting into two different facts. `/triage` flags **doc collisions** — a fact restated across docs. See workspace `CLAUDE.md` §6.
 - **`DOC_THEME.md`** — the shared warm-terminal theme for browser-read project HTML docs (`MISSION.html` and any hand-rolled architecture/design page). Stylesheet + skeleton to copy.
 - **`PROJECTS.md`** — workspace-level project index at the root. Source of truth for which tier each project lives in.
 - **`HANDBOOK.md`** — this file. Human-facing guide. Not auto-loaded into agent context.
@@ -289,4 +295,4 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
 - `CLAUDE.md` — agent operating manual (rules and invariants).
 - `PROJECTS.md` — current project index.
 - `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project`, `/triage`, and `/mission` do).
-- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `DOC_THEME.md` — the optional four-doc pipeline stencils + the HTML doc theme.
+- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `ARCHITECTURE.template.html` · `DOC_THEME.md` — the optional pipeline stencils (four-doc + optional fifth) and the HTML doc theme.
