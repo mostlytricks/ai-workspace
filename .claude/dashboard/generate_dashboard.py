@@ -226,42 +226,133 @@ TEMPLATE = """<!DOCTYPE html>
   @property --bd-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
 
   :root {
-    --bg:#0A0E1A;
-    --surface:rgba(17,24,43,0.7); --surface-hover:rgba(26,36,64,0.8);
-    --border:rgba(255,255,255,0.08); --border-focus:rgba(0,242,254,0.4);
-    --ink:#F3F4F6; --muted:#9CA3AF;
     --display:'Outfit',ui-sans-serif,system-ui,sans-serif;
     --sans:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     --mono:'Fira Code',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+
+  /* ----- Themes. Default = Aurora (the original deep-navy neon identity). -----
+     Swapped via [data-theme] on <html>. Tier-accent hues (set per-section in Python)
+     and the staleness heat scale stay constant — they're semantic. Only the chrome
+     (bg/surface/ink, glows, glass shadow, hover ring, chart axes) changes per theme. */
+  :root, [data-theme="aurora"] {
+    --bg:#0A0E1A;
+    --surface:rgba(17,24,43,0.7); --surface-hover:rgba(26,36,64,0.8);
+    --border:rgba(255,255,255,0.08); --border-focus:rgba(0,242,254,0.4);
+    --ink:#F3F4F6; --muted:#9CA3AF; --focus-text:#CBD5E1; --chip-bg:rgba(255,255,255,.04);
+    --selection:rgba(0,242,254,.22);
+    --h1-grad:linear-gradient(135deg,#00F2FE 0%,#4FACFE 60%,#F093FB 130%);
+    --shadow:0 8px 32px rgba(0,0,0,0.2); --shadow-hover:0 12px 40px rgba(0,242,254,0.15);
+    --ring-a:#00E5E8; --ring-b:#F093FB;
+    --chart-axis:#9CA3AF; --chart-grid:rgba(148,163,184,0.12);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(0,229,232,.06), transparent 60%),
+      #0A0E1A;
+  }
+  [data-theme="daylight"] {
+    --bg:#F7F9FC;
+    --surface:rgba(255,255,255,0.85); --surface-hover:#ffffff;
+    --border:rgba(15,23,42,0.10); --border-focus:rgba(37,99,235,0.45);
+    --ink:#1E293B; --muted:#64748B; --focus-text:#334155; --chip-bg:rgba(15,23,42,.04);
+    --selection:rgba(37,99,235,.18);
+    --h1-grad:linear-gradient(135deg,#2563EB 0%,#4F46E5 60%,#7C3AED 130%);
+    --shadow:0 8px 24px rgba(15,23,42,0.08); --shadow-hover:0 12px 32px rgba(37,99,235,0.16);
+    --ring-a:#2563EB; --ring-b:#7C3AED;
+    --chart-axis:#64748B; --chart-grid:rgba(100,116,139,0.18);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(37,99,235,.07), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(124,58,237,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(37,99,235,.05), transparent 60%),
+      #F7F9FC;
+  }
+  [data-theme="sandstone"] {
+    --bg:#FBF6EF;
+    --surface:rgba(255,252,247,0.88); --surface-hover:#FFFDFA;
+    --border:rgba(120,80,40,0.14); --border-focus:rgba(193,110,60,0.5);
+    --ink:#3D2E22; --muted:#8C7A66; --focus-text:#5C4A38; --chip-bg:rgba(120,80,40,.06);
+    --selection:rgba(217,144,90,.22);
+    --h1-grad:linear-gradient(135deg,#C2410C 0%,#D97706 60%,#B45309 130%);
+    --shadow:0 8px 24px rgba(90,60,30,0.10); --shadow-hover:0 12px 32px rgba(194,65,12,0.16);
+    --ring-a:#D97706; --ring-b:#C2410C;
+    --chart-axis:#8C7A66; --chart-grid:rgba(140,122,102,0.20);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(217,119,6,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(194,65,12,.07), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(180,83,9,.06), transparent 60%),
+      #FBF6EF;
+  }
+  [data-theme="forest"] {
+    --bg:#0C1A14;
+    --surface:rgba(18,38,30,0.7); --surface-hover:rgba(26,52,42,0.82);
+    --border:rgba(255,255,255,0.07); --border-focus:rgba(52,211,153,0.4);
+    --ink:#E8F2EC; --muted:#8BA89A; --focus-text:#C5D8CE; --chip-bg:rgba(255,255,255,.04);
+    --selection:rgba(52,211,153,.20);
+    --h1-grad:linear-gradient(135deg,#34D399 0%,#10B981 60%,#A3E635 130%);
+    --shadow:0 8px 32px rgba(0,0,0,0.25); --shadow-hover:0 12px 40px rgba(52,211,153,0.16);
+    --ring-a:#34D399; --ring-b:#A3E635;
+    --chart-axis:#8BA89A; --chart-grid:rgba(139,168,154,0.14);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(52,211,153,.09), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(163,230,53,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(16,185,129,.06), transparent 60%),
+      #0C1A14;
+  }
+  [data-theme="slate"] {
+    --bg:#16181D;
+    --surface:rgba(30,33,40,0.72); --surface-hover:rgba(42,46,55,0.85);
+    --border:rgba(255,255,255,0.08); --border-focus:rgba(148,163,184,0.45);
+    --ink:#E5E7EB; --muted:#9499A3; --focus-text:#C4C9D2; --chip-bg:rgba(255,255,255,.05);
+    --selection:rgba(148,163,184,.20);
+    --h1-grad:linear-gradient(135deg,#CBD5E1 0%,#94A3B8 60%,#64748B 130%);
+    --shadow:0 8px 32px rgba(0,0,0,0.3); --shadow-hover:0 12px 40px rgba(148,163,184,0.16);
+    --ring-a:#94A3B8; --ring-b:#CBD5E1;
+    --chart-axis:#9499A3; --chart-grid:rgba(148,163,184,0.12);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(148,163,184,.06), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(203,213,225,.05), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(148,163,184,.04), transparent 60%),
+      #16181D;
   }
   * { box-sizing:border-box; }
   body {
     margin:0; color:var(--ink);
     font:14px/1.5 var(--sans);
     padding:30px clamp(16px,4vw,52px);
-    background:
-      radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
-      radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
-      radial-gradient(700px 600px at 50% 120%, rgba(0,229,232,.06), transparent 60%),
-      var(--bg);
+    background:var(--body-bg);
     background-attachment:fixed;
     min-height:100vh;
+    transition:background .4s ease, color .3s ease;
   }
-  ::selection { background:rgba(0,242,254,.22); }
+  ::selection { background:var(--selection); }
 
-  header { display:flex; align-items:baseline; gap:14px; margin-bottom:24px; animation:fadeIn .5s ease both; }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; gap:14px; margin-bottom:24px; animation:fadeIn .5s ease both; }
   header h1 {
     font-family:var(--display); font-weight:700; font-size:22px; margin:0; letter-spacing:.2px;
-    background:linear-gradient(135deg,#00F2FE 0%,#4FACFE 60%,#F093FB 130%);
+    background:var(--h1-grad);
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   }
   header .gen { color:var(--muted); font-size:12px; font-family:var(--mono); }
   header .gen b { color:var(--ink); }
 
+  /* theme switcher — top-right pills, one swatch each */
+  .themebar { margin-left:auto; align-self:center; display:flex; flex-wrap:wrap; gap:6px; }
+  .themebar button {
+    font:600 11px/1 var(--sans); letter-spacing:.3px; cursor:pointer; color:var(--muted);
+    background:var(--surface); border:1px solid var(--border); border-radius:999px;
+    padding:6px 11px 6px 8px; display:inline-flex; align-items:center; gap:6px;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    transition:color .2s, border-color .2s, background .2s, transform .2s;
+  }
+  .themebar button:hover { color:var(--ink); transform:translateY(-1px); }
+  .themebar button.active { color:var(--ink); border-color:var(--border-focus); box-shadow:var(--shadow-hover); }
+  .themebar .sw { width:11px; height:11px; border-radius:50%; box-shadow:0 0 0 1px rgba(0,0,0,.18) inset; }
+
   .glass {
     background:var(--surface); border:1px solid var(--border); border-radius:16px;
     backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-    box-shadow:0 8px 32px rgba(0,0,0,0.2);
+    box-shadow:var(--shadow);
   }
 
   .charts { display:grid; gap:18px; margin-bottom:28px;
@@ -275,8 +366,8 @@ TEMPLATE = """<!DOCTYPE html>
   .panel::after {
     content:''; position:absolute; inset:0; border-radius:16px; padding:1.5px;
     background:conic-gradient(from var(--bd-angle),
-      transparent 0deg, rgba(0,229,232,0) 35deg, #00E5E8 110deg,
-      #F093FB 190deg, rgba(240,147,251,0) 265deg, transparent 360deg);
+      transparent 0deg, transparent 35deg, var(--ring-a) 110deg,
+      var(--ring-b) 190deg, transparent 265deg, transparent 360deg);
     -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;
     mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -307,7 +398,7 @@ TEMPLATE = """<!DOCTYPE html>
     position:relative; overflow:hidden; padding:13px 15px 13px 18px;
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-    box-shadow:0 8px 32px rgba(0,0,0,0.2);
+    box-shadow:var(--shadow);
     --bar:var(--grad);
     transition:transform .3s cubic-bezier(.4,0,.2,1), border-color .3s, box-shadow .3s, background .3s;
   }
@@ -316,7 +407,7 @@ TEMPLATE = """<!DOCTYPE html>
   }
   .card:hover {
     transform:translateY(-5px); background:var(--surface-hover);
-    border-color:var(--border-focus); box-shadow:0 12px 40px rgba(0,242,254,0.15);
+    border-color:var(--border-focus); box-shadow:var(--shadow-hover);
   }
   .card.stale  { --bar:#FBBF24; }
   .card.vstale { --bar:#FF4D6D; }
@@ -325,9 +416,9 @@ TEMPLATE = """<!DOCTYPE html>
   .ago { color:var(--muted); font-size:12px; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
   .marker { font-size:13px; }
   .stack { display:inline-block; margin:8px 0 7px; font-size:11px; color:var(--muted);
-    font-family:var(--mono); background:rgba(255,255,255,.04);
+    font-family:var(--mono); background:var(--chip-bg);
     border:1px solid var(--border); border-radius:6px; padding:2px 8px; }
-  .focus { color:#CBD5E1; font-size:13px; }
+  .focus { color:var(--focus-text); font-size:13px; }
   .empty { color:var(--muted); font-style:italic; padding:6px 2px; }
 
   .cap { margin-top:11px; font-size:11px; color:var(--muted); font-family:var(--mono); line-height:1.7; }
@@ -345,6 +436,13 @@ TEMPLATE = """<!DOCTYPE html>
   <header>
     <h1>◆ AI Workspace · Control Center</h1>
     <span class="gen">__TOTAL__ projects · generated <b>__GENERATED__</b></span>
+    <div class="themebar" id="themebar">
+      <button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button>
+      <button data-theme="daylight"><span class="sw" style="background:linear-gradient(135deg,#60A5FA,#A78BFA)"></span>Daylight</button>
+      <button data-theme="sandstone"><span class="sw" style="background:linear-gradient(135deg,#F59E0B,#C2410C)"></span>Sandstone</button>
+      <button data-theme="forest"><span class="sw" style="background:linear-gradient(135deg,#34D399,#A3E635)"></span>Forest</button>
+      <button data-theme="slate"><span class="sw" style="background:linear-gradient(135deg,#CBD5E1,#64748B)"></span>Slate</button>
+    </div>
   </header>
 
   <div id="fallback">⚠ Charts library not found. Fetch it once:
@@ -370,20 +468,10 @@ TEMPLATE = """<!DOCTYPE html>
 <script>
 (function () {
   var DATA = JSON.parse(document.getElementById('payload').textContent);
-  if (typeof Chart === 'undefined') { document.getElementById('fallback').style.display = 'block'; return; }
+  var hasChart = typeof Chart !== 'undefined';
+  if (!hasChart) { document.getElementById('fallback').style.display = 'block'; }
 
-  Chart.defaults.color = '#9CA3AF';
-  Chart.defaults.font.family = "'Inter', ui-sans-serif, system-ui, sans-serif";
-  var GRID = 'rgba(148,163,184,0.12)';
-
-  new Chart(document.getElementById('tierChart'), {
-    type: 'doughnut',
-    data: { labels: DATA.doughnut.labels,
-      datasets: [{ data: DATA.doughnut.data, backgroundColor: DATA.doughnut.colors,
-        borderColor: '#0A0E1A', borderWidth: 3, hoverOffset: 6 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '64%',
-      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 14 } } } }
-  });
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
   // Dashed "move line" thresholds drawn over the bars (no plugin dependency).
   var THRESHOLDS = [ { v: 14, c: '#FBBF24', t: '14d stale' }, { v: 30, c: '#FF4D6D', t: '30d → move' } ];
@@ -407,19 +495,62 @@ TEMPLATE = """<!DOCTYPE html>
   };
   var maxDays = Math.max(34, Math.max.apply(null, DATA.activity.data.concat([0])) + 4);
 
-  new Chart(document.getElementById('activityChart'), {
-    type: 'bar',
-    data: { labels: DATA.activity.labels,
-      datasets: [{ label: 'days', data: DATA.activity.data,
-        backgroundColor: DATA.activity.colors, borderRadius: 6, maxBarThickness: 26 }] },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 14 } },
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: function (c) { return c.parsed.x + ' days ago'; } } } },
-      scales: { x: { beginAtZero: true, suggestedMax: maxDays, grid: { color: GRID }, ticks: { precision: 0 } },
-        y: { grid: { display: false } } } },
-    plugins: [thresholdLines]
+  // Charts read their chrome (axis, grid, slice border) from CSS vars, so they're
+  // rebuilt on every theme switch to repaint against the new palette.
+  var charts = [];
+  function buildCharts() {
+    if (!hasChart) return;
+    charts.forEach(function (c) { c.destroy(); });
+    charts = [];
+
+    Chart.defaults.color = cssVar('--chart-axis') || '#9CA3AF';
+    Chart.defaults.font.family = "'Inter', ui-sans-serif, system-ui, sans-serif";
+    var GRID = cssVar('--chart-grid') || 'rgba(148,163,184,0.12)';
+    var sliceBorder = cssVar('--bg') || '#0A0E1A';
+
+    charts.push(new Chart(document.getElementById('tierChart'), {
+      type: 'doughnut',
+      data: { labels: DATA.doughnut.labels,
+        datasets: [{ data: DATA.doughnut.data, backgroundColor: DATA.doughnut.colors,
+          borderColor: sliceBorder, borderWidth: 3, hoverOffset: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '64%',
+        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 14 } } } }
+    }));
+
+    charts.push(new Chart(document.getElementById('activityChart'), {
+      type: 'bar',
+      data: { labels: DATA.activity.labels,
+        datasets: [{ label: 'days', data: DATA.activity.data,
+          backgroundColor: DATA.activity.colors, borderRadius: 6, maxBarThickness: 26 }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 14 } },
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function (c) { return c.parsed.x + ' days ago'; } } } },
+        scales: { x: { beginAtZero: true, suggestedMax: maxDays, grid: { color: GRID }, ticks: { precision: 0 } },
+          y: { grid: { display: false } } } },
+      plugins: [thresholdLines]
+    }));
+  }
+
+  // --- theme switching (persisted in localStorage) ---
+  var THEMES = ['aurora', 'daylight', 'sandstone', 'forest', 'slate'];
+  var bar = document.getElementById('themebar');
+  function setTheme(t) {
+    if (THEMES.indexOf(t) < 0) t = 'aurora';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('dash-theme', t); } catch (e) {}
+    Array.prototype.forEach.call(bar.querySelectorAll('button'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-theme') === t);
+    });
+    buildCharts();
+  }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (b) setTheme(b.getAttribute('data-theme'));
   });
+  var saved = 'aurora';
+  try { saved = localStorage.getItem('dash-theme') || 'aurora'; } catch (e) {}
+  setTheme(saved);
 })();
 </script>
 </body>

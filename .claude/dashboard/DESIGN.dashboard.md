@@ -22,12 +22,29 @@ semi-transparent blurred cards, luminous color-coded tiers, and dashed "move-lin
 - **Stdlib-only generator.** No pip/venv (workspace rule). Pure-Python string templating via token replacement (`__DATA_JSON__`, `__CARDS__`, `__GENERATED__`, `__TOTAL__`) — so CSS/JS braces stay literal.
 - **Data source = `PROJECTS.md`.** One bar/slice/card per indexed project; the dashboard inherits any index drift. It does not scan disk.
 - **Semantics drive color, not decoration.** Every hue means something (tier, or staleness). Don't add color that doesn't carry meaning.
+- **Chrome is themeable; semantics are not.** The palette below is the **default theme (`aurora`)**. A top-right switcher swaps five themes via `[data-theme]` on `<html>` (persisted in `localStorage` under `dash-theme`). Themes only change *chrome* — bg/surface/ink, ambient glows, glass shadow, hover ring, chart axes/grid. **Tier-accent hues and the staleness heat scale stay constant across all themes** (they're meaning, not style) — so they're still set per-section in Python, not in a theme block.
+
+---
+
+## 0a. Themes
+
+Five palettes, default `aurora`. Two light, three dark — the set deliberately spans beyond the original futuristic look. Each is a self-contained block of CSS custom properties: `:root, [data-theme="aurora"]` for the default, then `[data-theme="…"]` overrides. Charts read their chrome from CSS vars (`--chart-axis`, `--chart-grid`, `--bg` for the slice border) and are **destroyed + rebuilt on every switch** so they repaint against the active palette.
+
+| Theme | Feel | Canvas |
+|---|---|---|
+| `aurora` *(default)* | deep-navy neon, futuristic | `#0A0E1A` |
+| `daylight` | clean light, professional blue | `#F7F9FC` |
+| `sandstone` | warm light, cream + terracotta | `#FBF6EF` |
+| `forest` | calm dark green | `#0C1A14` |
+| `slate` | neutral graphite, muted/corporate | `#16181D` |
+
+**Adding/editing a theme:** add or edit one `[data-theme="x"]` block in the generator's CSS (mirror every var the `aurora` block defines — `--bg --surface --surface-hover --border --border-focus --ink --muted --focus-text --chip-bg --selection --h1-grad --shadow --shadow-hover --ring-a --ring-b --chart-axis --chart-grid --body-bg`), add a `<button data-theme="x">` with a signature swatch to the `#themebar` in the header, and append the key to the `THEMES` array in the page script. Keep light-theme overlays subtle (low-alpha) so the glassmorphism still reads.
 
 ---
 
 ## 1. Color tokens
 
-The `:root` palette (deep navy-black with luminous overlays):
+The default-theme (`aurora`) `:root` palette (deep navy-black with luminous overlays):
 
 | Token | Value | Purpose |
 |---|---|---|

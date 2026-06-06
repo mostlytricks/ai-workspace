@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f .amos/index.db .amos/index.db-*)",
+      "Bash(npm run *)"
+    ]
+  }
+}

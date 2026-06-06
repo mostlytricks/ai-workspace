@@ -4,6 +4,19 @@ One-sentence description of what this project is and who it serves.
 
 ---
 
+## Docs in this project
+
+<!-- A fresh agent opening here gets only the auto-loaded CLAUDE.md + CONTEXT.md; this map
+     tells it what the *other* files are and which one wins on conflict. Delete the lines that
+     don't apply — two-doc projects keep only CONTEXT.md + CLAUDE.md.
+     Precedence: CONTEXT (now) > CLAUDE (how) > PLAN (next) > MISSION (why). -->
+
+- **CONTEXT.md** — start here: current state + the single next step. *Now.*
+- **CLAUDE.md** (this file) — stable identity: stack, run/test, entry points, gotchas. *How.*
+- **IMPLEMENTATION_PLAN.md** — phases & locked decisions. *What's next* (may lag; CONTEXT wins on "now"). *(four-doc pipeline only)*
+- **MISSION.html** — why it exists, principles, non-goals. *Why* (browser-read). *(four-doc pipeline only)*
+- **ARCHITECTURE.html** — component boundaries, seams, data contracts (only if present; else "how it's built" stays in *Entry Points* below). *(optional fifth doc)*
+
 ## Stack
 
 - **Language / runtime:** e.g. Python 3.12, Node 20, JDK 21
