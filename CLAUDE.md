@@ -19,6 +19,7 @@ ai-workspace/
 ├── MISSION.template.html           # Per-project "why" stencil (optional four-doc pipeline, §6).
 ├── IMPLEMENTATION_PLAN.template.md # Per-project "what/next" stencil (optional four-doc pipeline, §6).
 ├── ARCHITECTURE.template.html      # Per-project "how it's built" stencil (optional fifth doc, §6).
+├── WALKTHROUGH.template.md         # Per-change "what got done + proof" stencil (optional, append-only; §6).
 ├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs.
 ├── .gitignore                      # Defense-in-depth against accidental git init at root.
 ├── .claude/commands/               # Workspace-level slash commands.
@@ -146,6 +147,8 @@ These docs answer *different* questions, so they shouldn't *collide* — but the
 The overlap to watch is the **architectural seam**. MISSION owns the one-sentence *principle* ("everything reduces to one Session shape" / "the JSON deck-spec is the interface"); CLAUDE.md (or ARCHITECTURE.html) owns the *mechanics* (which files, the gotcha) and points back — *"preserve the seam (MISSION §04)"* — instead of re-describing it. Same for non-goals vs constraints: a strategic "we don't do X" lives in MISSION; the operational "doing X breaks the build" lives in CLAUDE.md.
 
 **Optional fifth doc — `ARCHITECTURE.html` (how it's built).** Most projects describe their architecture adequately in CLAUDE.md's *Entry Points* (a file map) plus the one-line seam in MISSION — leave it there. A project whose "how it's built" genuinely outgrows a file map — multiple services, non-obvious data flow, several contributors — may add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme in `DOC_THEME.md`) as the canonical home for component boundaries, the seam's mechanics, data contracts, and build/deploy shape. It is **recognized only when present** (like MISSION.html — `/mission` reads it, `/triage` checks it) and **never mandated**; don't add it where a file map already serves. For cross-service contracts specifically, §5's `CONTRACT.md`/`GLOBAL_RULES.md` is this same idea living at the service boundary.
+
+**Optional per-change artifact — `WALKTHROUGH.md` (what got done + proof).** The five docs above are all *live* (they describe the present and get overwritten). A walkthrough is the opposite: a **dated, append-only record** of one shipped slice — the narrative of what changed *paired with the evidence it works* (gate output, and screenshots for UI). It's the human-reviewable trust artifact (modeled on Antigravity's walkthrough), the thing someone reads to trust a change without re-deriving it. Lives at `repos/<project>/docs/walkthroughs/<YYYY-MM-DD>-<slug>.md`, one per slice; copy from `WALKTHROUGH.template.md`. **Opt-in and non-destructive:** write it when a phase or reviewable feature ships, freeze it, and have the matching `CONTEXT.md` "Completed" bullet *link* to it rather than restate it (one concern, one home). Skip for trivial fixes — don't grow ceremony that doesn't pay (MISSION §06). It closes the loop opened by `IMPLEMENTATION_PLAN.md`'s per-phase **Verification** block.
 
 ---
 

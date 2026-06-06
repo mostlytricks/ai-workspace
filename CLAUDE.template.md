@@ -16,6 +16,7 @@ One-sentence description of what this project is and who it serves.
 - **IMPLEMENTATION_PLAN.md** — phases & locked decisions. *What's next* (may lag; CONTEXT wins on "now"). *(four-doc pipeline only)*
 - **MISSION.html** — why it exists, principles, non-goals. *Why* (browser-read). *(four-doc pipeline only)*
 - **ARCHITECTURE.html** — component boundaries, seams, data contracts (only if present; else "how it's built" stays in *Entry Points* below). *(optional fifth doc)*
+- **`docs/walkthroughs/*.md`** — dated, append-only proof-of-work records for shipped slices (only if present). *(optional; CONTEXT.md "Completed" links here rather than restating)*
 
 ## Stack
 
