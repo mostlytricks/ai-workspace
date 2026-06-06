@@ -10,19 +10,19 @@ Source of truth for what exists in this workspace and which tier each project li
 
 _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column should be the same as the project's CONTEXT.md → Next Step, in one line._
 
-- antigravity-based-project-plan-methodology | Node/TS CLI (commander, tsx)        | 2026-05-24 | add unit tests for the Task-Lock Safeguard in src/commands/task.ts; then commit untracked CONTEXT.md
 - antigravity--pptx-template-manager          | Python (google-adk + python-pptx)   | 2026-06-03 | just activated; make the initial commit (13 untracked files, .gitignore already correct) after a `test_generation.py` smoke run
-- claude-interactive-panel-20260516           | Node/TS workspaces (server+client)  | 2026-05-21 | verify + commit in-flight server/src/sections.ts related-topics change (+ fill CLAUDE.md, commit CONTEXT.md)
-- local-llmstxt-server                        | Node/TS (Fastify + Vite/React)      | 2026-05-30 | review `modifycation-plan--docs-split.md` and decide execute / defer / close
-- meta-project-manager                        | Markdown convention (orchestration) | 2026-05-26 | onboard first managed project; revise templates from real use
-- multi-system-maintenance-agent-system       | Claude Code subagents + git + JSONL | 2026-05-31 | Phases 0-6 done (build complete, standalone). Next: attach a real service + wire read-only DB MCP
+- claude-interactive-panel-20260516           | Node/TS workspaces (server+client)  | 2026-06-03 | verify + commit in-flight server/src/sections.ts related-topics change, together with the README Aesthetics trim, filled CLAUDE.md, and CONTEXT.md (all untracked/uncommitted)
+- local-llmstxt-server                        | Node/TS (Fastify + Vite/React)      | 2026-06-03 | review `IMPLEMENTATION_PLAN.md` (docs-split) and decide execute / defer / close
+- multi-system-maintenance-agent-system       | Claude Code subagents + git + JSONL | 2026-06-03 | Phases 0-6 done (build complete, standalone). Next: attach a real service + wire read-only DB MCP
 - agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-06-03 | multi-Claude orchestrator: Phase 6→10 arc pushed to origin (github.com/mostlytricks/agent-view-desktop, feat/orchestration @ 51e7a17) — session mgr + tool policy, ~/.flux plugin, transcript viewer, flux tools + shared memory, supervisor spawn/await workers, Overview dashboard + handoff, memory persistence + theme system. Phase 11 (Tier 3 resume = "Take control ▶" fork-resumes an external transcript live) built on top, UNCOMMITTED. Next: live smoke test, then commit. See IMPLEMENTATION_PLAN.md
+- api-server-managing-agent                  | Knowledge base + Claude Code skill (targets Spring Boot + Oracle) | 2026-06-04 | full doc set written (MISSION/CLAUDE/PLAN/CONTEXT) — method-first, read-only, two-layer knowledge seam. Next: Phase 1 — knowledge model + templates + a sample Spring Boot + Oracle schema (resolve sample-source + store-format open Qs first)
+- architecture-memory-os                      | TS/Node MCP core (SQLite-indexed Markdown graph) | 2026-06-04 | AMOS — institutional architecture-memory layer. Full 5-doc set + **Phases 1–4 built & green** (typecheck + 30/30 vitest incl. eval set + capture + hybrid-retrieval + temporal/traversal): zod model, Markdown-source-of-truth + derived-SQLite seam, the `capture` write path, **hybrid recall** (lexical FTS5 + semantic cosine fused via RRF, offline embedder), **multi-hop `related`** (recursive CTE) + **`timeline`** (supersession chain + `id@N` lineage scalar). 4 of 5 retrieval modes live. 11-node real seed corpus. No commits yet. Next: Phase 5 — MCP server wiring + run the eval set through the MCP surface
 
 ## incubator/
 
 _Experimental. Real folders OR junctions into `repos/` if intended to graduate. No CLAUDE.md/CONTEXT.md overhead. Promote with `/promote <name>` when validated._
 
-- ai-workspace-config         | unknown                           | 2026-05-24 | unknown — clarify intent or archive
+- ai-workspace-config         | PowerShell (bootstrap.ps1)        | 2026-05-24 | the **portable workspace shell** — clone on a new PC → `bootstrap.ps1` reads PROJECTS.md, clones each project into `repos/`, recreates tier junctions. This is the mission's "later shape" seed. Next: decide if portability is on the roadmap; if so, /promote it and exercise the bootstrap on a clean checkout
 - coding-agent                | Python (claude-agent-sdk)         | 2026-05-30 | first run on a real task in repos/local-llmstxt-server; tune system prompt
 - pipeline-demo               | Claude Code subagents + git + JSONL | 2026-05-31 | demo/target service for multi-system-maintenance-agent-system; build read-only loop (Phase 1)
 - project-analysis-agent      | Python (claude-agent-sdk)         | 2026-05-30 | first run on repos/local-llmstxt-server to bootstrap its CLAUDE.md
@@ -32,6 +32,8 @@ _Experimental. Real folders OR junctions into `repos/` if intended to graduate. 
 
 _Paused but alive. The "resume blocker" must be concrete — what specifically needs to be true before you'd pick this back up. If you can't name a blocker, this project belongs in archive/._
 
+- antigravity-based-project-plan-methodology | Node/TS CLI (commander, tsx)        | paused 2026-06-03 | resume blocker: no current use for the methodology CLI. Resume when running the lifecycle on a real project (→ cover the untested Task-Lock Safeguard) or publishing it (→ wire dist/ for npx). Feature-complete + clean otherwise
+- meta-project-manager | Markdown convention (orchestration) | paused 2026-06-03 | resume blocker: no real multi-service project worth orchestrating. Its only managed project (personal-intelligence-manage-system) had both scaffold service repos (pims-api, pims-web) deleted 2026-06-03 — resume needs a genuine legacy multi-service codebase to onboard + clone/junction its repos
 - _example_         | _Node/Express_        | _paused 2026-02-10_ | _resume blocker: target API v2 not yet released_
 
 ## archive/
@@ -39,14 +41,7 @@ _Paused but alive. The "resume blocker" must be concrete — what specifically n
 _Done, abandoned, or superseded. Read-only. Listed here only so you don't accidentally recreate something that already exists._
 
 - agent-view        | _empty scaffold_      | archived 2026-05-30   | never had content; name is free to reuse but flagging so we don't recreate accidentally
-
----
-
-## Not surfaced in a tier (intentional)
-
-_Folders that live in `repos/` but have no workspace-tier junction because they're owned by another project here. Listed so triage doesn't keep flagging them as orphans._
-
-- pims-api, pims-web | owned by `meta-project-manager` (junctioned into `projects/personal-intelligence-manage-system/services/`)
+- multi-system-maintenance-agent-system-google-adk | Python (Google ADK) | archived 2026-06-06 | superseded early ADK variant of multi-system-maintenance-agent-system (just a build plan + Run.py). Kept for reference only; its odd remote (→ ai-workspace.git) is moot now that it's read-only
 
 ---
 
