@@ -221,3 +221,37 @@ For a quick prompt: *"render this as an HTML doc using the DOC_THEME.md theme."*
 **Re-theming an existing doc:** swap the standard token *values* in its `:root` and append the
 aurora override block (ambient bg, gradient `h1`, glowing `.logo .sq`, glass blur on
 `pre/.toc/.note/.card/.phase`) before `</style>` — preserving any custom diagram CSS.
+
+---
+
+## Theme switcher (5 themes, shared with the dashboard)
+
+Every browser doc ships with the **same five themes the dashboard uses**, picked from a swatch
+bar (top-right) — and the choice is **shared with the dashboard** (same `localStorage('dash-theme')`
+key), so a theme set in either place applies everywhere:
+
+| Theme | Mood | `--bg` / `--accent` |
+|---|---|---|
+| **`aurora`** (default) | deep-navy neon glass | `#0A0E1A` / `#00E5E8` |
+| **`daylight`** | clean light, blue/violet | `#F7F9FC` / `#2563EB` |
+| **`sandstone`** | warm paper, terracotta | `#FBF6EF` / `#C2410C` |
+| **`forest`** | dark green | `#0C1A14` / `#34D399` |
+| **`slate`** | neutral graphite | `#16181D` / `#94A3B8` |
+
+The five palettes are ported verbatim from `.claude/dashboard/dashboard.html` onto the doc token
+names — the dashboard remains the **palette source of truth**; change a hue there and re-port.
+
+**Mechanics — three pieces, no per-file HTML rework:**
+
+1. **`:root, html[data-theme="aurora"]`** holds the default; four more `html[data-theme="…"]` blocks
+   override the token *values* per theme. Switching = re-pointing every `var(--token)` already used.
+2. **Flourishes are tokenized**, not gated — `body` background (`--body-bg`), gradient `h1`
+   (`--h1-grad`), `.logo .sq` glow (`--glow`), glass `--shadow`, `.card` hover (`--hover-glow`) —
+   so each theme (light ones included) gets a fitting look. Custom diagram CSS above is untouched.
+3. A **no-FOUC `<head>` script** reads `dash-theme` (validated; default `aurora`) before paint; the
+   `.themebar` pills flip + persist the choice.
+
+Both templates (`MISSION.template.html`, `ARCHITECTURE.template.html`) carry all three, so new docs
+get the switcher for free. To retrofit / re-sync an existing aurora doc, run
+`python .claude/scripts/add_theme_switch.py` — idempotent (skips docs already on the bar), matches
+only the appended block, so custom CSS survives.
