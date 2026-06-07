@@ -23,7 +23,7 @@ ai-workspace/
 ├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs.
 ├── .gitignore                      # Defense-in-depth against accidental git init at root.
 ├── .claude/commands/               # Workspace-level slash commands.
-├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py).
+├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
 │
 ├── repos/                          # CANONICAL storage. Real project files live here.
 ├── incubator/                      # Ephemeral real folders. No junctions.
@@ -37,7 +37,7 @@ ai-workspace/
 - New real project OR promoted from incubator → `repos/<name>/`, junction into `active/<name>`.
 - Pause an active project → `mv active/<name> dormant/`. Update CONTEXT.md's Next Step with the resume blocker.
 - Resume → `mv dormant/<name> active/`. Refresh CONTEXT.md.
-- Done or dead → `mv */<name> archive/`. No further edits.
+- Done or dead → `/retire <name>` — assess, then **archive** (keep, read-only) or **delete** (permanent). No further edits once archived.
 
 After any transition, update `PROJECTS.md`.
 
@@ -157,6 +157,7 @@ The overlap to watch is the **architectural seam**. MISSION owns the one-sentenc
 - **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change.
 - **`/init-project <name>`** scaffolds a brand-new project end-to-end (Workflow 1 in HANDBOOK): creates `repos/<name>/`, junctions into `active/`, copies both templates, runs `git init`, adds a `PROJECTS.md` row. Use instead of running §3-referenced commands by hand.
 - **`/promote <name>`** graduates an incubator project to active (Workflow 3 in HANDBOOK): `mv incubator/<name> repos/<name>`, junctions into `active/`, runs `git init` only if missing, copies templates only if missing (never overwrites), adds a `PROJECTS.md` row.
+- **`/retire <name>`** ends the lifecycle (the destructive twin of `/init-project`): prints a read-only **risk card** (remote? commits? uncommitted? referenced by another project?), then on your choice either **archives** (junction → `archive/`, real files kept, reversible) or **deletes** (every junction detached + real folder removed, permanent). Backed by `retire_project.py`, which detaches junctions with `rmdir`/`unlink` — never `rm -rf` through a junction — then reconciles `PROJECTS.md` and regenerates the dashboard.
 - **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc, and **doc collisions** — the same fact restated across MISSION and CLAUDE.md, per the §6 ownership rule), and orphans — producing a one-page report. Read-only by default. Use weekly.
 - **`/mission <project>`** re-orients on a single project: reads its four docs — plus `ARCHITECTURE.html` if present (per the optional pipeline in §6) — and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.
 - **`HANDBOOK.md`** is the human-facing guide — workflows, slash command cheat sheet, glossary. Not auto-loaded; agents may read it when explicitly asked.
