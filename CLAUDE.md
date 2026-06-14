@@ -20,7 +20,8 @@ ai-workspace/
 ├── IMPLEMENTATION_PLAN.template.md # Per-project "what/next" stencil (optional four-doc pipeline, §6).
 ├── ARCHITECTURE.template.html      # Per-project "how it's built" stencil (optional fifth doc, §6).
 ├── WALKTHROUGH.template.md         # Per-change "what got done + proof" stencil (optional, append-only; §6).
-├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs.
+├── DESIGN.template.md              # Per-project running-app UI design-system stencil (optional; §6).
+├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs (distinct from DESIGN.md — §6).
 ├── .gitignore                      # Defense-in-depth against accidental git init at root.
 ├── .claude/commands/               # Workspace-level slash commands.
 ├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
@@ -143,6 +144,10 @@ These docs answer *different* questions, so they shouldn't *collide* — but the
 | Phases · locked decisions · the gate | **IMPLEMENTATION_PLAN.md** | "is this about *what's next*?" |
 | Current state · the single next step | **CONTEXT.md** | "is this only true *right now*?" |
 | How it's built · seams · data contracts | **CLAUDE.md** Entry Points — or **ARCHITECTURE.html** when it outgrows a file map | "would a new contributor need this to navigate the code?" |
+| App visual design · type · token contract · motion | **`<project>/DESIGN.md`** (copy `DESIGN.template.md`) — for UI projects | "would changing this alter the app's look or erase its personality?" |
+| Browser-read HTML-doc look (MISSION.html / ARCHITECTURE.html) | **DOC_THEME.md** | "is this about how a *doc page* renders, not the app?" |
+
+**`DESIGN.md` vs `DOC_THEME.md` — don't conflate.** `DESIGN.md` owns the *running app's* visual identity (the thing users operate); `DOC_THEME.md` owns the look of *browser-read project docs*. A project may have both — keep app design in `DESIGN.md` and the doc theme separate (a per-project doc-theme file may be named `DESIGN.docs.md`, as in agent-view-desktop). `DESIGN.md` is **recognized only when present** and **never mandated** — copy `DESIGN.template.md` only for projects with a UI worth protecting; skip it for libraries, CLIs, and scripts. (Heads-up: one project, `antigravity--pptx-template-manager`, uses `DESIGN.md` for a *JSON schema contract*, not UI — a legacy exception predating this rule, not the convention.)
 
 The overlap to watch is the **architectural seam**. MISSION owns the one-sentence *principle* ("everything reduces to one Session shape" / "the JSON deck-spec is the interface"); CLAUDE.md (or ARCHITECTURE.html) owns the *mechanics* (which files, the gotcha) and points back — *"preserve the seam (MISSION §04)"* — instead of re-describing it. Same for non-goals vs constraints: a strategic "we don't do X" lives in MISSION; the operational "doing X breaks the build" lives in CLAUDE.md.
 
