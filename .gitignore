@@ -22,6 +22,9 @@
 !IMPLEMENTATION_PLAN.template.md
 !ARCHITECTURE.template.html
 !DOC_THEME.md
+!SPEC.template.md
+!WALKTHROUGH.template.md
+!DESIGN.template.md
 
 # --- workspace tooling (commands, scripts, dashboard generator) ---
 !.claude/

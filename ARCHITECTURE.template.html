@@ -8,6 +8,14 @@
   Doc ownership (workspace CLAUDE.md §6): the WHY lives in MISSION.html, WHAT/next in IMPLEMENTATION_PLAN.md,
   NOW in CONTEXT.md. This file does not restate those — it links to them. Read in a browser.
   Theme = the shared aurora doc theme (dashboard-matched); see DOC_THEME.md at the workspace root.
+
+  FACET DEEP-DIVES (workspace CLAUDE.md §6, "audience split"): when one ARCHITECTURE page serves several domains
+  badly, split by AUDIENCE. This file stays the system OVERVIEW (the fixed 6 sections below). For a domain that
+  needs a full human deep-dive, copy this file to ARCHITECTURE.<facet>.html (e.g. ARCHITECTURE.search.html),
+  KEEP the <style>/theme + header, and DROP the fixed section skeleton — a facet is a free-form deep-dive, not
+  another overview. Pair each facet with a compact, agent-loadable SPEC.<domain>.md (copy SPEC.template.md) that
+  links UP to the facet and carries the enforceable rules. The facet owns the full rationale; the SPEC owns the
+  rules an agent loads. Both recognized only when present, never mandated. knowledge-viewer is the worked example.
 -->
 <html lang="en">
 <head>
