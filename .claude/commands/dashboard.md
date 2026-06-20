@@ -11,7 +11,7 @@ You are running the `/dashboard` workspace command from `ai-workspace/`. Print a
 2. **For each project, gather** (skip what's missing):
    - From `CONTEXT.md`: `Last touched` date, the Next Step line (or, for dormant, the resume blocker).
    - From `CLAUDE.md`: stack (one short phrase — language/framework). If absent, fall back to inferring from `package.json`, `pyproject.toml`, `Cargo.toml`, etc.; if still unknown, write `—`.
-   - **For `active/` only, if the project is on the four-doc pipeline:** the one-line mission from `MISSION.html`'s `.lede`, and the current phase from `IMPLEMENTATION_PLAN.md` (the phase tagged `next`, else the highest `done`). Skip silently for projects without these docs — they just don't get a mission line.
+   - **For `active/` only, if the project is on the four-doc pipeline:** the one-line mission from `MISSION.html`'s `.lede`, and the current phase from `IMPLEMENTATION_PLAN.md` (the phase tagged `next`, else the highest `done`). These sit at the project root for a flat project, or under `.gravity/` for one on the `.gravity/` doc system (CLAUDE.md §6) — check `.gravity/MISSION.html` / `.gravity/IMPLEMENTATION_PLAN.md` too. Skip silently for projects without these docs — they just don't get a mission line.
    - If both `CONTEXT.md` and `CLAUDE.md` are missing, mark the project `uninitialized`.
 
 3. **Staleness** (active only): days since `Last touched` vs today.

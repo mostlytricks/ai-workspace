@@ -15,6 +15,8 @@ Human-facing guide for working in `ai-workspace/`. The agent's operating rules l
 | See status across all projects | `/triage` |
 | Re-orient on one project — what's it for, what should I ask? | `/mission <name>` |
 | Give a long-lived project a "why" doc and a phase roadmap | [Adopt the full doc pipeline](#adopt-the-full-doc-pipeline) |
+| Move a doc-heavy project's docs into a `.gravity/` directory | `/adopt-gravity <name>` ([Adopt the `.gravity/` doc system](#adopt-the-gravity-doc-system)) |
+| Add a new domain to a `.gravity/` project | `/new-domain <name> <domain>` |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -28,7 +30,9 @@ Run from the `ai-workspace/` root in Claude Code.
 | `/init-project <name>` | Scaffold a brand-new project end-to-end: creates `repos/<name>/`, junctions it into `active/`, copies both templates, runs `git init`, adds a row to `PROJECTS.md`. |
 | `/promote <name>` | Graduate `incubator/<name>` into a real project: moves it into `repos/<name>/`, junctions into `active/`, runs `git init` if missing, copies missing templates (preserves existing), adds a row to `PROJECTS.md`. |
 | `/triage` | Survey `active/` + `dormant/`, read each `CONTEXT.md`, flag stale projects (>14 days), unfilled stencils, bloated files needing a prune, index drift, and doc-pipeline drift (incl. doc collisions — a fact restated across MISSION + CLAUDE.md) — produce a one-page status report. Read-only by default. |
-| `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
+| `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` and the `.gravity/` Doc Map if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
+| `/adopt-gravity <name>` | Retrofit the `.gravity/` doc system into a doc-heavy project: relocate the heavy docs out of the root into per-domain `.gravity/` folders (`git mv`), seed the root-`CLAUDE.md` router, wire the four registry owners. Proposes the move table and confirms before touching disk; doesn't commit. |
+| `/new-domain <name> <domain>` | Mint one domain inside a project's `.gravity/`: run the *is-it-a-domain?* gate, create `.gravity/<domain>/PLAN.md`, and wire all four indexes (Doc Map, router table, MISSION row, status spine) so it's never orphaned. |
 | `/dashboard` | One-screen status across all four tiers; active projects on the full pipeline also show their mission + current phase. Regenerates the visual HTML dashboard. |
 
 ---
@@ -264,6 +268,20 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
 
 ---
 
+## Adopt the `.gravity/` doc system
+
+The four-doc pipeline above keeps the docs at the project root. Once a project grows **several** architecture/spec/plan docs across **multiple domains**, the root gets crowded and the two files that auto-load (`CLAUDE.md`, `CONTEXT.md`) get buried. The `.gravity/` system (workspace `CLAUDE.md` §6) fixes that: it relocates every heavy doc into a `.gravity/` directory **organized by subject domain**, leaving only `CLAUDE.md` + `CONTEXT.md` + `README.md` at the root. The root `CLAUDE.md` becomes the **router** — a Doc Map plus a "what to read before which change" table. `knowledge-viewer` is the worked example.
+
+It's **opt-in and recognized only when present** — for projects that outgrew the flat root. CLIs, scripts, and libraries never need it; the two-doc minimum stays correct for them.
+
+**Retrofit an existing project** — run `/adopt-gravity <name>`. The agent inventories the root, proposes a before→after move table (grouping docs by domain — *you confirm the boundaries*), `git mv`s them into `.gravity/<domain>/` folders, fixes cross-references, seeds the root-`CLAUDE.md` router from `GRAVITY.template.md`, and wires the four registry owners (directory · CLAUDE.md routing · MISSION why-rows · IMPLEMENTATION_PLAN status). It stops to confirm before moving anything and doesn't commit.
+
+**Add a domain later** — run `/new-domain <name> <domain>`. It runs the *is-it-a-domain?* gate first (most features are a `PLAN.*.md` slice under an existing domain, not a new folder), then creates `.gravity/<domain>/PLAN.md` and **wires all four indexes** so the domain is never orphaned. The full gate + lifecycle lives in the project's root `CLAUDE.md` "Adding a domain" section (seeded from `GRAVITY.template.md`).
+
+> Or just ask the agent: *"move `<name>` onto the `.gravity/` doc system"* / *"add a `<domain>` domain to `<name>`"*.
+
+---
+
 ## Glossary
 
 - **Junction** — Windows directory pointer (`mklink /J`, or PowerShell `New-Item -ItemType Junction`). Same-volume only. No admin or Developer Mode required. We use junctions, not symbolic links, throughout the tier folders. **Always create one via `.claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. Never use the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting eats the `$name` variable and creates a bogus `active$name` link. The helper drives `mklink` through Python argv, so no shell can corrupt the paths.
@@ -279,6 +297,8 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
 - **`IMPLEMENTATION_PLAN.md`** — optional per-project "what/next" doc: phase roadmap, locked decisions, the verification gate, open questions. Changes per phase; the agent edits it. Copy from `IMPLEMENTATION_PLAN.template.md`. The multi-phase arc lives here; `CONTEXT.md` holds only *now*.
 - **Four-doc pipeline** — the optional `MISSION.html` + `CLAUDE.md` + `IMPLEMENTATION_PLAN.md` + `CONTEXT.md` set, ordered by how often each changes (rarely → per-session). Opt-in for ambitious `active/` projects. See workspace `CLAUDE.md` §6.
 - **`ARCHITECTURE.html`** — optional per-project *fifth* doc: the canonical "how it's built" (component boundaries, the seam's mechanics, data contracts, build/deploy shape). Add only when "how it's built" outgrows CLAUDE.md's Entry Points. Browser-read; copy from `ARCHITECTURE.template.html`, styled via `DOC_THEME.md`. Recognized when present, never mandated. See workspace `CLAUDE.md` §6.
+- **`.gravity/`** — optional per-project directory that holds the heavy docs (everything but the root `CLAUDE.md` + `CONTEXT.md` + `README.md`), organized **by subject domain** rather than doc-type. Top level carries the cross-cutting `MISSION.html` / `ARCHITECTURE.html` / `IMPLEMENTATION_PLAN.md` / `DESIGN.md`; each `<domain>/` folder carries whichever of `ARCHITECTURE.html` (human *how*) · `SPEC.md` (agent *rules*) · `PLAN.*.md` (*what/next*) it needs. The directory **is** the domain registry — no registry file. Adopt with `/adopt-gravity`, extend with `/new-domain`. Recognized when present, never mandated (for projects that outgrew the flat root). `knowledge-viewer` is the worked example. See workspace `CLAUDE.md` §6.
+- **Domain (`.gravity/`)** — a durable subject area an agent repeatedly navigates and changes, with its own *principle* and non-goal — earns a `.gravity/<domain>/` folder. Not every feature is a domain; a one-off is a `PLAN.*.md` slice under an existing domain. The *is-it-a-domain?* gate lives in the project's root `CLAUDE.md` (seeded from `GRAVITY.template.md`).
 - **Doc ownership** — the rule that each concern has one canonical owner doc; other docs *link* to it rather than restate it (why → MISSION, how → CLAUDE.md, what/next → PLAN, now → CONTEXT, how-it's-built → CLAUDE.md/ARCHITECTURE.html). Prevents the same fact drifting into two different facts. `/triage` flags **doc collisions** — a fact restated across docs. See workspace `CLAUDE.md` §6.
 - **`DOC_THEME.md`** — the shared warm-terminal theme for browser-read project HTML docs (`MISSION.html` and any hand-rolled architecture/design page). Stylesheet + skeleton to copy.
 - **`PROJECTS.md`** — workspace-level project index at the root. Source of truth for which tier each project lives in.
@@ -294,5 +314,6 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
 
 - `CLAUDE.md` — agent operating manual (rules and invariants).
 - `PROJECTS.md` — current project index.
-- `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project`, `/triage`, and `/mission` do).
-- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `ARCHITECTURE.template.html` · `DOC_THEME.md` — the optional pipeline stencils (four-doc + optional fifth) and the HTML doc theme.
+- `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project`, `/triage`, `/mission`, `/adopt-gravity`, and `/new-domain` do).
+- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `ARCHITECTURE.template.html` · `SPEC.template.md` · `DOC_THEME.md` — the optional pipeline stencils (four-doc + optional fifth + agent spec) and the HTML doc theme.
+- `GRAVITY.template.md` — the root-`CLAUDE.md` router block (Doc Map + read-first table + domain gate) for projects adopting the `.gravity/` doc system.

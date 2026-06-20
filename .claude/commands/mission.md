@@ -10,14 +10,16 @@ The argument is a project name (matches a folder under `active/`, `dormant/`, `i
 
 1. **Locate the project.** Find `<name>` under `active/`, `dormant/`, `incubator/`, or `repos/` (junctions read through transparently). If it's not found, say so and list the closest matches.
 
-2. **Read its four docs, in this order** (skip what's missing, note what's absent):
-   - `MISSION.html` → the durable why. Pull the `.lede` line, the mission statement, principles, and especially the **Current Non-Goals**.
-   - `CLAUDE.md` → identity, stack, constraints, entry points.
-   - `IMPLEMENTATION_PLAN.md` (or `.html`) → current phase, locked decisions, the gate, and any **Open Questions** section.
+2. **Locate the docs.** `CLAUDE.md` + `CONTEXT.md` always live at the project root. For a project on the **`.gravity/` doc system** (CLAUDE.md §6 — `.gravity/` directory present), the rest live under `.gravity/`: `.gravity/MISSION.html`, `.gravity/IMPLEMENTATION_PLAN.md`, `.gravity/ARCHITECTURE.html`, and per-domain docs in `.gravity/<domain>/`. For a flat project they're at the root. Read the root `CLAUDE.md` **Doc Map** first if present — it tells you exactly where each doc is.
+
+3. **Read its four docs, in this order** (skip what's missing, note what's absent):
+   - `MISSION.html` → the durable why. Pull the `.lede` line, the mission statement, principles, and especially the **Current Non-Goals**. For `.gravity/` projects also note the **per-domain "system in N domains"** rows (each domain's principle + non-goal guard).
+   - `CLAUDE.md` → identity, stack, constraints, entry points; for `.gravity/` projects it's the **router** (Doc Map + read-first table).
+   - `IMPLEMENTATION_PLAN.md` (or `.html`) → current phase, locked decisions, the gate, any **Open Questions**, and (for `.gravity/` projects) the **per-domain `✓/◑/○` status spine**.
    - `CONTEXT.md` → current state + the immediate next step + `Last touched`.
    - `ARCHITECTURE.html` (only if present — the optional fifth doc) → the load-bearing seam's mechanics, component boundaries, and data contracts.
 
-3. **Print the re-orientation** in this exact shape (keep it to one screen):
+4. **Print the re-orientation** in this exact shape (keep it to one screen):
 
 ```
 MISSION — <name>
@@ -38,7 +40,7 @@ Questions worth asking the agent
   3. <…>
 ```
 
-4. **Generate the questions — this is the point of the command.** Don't produce generic advice. Derive each question from a real tension you found across the four docs. Hunt specifically for:
+5. **Generate the questions — this is the point of the command.** Don't produce generic advice. Derive each question from a real tension you found across the four docs. Hunt specifically for:
    - **Non-goal drift** — does recent work (CONTEXT Completed) push toward something MISSION lists as a non-goal? Ask about it.
    - **Unlocked decisions** — an Open Question in the plan that's gone stale, or a choice made in CONTEXT that was never promoted to a Locked Decision.
    - **Gate gaps** — the plan names a verification gate; does CONTEXT say tests are passing / written? If "no tests yet" persists across phases, ask about it.
@@ -49,7 +51,7 @@ Questions worth asking the agent
 
    Prefer 3-5 questions, each naming the specific doc/decision/file it came from so the user can act immediately. A question the user can't act on is noise — cut it.
 
-5. **Read-only.** This command never edits files. If the user follows up ("update the plan", "lock that decision", "prune CONTEXT"), then make the edit.
+6. **Read-only.** This command never edits files. If the user follows up ("update the plan", "lock that decision", "prune CONTEXT"), then make the edit.
 
 ## Notes
 
