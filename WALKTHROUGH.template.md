@@ -7,7 +7,11 @@
   the human-reviewable face of agent work — the thing someone reads to TRUST the change without
   re-deriving it.
 
-  Where it lives: repos/<project>/docs/walkthroughs/<YYYY-MM-DD>-<slug>.md (one file per shipped slice).
+  Where it lives: repos/<project>/docs/walkthroughs/<YYYY-MM-DD>-<domain>-<slug>.md (one file per shipped slice).
+  The flat dated log IS the timeline (history is read by time/event, not subject) — so walkthroughs are NOT
+  foldered into .gravity/<domain>/ like the live docs. Instead the <domain> in the slug + the Domain(s) header
+  below make them per-domain queryable (glob `*-<domain>-*`). A cross-cutting slice lists every domain it
+  touched rather than being forced into one folder.
   Lifecycle: APPEND-ONLY. Unlike CONTEXT.md (overwritten each session), a walkthrough is written once
   when a slice ships and then frozen — it's a dated record, not live state. git versions it; don't edit
   old ones to reflect new reality (write a new walkthrough instead).
@@ -19,7 +23,8 @@
 
 # Walkthrough — <feature / phase name>
 
-> Closes: **Phase N** of `IMPLEMENTATION_PLAN.md` (or the feature it implements).
+> Closes: **Phase N** of `IMPLEMENTATION_PLAN.md` — or, in a `.gravity/` project, a domain's `<domain>/PLAN.*.md` slice (or the feature it implements).
+> Domain(s): `<domain>` — the subject(s) this slice touched; comma-list if cross-cutting. Matches the slug.
 > Date: YYYY-MM-DD · Branch `<branch>` · Commit `<sha>` (or "uncommitted — in working tree").
 
 ## What changed

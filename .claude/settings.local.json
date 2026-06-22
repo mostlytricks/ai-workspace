@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(rm -f .amos/index.db .amos/index.db-*)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(python .claude/dashboard/generate_dashboard.py)",
+      "Bash(py .claude/dashboard/generate_dashboard.py)",
+      "Read(//tmp/**)",
+      "Bash(curl -s \"http://127.0.0.1:3001/api/search?q=local%20LLM&limit=3\")"
     ]
   }
 }
