@@ -16,8 +16,9 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 - multi-system-maintenance-agent-system       | Claude Code subagents + git + JSONL | 2026-06-03 | Phases 0-6 done (build complete, standalone). Next: attach a real service + wire read-only DB MCP
 - agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-06-03 | multi-Claude orchestrator: Phase 6→10 arc pushed to origin (github.com/mostlytricks/agent-view-desktop, feat/orchestration @ 51e7a17) — session mgr + tool policy, ~/.flux plugin, transcript viewer, flux tools + shared memory, supervisor spawn/await workers, Overview dashboard + handoff, memory persistence + theme system. Phase 11 (Tier 3 resume = "Take control ▶" fork-resumes an external transcript live) built on top, UNCOMMITTED. Next: live smoke test, then commit. See IMPLEMENTATION_PLAN.md
 - api-server-managing-agent                  | Knowledge base + Claude Code skill (targets Spring Boot + Oracle) | 2026-06-04 | full doc set written (MISSION/CLAUDE/PLAN/CONTEXT) — method-first, read-only, two-layer knowledge seam. Next: Phase 1 — knowledge model + templates + a sample Spring Boot + Oracle schema (resolve sample-source + store-format open Qs first)
-- architecture-memory-os                      | TS/Node MCP core (SQLite-indexed Markdown graph) | 2026-06-04 | AMOS — institutional architecture-memory layer. Full 5-doc set + **Phases 1–4 built & green** (typecheck + 30/30 vitest incl. eval set + capture + hybrid-retrieval + temporal/traversal): zod model, Markdown-source-of-truth + derived-SQLite seam, the `capture` write path, **hybrid recall** (lexical FTS5 + semantic cosine fused via RRF, offline embedder), **multi-hop `related`** (recursive CTE) + **`timeline`** (supersession chain + `id@N` lineage scalar). 4 of 5 retrieval modes live. 11-node real seed corpus. No commits yet. Next: Phase 5 — MCP server wiring + run the eval set through the MCP surface
+- architecture-memory-os                      | TS/Node MCP core (SQLite-indexed Markdown graph) | 2026-06-27 | AMOS — institutional architecture-memory layer; docs re-gravitied (`.gravity/MISSION.html`, `.gravity/ARCHITECTURE.html`, `.gravity/IMPLEMENTATION_PLAN.md`; root `CLAUDE.md` is the router). Phases 1–4 built & green (typecheck + 30/30 vitest incl. eval set + capture + hybrid retrieval + temporal/traversal). 4 of 5 retrieval modes live; 11-node seed corpus. No commits yet. Next: Phase 5 — MCP server wiring + run the eval set through the MCP surface
 - my-personal-accountant | tbd | 2026-06-20 | scaffolded, fill in CLAUDE.md
+- lecture-note | self-contained HTML lecture decks | 2026-06-27 | initialized: portable 16:9 slide-deck project with embedded CSS/JS template (`templates/lecture.template.html`), `lectures/` target folder, README, and project docs. Next: choose the general design theme, then tune template tokens before first real lecture
 
 ## incubator/
 
@@ -38,6 +39,27 @@ _Done, abandoned, or superseded. Read-only. Listed here only so you don't accide
 
 - agent-view        | _empty scaffold_      | archived 2026-05-30   | never had content; name is free to reuse but flagging so we don't recreate accidentally
 - multi-system-maintenance-agent-system-google-adk | Python (Google ADK) | archived 2026-06-06 | superseded early ADK variant of multi-system-maintenance-agent-system (just a build plan + Run.py). Kept for reference only; its odd remote (→ ai-workspace.git) is moot now that it's read-only
+
+---
+
+## Gravity adoption
+
+_Where each project sits on the gravity-v1.0 conventions. The **dashboard renders this live from disk** (chips on every card, always accurate); this table is the at-a-glance markdown view — a snapshot reconciled like the tier rows above (run `/triage` if it drifts). **stamp** = the `> gravity: vX.Y` line in `CLAUDE.md` · **docs** = `.gravity/` faceted vs `flat` two-doc · **rel** = a `CHANGELOG.md` (release light-layer) · **codex** = the `AGENTS.md` shim._
+
+| Project | stamp | docs | rel | codex |
+|---|---|---|---|---|
+| knowledge-viewer | `v1.0` | `.gravity` | ✓ | ✓ |
+| architecture-memory-os | `v1.0` | `.gravity` | — | ✓ |
+| local-llmstxt-server | — | `.gravity` | ✓ | ✓ |
+| lecture-note | — | `.gravity` | — | ✓ |
+| multi-system-maintenance-agent-system | — | flat | ✓ | ✓ |
+| agent-view-desktop | — | flat | — | ✓ |
+| api-server-managing-agent | — | flat | — | ✓ |
+| antigravity--pptx-template-manager | — | flat | — | ✓ |
+| my-personal-accountant | — | flat | — | ✓ |
+| antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
+
+Next adoption moves: stamp the three `.gravity` projects (`local-llmstxt-server`, `lecture-note`, `architecture-memory-os` already stamped → just needs `rel`); then decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp.
 
 ---
 

@@ -21,6 +21,11 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [1.1.0] - 2026-06-27
+
+### Added
+- **Dashboard gravity-adoption chips** — `generate_dashboard.py` reads each project's adoption layers **live from disk** (the `> gravity: vX.Y` stamp, `.gravity/` vs flat, a `CHANGELOG`, the `AGENTS.md` shim) and renders them as chips on every project card, with a legend. `PROJECTS.md` carries a matching at-a-glance **Gravity adoption** snapshot matrix.
+
 ## [1.0.0] - 2026-06-27
 
 First versioned baseline of gravity — the system as it stands after the `.gravity/`
@@ -38,5 +43,6 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.0.0

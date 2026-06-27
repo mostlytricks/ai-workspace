@@ -121,6 +121,53 @@ def esc(s: str) -> str:
     return html.escape(s, quote=True)
 
 
+# --- gravity adoption (computed live from disk, not from PROJECTS.md) -------
+# Each project's adoption "layers" are read straight from repos/<name>/ so the
+# dashboard never drifts from reality: the `> gravity: vX.Y` stamp in CLAUDE.md,
+# whether docs are faceted (.gravity/) or flat, a CHANGELOG (release layer), and
+# the AGENTS.md Codex shim. Projects living at an external path (no repos/<name>)
+# return blanks — no chips, same as before.
+STAMP_RE = re.compile(r"gravity:\s*v(\d+\.\d+(?:\.\d+)?)", re.IGNORECASE)
+
+
+def gravity_adoption(name: str) -> dict:
+    base = WORKSPACE_ROOT / "repos" / name
+    info = {"stamp": None, "docsys": None, "release": False, "shim": False}
+    claude = base / "CLAUDE.md"
+    if not claude.exists():
+        return info  # external-path or non-gravity project → no chips
+    try:
+        txt = claude.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        txt = ""
+    m = STAMP_RE.search(txt)
+    info["stamp"] = m.group(1) if m else None
+    info["docsys"] = "gravity" if (base / ".gravity").is_dir() else "flat"
+    info["release"] = (base / "CHANGELOG.md").exists()
+    info["shim"] = (base / "AGENTS.md").exists()
+    return info
+
+
+def adoption_chips(name: str) -> str:
+    a = gravity_adoption(name)
+    if a["docsys"] is None:
+        return ""  # nothing to show for external-path / non-gravity projects
+    chips = []
+    if a["stamp"]:
+        chips.append(f'<span class="gv on">v{esc(a["stamp"])}</span>')
+    else:
+        chips.append('<span class="gv warn">unstamped</span>')
+    if a["docsys"] == "gravity":
+        chips.append('<span class="gv acc">.gravity</span>')
+    else:
+        chips.append('<span class="gv dim">flat</span>')
+    if a["release"]:
+        chips.append('<span class="gv on">rel</span>')
+    chips.append('<span class="gv dim">codex</span>' if a["shim"]
+                 else '<span class="gv warn">no-codex</span>')
+    return f'<div class="gvbar">{"".join(chips)}</div>'
+
+
 def build_payload(tiers: dict[str, list[dict]], today: date) -> dict:
     """Everything the page's JS needs, as a JSON-serializable dict."""
     counts = {name: len(tiers[name]) for name, _, _ in TIERS}
@@ -184,6 +231,7 @@ def render_cards(tiers: dict[str, list[dict]], today: date) -> str:
                 f'<div class="cardhead">{marker}<span class="pname">{esc(p["name"])}</span>'
                 f'<span class="ago">{ago}</span></div>'
                 f'<div class="stack">{stack}</div>'
+                f'{adoption_chips(p["name"])}'
                 f'<div class="focus">{esc(p["focus"])}</div></div>'
             )
         body = "".join(cards) if cards else '<div class="empty">— empty</div>'
@@ -421,6 +469,18 @@ TEMPLATE = """<!DOCTYPE html>
   .focus { color:var(--focus-text); font-size:13px; }
   .empty { color:var(--muted); font-style:italic; padding:6px 2px; }
 
+  /* gravity-adoption chips — computed live from disk (stamp/.gravity/CHANGELOG/AGENTS).
+     Semantic constant hues like the tier/staleness colors: teal = present/good,
+     blue = faceted, amber = a gap, muted = neutral choice. */
+  .gvbar { display:flex; flex-wrap:wrap; gap:5px; margin:9px 0 3px; }
+  .gv { font-family:var(--mono); font-size:10px; line-height:1; padding:3px 7px; border-radius:5px;
+    border:1px solid var(--border); color:var(--muted); background:var(--chip-bg);
+    letter-spacing:.2px; white-space:nowrap; }
+  .gv.on   { color:#00E5E8; border-color:rgba(0,229,232,.40); }   /* stamped · release present */
+  .gv.acc  { color:#4FACFE; border-color:rgba(79,172,254,.40); }  /* .gravity faceted */
+  .gv.dim  { color:var(--muted); }                                 /* flat · codex present (neutral) */
+  .gv.warn { color:#FBBF24; border-color:rgba(251,191,36,.40); }  /* unstamped · no-codex (a gap) */
+
   .cap { margin-top:11px; font-size:11px; color:var(--muted); font-family:var(--mono); line-height:1.7; }
   .cap .dot { font-size:9px; vertical-align:1px; }
   .cap .teal { color:#00E5E8; } .cap .blue { color:#4FACFE; }
@@ -462,7 +522,15 @@ TEMPLATE = """<!DOCTYPE html>
 
   <div class="tiers">__CARDS__</div>
 
-  <footer>Generated from PROJECTS.md by .claude/dashboard/generate_dashboard.py · design: DESIGN.dashboard.md · Chart.js + fonts vendored locally · rerun to refresh.</footer>
+  <div class="cap" style="margin-top:20px">gravity adoption (live from disk) ·
+    <span class="gv on">v1.0</span> stamped ·
+    <span class="gv acc">.gravity</span> faceted /
+    <span class="gv dim">flat</span> two-doc ·
+    <span class="gv on">rel</span> changelog ·
+    <span class="gv dim">codex</span> AGENTS shim ·
+    <span class="gv warn">unstamped</span> / <span class="gv warn">no-codex</span> = a gap to close</div>
+
+  <footer>Generated from PROJECTS.md by .claude/dashboard/generate_dashboard.py · adoption chips read live from repos/&lt;name&gt;/ · design: DESIGN.dashboard.md · Chart.js + fonts vendored locally · rerun to refresh.</footer>
 
 <script id="payload" type="application/json">__DATA_JSON__</script>
 <script>
