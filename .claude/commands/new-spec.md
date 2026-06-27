@@ -3,7 +3,7 @@ description: Author (or retrofit) one domain's SPEC.md from the v2 template — 
 argument-hint: <project-name> <domain-name>
 ---
 
-You are running `/new-spec` from `ai-workspace/` to write **`.gravity/<domain>/SPEC.md`** for project **`<project>`** (workspace CLAUDE.md §6; stencil = `SPEC.template.md`). Parse `$ARGUMENTS` as `<project> <domain>`; if either is missing, ask.
+You are running `/new-spec` from `ai-workspace/` to write **`.gravity/<domain>/SPEC.md`** for project **`<project>`** (workspace CLAUDE.md §6; stencil = `templates/SPEC.template.md`). Parse `$ARGUMENTS` as `<project> <domain>`; if either is missing, ask.
 
 A SPEC is **two halves at once**: *generative* (a **Minimal Shape** + a 3-step **Generate loop** an agent builds a unit *from*) and *limiting* (a **Rules** checklist where **every rule names the wall** — `[lint]` / `[type]` / `[test:name]` / `[review]` / `[—]` — that catches a violation). The hard part, and the entire reason this command exists, is **tagging honestly**. A wrong tag is worse than no SPEC: `[lint]` on a rule nothing checks manufactures false trust. So this command is mostly a **verification procedure** — never tag from assumption; tag from evidence you went and found.
 
@@ -50,7 +50,9 @@ Hard rules for a weaker agent:
 
 ## Step 4 — Write it short
 
-Fill `SPEC.template.md`: **Gate** line, **Core Definition** (1–2 sentences), **Minimal Shape** (the copied real shape), **Generate (the loop)** (3 lines), tagged **Rules**, optional **Behavioral Contract** (`given/when/then` → its test — *only* if a test backs it; else fold into Rules as `[review]`), **Gotchas**. Keep the rate-of-change boundary: **SPEC = true of every unit forever; PLAN = this change's intent; WALKTHROUGH = its proof.** If a rule needs a paragraph of *why*, that prose belongs in `ARCHITECTURE.html` — link up, don't restate. Stop when every rule is checkable; more detail past that bloats agent context and drifts from the gate.
+Fill `templates/SPEC.template.md`: **Gate** line, **Core Definition** (1–2 sentences), **Minimal Shape** (the copied real shape), **Generate (the loop)** (3 lines), tagged **Rules**, optional **Behavioral Contract** (`given/when/then` → its test — *only* if a test backs it; else fold into Rules as `[review]`), **Gotchas**. Keep the rate-of-change boundary: **SPEC = true of every unit forever; PLAN = this change's intent; WALKTHROUGH = its proof.** If a rule needs a paragraph of *why*, that prose belongs in `ARCHITECTURE.html` — link up, don't restate. Stop when every rule is checkable; more detail past that bloats agent context and drifts from the gate.
+
+**For an `integration` domain, use the template's INTEGRATION VARIANT** (workspace CLAUDE.md §5): swap **Minimal Shape → Boundary Map** (one row per seam: from → to · what crosses · transport/port, plus the local ports/base-URL table) and **Generate → Change Order** (the strict cross-boundary edit sequence, last step bound to the Gate). The variant block lists the typical cross-boundary walls to lift into **Rules** — wire envelope, generated client-type sync, auth/session credential, the database-access boundary (`web` never reaches the DB directly), and the mandatory change order. Tag each one *just as honestly* as any other rule (a generated-types check is `[test]`/`[type]` only if it really runs; else `[review]`). Include only cross-boundary rules; leave backend internals, frontend component rules, and schema design in their own domain SPECs.
 
 ## Step 5 — Wire the indexes & prove it
 

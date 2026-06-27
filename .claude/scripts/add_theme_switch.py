@@ -1,15 +1,23 @@
 """
-add_theme_switch.py — give the aurora-themed browser docs the SAME 5-theme switcher the
+add_theme_switch.py — give the gravity browser docs the SAME 5-theme switcher the
 dashboard uses (Aurora / Daylight / Sandstone / Forest / Slate), sharing the dashboard's
 localStorage key so a theme chosen in either place applies everywhere.
 
+Targets are **auto-discovered**, never hardcoded — so a doc that moves into `.gravity/` or
+gets added later is never silently missed (the old hardcoded list was the source of that bug).
+Discovery covers the workspace stencils + `docs/MISSION.html` and every repo's gravity docs
+(`MISSION.html` / `ARCHITECTURE*.html` at the repo root, under `.gravity/`, and `.gravity/<domain>/`).
+
 Per file (idempotent — skips files that already carry the .themebar):
-  1. Replaces the appended aurora override block with five [data-theme] token palettes
-     (ported from .claude/dashboard/dashboard.html onto the docs' token names) + tokenized
-     visual flourishes (radial bg, gradient h1, glow, glass blur) that adapt per theme +
-     the .themebar pill styles. Custom CSS above the block is untouched.
-  2. Replaces the no-FOUC <head> init script (now reads the shared 'dash-theme' key).
-  3. Replaces the floating widget before </body> with the 5-pill swatch bar + its script.
+  1. The five [data-theme] token palettes (ported from .claude/dashboard onto the docs' token
+     names) + tokenized flourishes (radial bg, gradient h1, glow, glass blur) + .themebar styles.
+     If the doc already has the aurora switcher block it's replaced; if it's a pre-switcher
+     single-aurora doc (standard tokens, no block) the block is appended before </style>.
+     Custom CSS above the block is untouched.
+  2. Replaces / injects the no-FOUC <head> init script (reads the shared 'dash-theme' key).
+  3. Replaces / injects the floating widget before </body> with the 5-pill swatch bar + its script.
+
+A doc that doesn't use the standard doc token system is skipped (never clobbered), not failed.
 
 Re-run safely:  python .claude/scripts/add_theme_switch.py
 """
@@ -140,20 +148,49 @@ WIDGET = (
     "if(ok.indexOf(saved)<0)saved='aurora';set(saved);})();</script>\n"
 )
 
-FILES = [
-    "ARCHITECTURE.template.html",
-    "MISSION.html",
-    "MISSION.template.html",
-    "repos/agent-view-desktop/ARCHITECTURE.html",
-    "repos/agent-view-desktop/MISSION.html",
-    "repos/antigravity--pptx-template-manager/ARCHITECTURE.html",
-    "repos/antigravity--pptx-template-manager/MISSION.html",
-    "repos/api-server-managing-agent/MISSION.html",
-    "repos/architecture-memory-os/ARCHITECTURE.html",
-    "repos/architecture-memory-os/MISSION.html",
-    "repos/local-llmstxt-server/MISSION.html",
-    "repos/multi-system-maintenance-agent-system/ARCHITECTURE.html",
-]
+# Workspace-level docs always carry the switcher (the stencils, so new copies inherit it).
+WORKSPACE_DOCS = (
+    "templates/MISSION.template.html",
+    "templates/ARCHITECTURE.template.html",
+    "docs/MISSION.html",
+)
+
+
+def _gravity_docs_in(base):
+    """MISSION.html + ARCHITECTURE*.html directly inside `base` (non-recursive)."""
+    if not base.is_dir():
+        return []
+    out = list(base.glob("MISSION.html"))
+    out += sorted(base.glob("ARCHITECTURE*.html"))
+    return out
+
+
+def discover():
+    """Every gravity HTML doc that should carry the switcher — found, not hardcoded.
+
+    Workspace stencils + docs/, plus each repo's docs at the repo root, under `.gravity/`,
+    and `.gravity/<domain>/` (the only places gravity docs live, per CLAUDE.md §6). Build
+    output / vendored HTML elsewhere in a repo is deliberately not matched.
+    """
+    found = [ROOT / rel for rel in WORKSPACE_DOCS]
+    repos = ROOT / "repos"
+    if repos.is_dir():
+        for repo in sorted(p for p in repos.iterdir() if p.is_dir()):
+            found += _gravity_docs_in(repo)                       # flat-root docs
+            gravity = repo / ".gravity"
+            if gravity.is_dir():
+                found += _gravity_docs_in(gravity)                # .gravity/ top level
+                for sub in sorted(p for p in gravity.iterdir() if p.is_dir()):
+                    found += _gravity_docs_in(sub)                # .gravity/<domain>/
+    seen, ordered = set(), []                                     # de-dup, stable order
+    for p in found:
+        if not p.exists():
+            continue
+        key = p.resolve()
+        if key not in seen:
+            seen.add(key)
+            ordered.append(p)
+    return ordered
 
 
 def transform(text):
@@ -162,9 +199,17 @@ def transform(text):
         return None, ["already on 5-theme switcher (skipped)"]
 
     new, n = CSS_RE.subn(NEW_CSS, text)
-    if n != 1:
-        return None, ["FAILED: css block not matched once (n=%d)" % n]
-    notes.append("css")
+    if n == 1:
+        notes.append("css")
+    elif n == 0:
+        # No existing switcher block. Append it before </style> — but only for a doc that
+        # already uses the standard doc token system, so a bespoke design is never clobbered.
+        if "--accent" not in text or "</style>" not in text:
+            return None, ["SKIP: not a standard-token doc — theme manually"]
+        new = text.replace("</style>", "\n" + NEW_CSS + "\n</style>", 1)
+        notes.append("css+appended")
+    else:
+        return None, ["FAILED: aurora block matched %d times (expected 0 or 1)" % n]
 
     new, n = HEAD_RE.subn(HEAD_SCRIPT, new)
     if n != 1:
@@ -185,21 +230,20 @@ def transform(text):
 
 def main():
     fail = False
-    for rel in FILES:
-        p = ROOT / rel
-        if not p.exists():
-            print("MISS  %-58s not found" % rel)
-            fail = True
-            continue
+    files = discover()
+    print("Discovered %d gravity doc(s):\n" % len(files))
+    for p in files:
+        rel = p.relative_to(ROOT).as_posix()
         new, notes = transform(p.read_text(encoding="utf-8"))
         if new is None:
-            tag = "SKIP" if "skipped" in notes[0] else "FAIL"
+            note0 = notes[0]
+            tag = "SKIP" if note0.startswith("SKIP") or "skipped" in note0 else "FAIL"
             if tag == "FAIL":
                 fail = True
-            print("%-5s %-58s %s" % (tag, rel, "; ".join(notes)))
+            print("%-5s %-62s %s" % (tag, rel, "; ".join(notes)))
             continue
         p.write_text(new, encoding="utf-8")
-        print("OK    %-58s %s" % (rel, "; ".join(notes)))
+        print("OK    %-62s %s" % (rel, "; ".join(notes)))
     if fail:
         sys.exit(1)
 

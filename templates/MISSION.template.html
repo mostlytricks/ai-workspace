@@ -1,12 +1,17 @@
 <!doctype html>
-<!-- The ai-workspace's own mission. The durable "why" behind the rules in CLAUDE.md and the
-     workflows in HANDBOOK.md. Read in a browser. Edit only when the workspace's purpose or a
-     durable principle changes. Theme: DOC_THEME.md. -->
+<!--
+  MISSION.template.html — the durable "why" doc (one of the four clocks; see workspace CLAUDE.md §6).
+  Copy to repos/<project>/MISSION.html and fill the <!-- FILL --> spots. Delete these comments as you go.
+  This is the SLOWEST-changing doc: purpose + principles + non-goals that should survive refactors.
+  It is read in a browser by you, and by an agent when pointed at it (it does NOT auto-load — CLAUDE.md does).
+  Theme = the shared aurora doc theme (dashboard-matched); see docs/DESIGN.docs.md in the workspace.
+  Maintenance: edit only when the mission or a durable principle actually changes. In-flight state → CONTEXT.md.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ai-workspace — Mission</title>
+<title><!-- FILL: Project --> — Project mission</title>
 <style>
   :root {
     --bg:#0A0E1A; --panel:rgba(17,24,43,0.66); --panel-2:rgba(26,36,64,0.55); --line:rgba(255,255,255,0.09);
@@ -56,7 +61,6 @@
   }
   pre b { color:var(--accent); font-weight:600; }
   pre .c { color:var(--faint); }
-  pre .b { color:var(--blue); }
   .toc {
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
     padding:14px 20px; margin:22px 0 0;
@@ -175,97 +179,86 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="logo"><span class="sq"></span><span class="k">ai-workspace</span></div>
-    <h1>Workspace mission</h1>
-    <p class="lede">A local-first home for running many agent-assisted projects in parallel without losing the thread — where any session, human or agent, can open at the root and know exactly where everything stands.</p>
-    <p style="color:var(--faint);font-size:13px;margin-top:4px">The durable <em>why</em> behind the rules in <code>CLAUDE.md</code> and the workflows in <code>HANDBOOK.md</code>. Live state lives in <code>PROJECTS.md</code>.</p>
+    <div class="logo"><span class="sq"></span><span class="k"><!-- FILL: project-slug --></span></div>
+    <h1>Project mission</h1>
+    <!-- lede = the ONE sentence that re-orients you. Keep it sharp; the dashboard reads it verbatim. -->
+    <p class="lede"><!-- FILL: one-line north star — what this is and who it serves. --></p>
+    <p style="color:var(--faint);font-size:13px;margin-top:4px">Read before <code>IMPLEMENTATION_PLAN.md</code> (the roadmap), then hand work to the agent through <code>CLAUDE.md</code> and the rolling <code>CONTEXT.md</code>.</p>
     <div class="toc"><ol>
       <li><a href="#mission">Mission</a></li>
-      <li><a href="#why">Why this shape</a></li>
-      <li><a href="#principles">Principles</a></li>
+      <li><a href="#staging">Why this first</a></li>
+      <li><a href="#principles">Product principles</a></li>
       <li><a href="#architecture">Architecture principle</a></li>
-      <li><a href="#docs">The doc system</a></li>
-      <li><a href="#non-goals">Non-goals</a></li>
+      <li><a href="#pipeline">Planning pipeline</a></li>
+      <li><a href="#non-goals">Current non-goals</a></li>
     </ol></div>
   </header>
 
   <h2 id="mission"><span class="n">01</span>Mission</h2>
-  <p><strong>ai-workspace is a local-only management layer that lets one person run many agent-assisted software projects side by side without anything getting lost between sessions.</strong> Scattered terminals forget; chat context evaporates; parallel projects blur together. This workspace is the antidote: a calm root with a fixed storage model, a per-project memory, and a deterministic lifecycle an agent can operate.</p>
-  <pre><b>north star</b>: one calm root an agent can drive, where no project's context is ever lost
-<b>first wedge</b>: a Windows junction-based tier model + per-project handoff docs + lifecycle slash commands
-<b>later shape</b>: a portable (Windows / Linux / WSL) workspace standard any coding agent can run</pre>
+  <!-- The durable purpose. What becomes true in the world if this succeeds. Not features — outcome. -->
+  <p><strong><!-- FILL: one-sentence mission. --></strong> <!-- FILL: 2-3 sentences expanding it: the problem, who it's for, the calm it creates. --></p>
+  <pre><b>north star</b>: <!-- FILL: the end state -->
+<b>first wedge</b>: <!-- FILL: the narrow thing you're nailing first -->
+<b>later shape</b>: <!-- FILL: what it generalizes into --></pre>
 
   <div class="note">
-    <span class="lbl">Rules vs why.</span> <code>CLAUDE.md</code> says <em>what to do</em>; this file says <em>why it's worth doing</em>. When a rule feels arbitrary, the justification should be here — and when the mission changes, the rules follow, not the reverse.
+    <span class="lbl">Staged, not confused.</span> <!-- FILL: one line — why you start narrow without that being the whole ambition. -->
   </div>
 
-  <h2 id="why"><span class="n">02</span>Why This Shape</h2>
-  <p>The workspace earns its discipline with three moves, each aimed at a specific way multi-project work falls apart:</p>
+  <h2 id="staging"><span class="n">02</span>Why This First</h2>
+  <!-- Why the first wedge is the RIGHT first wedge: it surfaces the hardest real problems early. -->
+  <p><!-- FILL: the reasoning. --></p>
   <table>
-    <thead><tr><th>Failure it prevents</th><th>The move</th></tr></thead>
+    <thead><tr><th>Stage</th><th>Purpose</th></tr></thead>
     <tbody>
-      <tr><td>"Where do the real files live, and what's active?"</td><td><strong>Separate storage from views</strong> — canonical files in <code>repos/</code>, activity expressed as junction <em>views</em> in tiers.</td></tr>
-      <tr><td>"What was I doing here last week?"</td><td><strong>Every project carries its own memory</strong> — <code>CLAUDE.md</code> (identity) + <code>CONTEXT.md</code> (rolling now), read at session start.</td></tr>
-      <tr><td>"Did I run those setup steps right?"</td><td><strong>Automate the lifecycle</strong> — slash commands + helper scripts, so create / promote / move / triage are deterministic, not hand-typed shell.</td></tr>
+      <tr><td><code>Now</code></td><td><!-- FILL --></td></tr>
+      <tr><td><code>Next</code></td><td><!-- FILL --></td></tr>
+      <tr><td><code>Later</code></td><td><!-- FILL --></td></tr>
     </tbody>
   </table>
 
-  <h2 id="principles"><span class="n">03</span>Principles</h2>
+  <h2 id="principles"><span class="n">03</span>Product Principles</h2>
+  <!-- The handful of commitments that should win arguments during a refactor. 4-6 is plenty. -->
   <ul>
-    <li><strong>Local-first, root is local-only.</strong> Never <code>git init</code> at the root or push the workspace as an umbrella repo. Version control lives <em>per project</em>, inside <code>repos/&lt;name&gt;/</code>.</li>
-    <li><strong>Storage vs views.</strong> <code>repos/</code> is the one canonical store; tiers are cheap junction views. Changing a project's tier is a metadata move, never a file copy.</li>
-    <li><strong>The docs are the memory.</strong> <code>CLAUDE.md</code> is stable identity (auto-loads); <code>CONTEXT.md</code> is a rolling snapshot of <em>now</em>. git is the changelog — so <code>CONTEXT.md</code> stays small and never becomes a log.</li>
-    <li><strong>One venv per project.</strong> No shared or root-level <code>.venv</code>; silent version collisions are the enemy.</li>
-    <li><strong>The lifecycle is agent-operated and deterministic.</strong> Prefer slash commands and argv-driven helper scripts over hand-run shell strings — quoting pitfalls (e.g. junction creation) are designed out, not worked around.</li>
-    <li><strong>One index of record.</strong> <code>PROJECTS.md</code> is the single source of truth for which tier each project lives in; it's updated on every transition.</li>
-    <li><strong>Right-sized ceremony.</strong> Two docs for most projects; the optional four-doc pipeline only for ambitious ones; <code>incubator/</code> one-shots carry none.</li>
+    <li><strong><!-- FILL: principle --></strong> <!-- FILL: what it means in practice. --></li>
+    <li><strong><!-- FILL --></strong> <!-- FILL --></li>
+    <li><strong><!-- FILL --></strong> <!-- FILL --></li>
   </ul>
 
   <h2 id="architecture"><span class="n">04</span>Architecture Principle</h2>
-  <p>Everything reduces to one idea: <strong>real files in <code>repos/</code>, junction views in tiers.</strong> Lifecycle commands, triage, and the dashboard all operate on that single model — so a new capability extends the storage/view split rather than inventing a parallel notion of "where a project is."</p>
-  <pre><span class="c"># canonical storage — the only place real files (.git, .venv, code) live</span>
-repos/&lt;project&gt;/
-      <span class="b">^</span>
-      <span class="b">|</span>  directory junction  (<b>mklink /J</b> on Windows  ·  symlink on Linux/WSL)
-      <span class="b">|</span>     via <b>.claude/scripts/link_project.py</b> — argv-driven, no shell quoting
-      <span class="b">|</span>
-active/  dormant/  archive/   <span class="c"># views — a project's tier = its activity state</span>
-      <span class="b">|</span>
-      <span class="b">v</span>
-slash commands · /triage · /dashboard · /mission   <span class="c"># all read this one model</span></pre>
-  <p>(<code>incubator/</code> is the deliberate exception — real folders, not junctions, because experiments are ephemeral and may never graduate.)</p>
+  <!-- The ONE structural idea that bridges the first wedge to the full mission. Optional but powerful.
+       Delete this section if the project has no single load-bearing architectural commitment yet. -->
+  <p><!-- FILL: the seam / shared shape / invariant that every feature should extend rather than bypass. --></p>
+  <pre><!-- FILL: optional ASCII diagram. Use <b>green</b> and .c faint spans for highlights. --></pre>
 
-  <h2 id="docs"><span class="n">05</span>The Doc System</h2>
-  <p>The workspace runs on documents with distinct, non-overlapping jobs — at the root, and inside each project.</p>
+  <h2 id="pipeline"><span class="n">05</span>Planning Pipeline</h2>
+  <p>The project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time. <strong>One concern, one home:</strong> each doc owns its column; if another doc needs a fact, it links here rather than restating it.</p>
   <table>
-    <thead><tr><th>Document</th><th>Scope</th><th>Job</th></tr></thead>
+    <thead><tr><th>Document</th><th>Job (what it owns)</th><th>Changes</th></tr></thead>
     <tbody>
-      <tr><td><code>CLAUDE.md</code></td><td>root</td><td>The rules and invariants an agent must follow. Auto-loads every session.</td></tr>
-      <tr><td><code>MISSION.html</code></td><td>root</td><td>This file — the durable why behind those rules.</td></tr>
-      <tr><td><code>HANDBOOK.md</code></td><td>root</td><td>Human-facing workflows, slash-command reference, glossary.</td></tr>
-      <tr><td><code>PROJECTS.md</code></td><td>root</td><td>The live index — which project is in which tier, and its current focus.</td></tr>
-      <tr><td><code>CLAUDE.md</code> · <code>CONTEXT.md</code></td><td>per project</td><td>Stable identity + rolling now. The mandatory pair every project carries.</td></tr>
-      <tr><td><code>MISSION.html</code> · <code>IMPLEMENTATION_PLAN.md</code></td><td>per project</td><td>Optional "four-doc pipeline" for ambitious projects — durable why + phase roadmap (CLAUDE.md §6).</td></tr>
+      <tr><td><code>MISSION.html</code></td><td>Why: north star, principles, non-goals that survive refactors.</td><td>rarely</td></tr>
+      <tr><td><code>CLAUDE.md</code></td><td>How: repo identity, stack, constraints, entry points, how the agent should behave here.</td><td>on refactors</td></tr>
+      <tr><td><code>IMPLEMENTATION_PLAN.md</code></td><td>What/next: phase roadmap, locked decisions, the verification gate, open questions.</td><td>per phase</td></tr>
+      <tr><td><code>CONTEXT.md</code></td><td>Now: current state, last 1-2 sessions, the immediate next step.</td><td>per session</td></tr>
+      <tr><td><code>ARCHITECTURE.html</code> <span style="color:var(--faint)">(optional)</span></td><td>How it's built: component boundaries, the seam's mechanics, data contracts. Add only when "how it's built" outgrows CLAUDE.md's entry points.</td><td>on structural change</td></tr>
     </tbody>
   </table>
-  <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/promote</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.claude/scripts/</code>.</p>
 
-  <h2 id="non-goals"><span class="n">06</span>Non-Goals</h2>
+  <h2 id="non-goals"><span class="n">06</span>Current Non-Goals</h2>
+  <!-- The most valuable section for keeping an agent on-mission. State what you are deliberately NOT doing.
+       /triage and /mission check recent work against these to flag drift. -->
   <ul>
-    <li>Do not <code>git init</code> at the root or turn the workspace into an umbrella / monorepo. Projects stay independently versioned.</li>
-    <li>Do not create a shared or root-level <code>.venv</code>.</li>
-    <li>Do not put real project files inside <code>active/</code>, <code>dormant/</code>, or <code>archive/</code> — those hold junctions only (<code>incubator/</code> is the one real-folder exception).</li>
-    <li>The workspace does not manage credentials or secrets; that stays with each project and the local toolchain.</li>
-    <li><code>CONTEXT.md</code> is not a changelog — never duplicate git history into it.</li>
-    <li>Do not grow ceremony where it doesn't pay: small and one-shot projects stay on the light setup.</li>
+    <li><!-- FILL: a thing you are deliberately not building yet, and (briefly) why. --></li>
+    <li><!-- FILL --></li>
+    <li><!-- FILL --></li>
   </ul>
 
   <div class="note warn">
-    <span class="lbl">Maintenance rule.</span> Edit this file only when the workspace's purpose or a durable principle changes. Operational rules belong in <code>CLAUDE.md</code>; how-to steps belong in <code>HANDBOOK.md</code>; live project state belongs in <code>PROJECTS.md</code>.
+    <span class="lbl">Maintenance rule.</span> Update this file only when the mission or a durable principle changes. Use <code>CONTEXT.md</code> for in-flight state and <code>IMPLEMENTATION_PLAN.md</code> for phase-by-phase execution.
   </div>
 
   <footer>
-    ai-workspace · mission · the durable why behind the rules in CLAUDE.md and the workflows in HANDBOOK.md.
+    <!-- FILL: project --> · project mission · stable source for purpose before roadmap, agent guidelines, and rolling context.
   </footer>
 </div>
 <div class="themebar" id="themebar" role="group" aria-label="Theme"><button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button><button data-theme="daylight"><span class="sw" style="background:linear-gradient(135deg,#60A5FA,#A78BFA)"></span>Daylight</button><button data-theme="sandstone"><span class="sw" style="background:linear-gradient(135deg,#F59E0B,#C2410C)"></span>Sandstone</button><button data-theme="forest"><span class="sw" style="background:linear-gradient(135deg,#34D399,#A3E635)"></span>Forest</button><button data-theme="slate"><span class="sw" style="background:linear-gradient(135deg,#CBD5E1,#64748B)"></span>Slate</button></div>

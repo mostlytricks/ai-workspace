@@ -19,7 +19,7 @@ If `python` isn't found, retry with `py .claude/scripts/new_project.py "$ARGUMEN
 
 The script handles everything in one shot:
 - **Validates** the name (kebab-case; not already in repos/active/dormant/archive/incubator; templates present) and stops with a clear `ERROR:` if anything is off.
-- Creates `repos/<name>/`, junctions `active/<name>` → `repos/<name>`, copies both templates, runs `git init`, and appends the `## active/` row in `PROJECTS.md`.
+- Creates `repos/<name>/`, junctions `active/<name>` → `repos/<name>`, copies the starter templates (`CLAUDE.md`, `CONTEXT.md`, and the `AGENTS.md` Codex shim), runs `git init`, and appends the `## active/` row in `PROJECTS.md`.
 - Prints a summary + next steps.
 
 ## Report back

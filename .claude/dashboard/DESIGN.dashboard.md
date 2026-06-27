@@ -6,7 +6,7 @@
 > `generate_dashboard.py` from `PROJECTS.md`. An agent restyling or regenerating the
 > dashboard reads this file first, then edits the `TEMPLATE` in `generate_dashboard.py` to match.
 >
-> **Not** for reading-docs (`MISSION.html` etc. use the flat muted-teal `DOC_THEME.md`) and
+> **Not** for reading-docs (`MISSION.html` etc. use the flat muted-teal `DESIGN.docs.md`) and
 > **not** for slides/Outlook HTML. The dashboard is built for **scanning at a glance**; it is
 > deliberately louder and more luminous than the doc theme. Two surfaces, two systems.
 

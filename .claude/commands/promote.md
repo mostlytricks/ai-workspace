@@ -13,7 +13,7 @@ This command is for **incubator promotion only**. If the project already lives u
 2. **Name format** — must be kebab-case: lowercase letters, digits, and hyphens only. No spaces, underscores, or uppercase. If invalid, explain the rule and stop.
 3. **Source exists** — `incubator/<name>` must exist as a real directory. If missing, stop and tell the user. If it exists but is itself a junction or symlink, stop — incubator entries should be real folders.
 4. **Target free** — `<name>` must NOT already exist as a folder under `repos/`, `active/`, `dormant/`, or `archive/`. If it exists anywhere besides `incubator/`, stop and tell the user where the collision is.
-5. **Templates present** — verify `CLAUDE.template.md` and `CONTEXT.template.md` exist at workspace root. If either is missing, stop and tell the user to restore them.
+5. **Templates present** — verify `templates/CLAUDE.template.md`, `templates/CONTEXT.template.md`, and `templates/AGENTS.template.md` exist (stencils live in `templates/`, CLAUDE.md §1). If any is missing, stop and tell the user to restore them.
 
 ## Execute
 
@@ -25,8 +25,9 @@ name="$ARGUMENTS"
 mv "incubator/$name" "repos/$name"
 python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
 (cd "repos/$name" && { [ -d ".git" ] || git init -q; })
-[ -f "repos/$name/CLAUDE.md" ]  || cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
-[ -f "repos/$name/CONTEXT.md" ] || cp CONTEXT.template.md "repos/$name/CONTEXT.md"
+[ -f "repos/$name/CLAUDE.md" ]  || cp templates/CLAUDE.template.md  "repos/$name/CLAUDE.md"
+[ -f "repos/$name/CONTEXT.md" ] || cp templates/CONTEXT.template.md "repos/$name/CONTEXT.md"
+[ -f "repos/$name/AGENTS.md" ]  || cp templates/AGENTS.template.md  "repos/$name/AGENTS.md"   # Codex shim
 ```
 
 > Use the `link_project.py` helper, **not** `cmd //c "mklink /J active\\$name …"` — that Git-Bash
@@ -40,8 +41,9 @@ Move-Item "incubator\$name" "repos\$name"
 New-Item -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
 Push-Location "repos\$name"
 if (-not (Test-Path ".git"))       { git init -q }
-if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\CLAUDE.template.md  CLAUDE.md }
-if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\CONTEXT.template.md CONTEXT.md }
+if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\templates\CLAUDE.template.md  CLAUDE.md }
+if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\templates\CONTEXT.template.md CONTEXT.md }
+if (-not (Test-Path "AGENTS.md"))  { Copy-Item ..\..\templates\AGENTS.template.md  AGENTS.md }
 Pop-Location
 ```
 
@@ -74,6 +76,7 @@ Promoted: <name>
   Git:        <initialized | already a repo, preserved>
   CLAUDE.md:  <created from template | preserved existing>
   CONTEXT.md: <created from template | preserved existing>
+  AGENTS.md:  <created from template | preserved existing>
   PROJECTS.md: row added under active/
 
 Next steps:
@@ -84,7 +87,7 @@ Next steps:
 
 ## What NOT to do
 
-- **Do not** overwrite an existing `CLAUDE.md` or `CONTEXT.md` inside the incubator project. If the user already wrote one, preserve it.
+- **Do not** overwrite an existing `CLAUDE.md`, `CONTEXT.md`, or `AGENTS.md` inside the incubator project. If the user already wrote one, preserve it (the `[ -f ]` / `Test-Path` guards handle this).
 - **Do not** reinitialize git if `.git` already exists — that destroys history.
 - **Do not** fill in CLAUDE.md or CONTEXT.md content yourself. Leave templates as-is.
 - **Do not** create a first commit, add a remote, or install dependencies.

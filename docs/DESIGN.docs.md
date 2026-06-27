@@ -1,4 +1,4 @@
-# DOC_THEME — shared HTML doc theme (aurora)
+# DESIGN.docs — shared HTML doc theme (aurora)
 
 The workspace theme for **human-facing project HTML docs** (`MISSION.html`, `ARCHITECTURE.html`,
 and any design page you want rendered in a browser). A premium **deep-navy glassmorphism** look,
@@ -216,7 +216,7 @@ footer { margin-top:70px; padding-top:18px; border-top:1px solid var(--line); co
 ---
 
 **Usage:** copy the skeleton to a new `*.html`, paste the stylesheet, fill sections.
-For a quick prompt: *"render this as an HTML doc using the DOC_THEME.md theme."*
+For a quick prompt: *"render this as an HTML doc using the DESIGN.docs.md theme."*
 
 **Re-theming an existing doc:** swap the standard token *values* in its `:root` and append the
 aurora override block (ambient bg, gradient `h1`, glowing `.logo .sq`, glass blur on

@@ -3,8 +3,8 @@
 <!-- Per-project stencil for a running-app UI design system. Copy to <project>/DESIGN.md and fill.
      This is the canonical home for *app visual design* (workspace CLAUDE.md §6 ownership table):
      temperature, type, token contract, motion, components, the lines you must not cross.
-     NOT the same as DOC_THEME.md (browser-read HTML-doc theme) — if a project needs both, the
-     doc theme stays in DOC_THEME.md / a DESIGN.docs.md, and this file owns only the app.
+     NOT the same as DESIGN.docs.md (browser-read HTML-doc theme) — if a project needs both, the
+     doc theme stays in a DESIGN.docs.md, and this file owns only the app.
      Delete sections that don't apply; keep the ones that protect identity. -->
 
 A guide for anyone (human or agent) touching the UI of this project. The aesthetic is
@@ -170,5 +170,5 @@ Easing: `<cubic-bezier(...)>` for everything. Timing scale:
 
 <!--
 This file is stable identity — it changes on real redesigns, not per session.
-It owns *app visual design*; the browser-read HTML-doc theme is DOC_THEME.md's concern. One concern, one home.
+It owns *app visual design*; the browser-read HTML-doc theme is DESIGN.docs.md's concern. One concern, one home.
 -->

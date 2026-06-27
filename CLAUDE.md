@@ -1,6 +1,6 @@
 # AI Workspace — Agent Operating Manual
 
-Root contract for any coding agent working inside `ai-workspace/`. **Rules and invariants only** — step-by-step workflows for humans live in `HANDBOOK.md`.
+Root contract for any coding agent working inside `ai-workspace/`. **Rules and invariants only** — step-by-step workflows for humans live in `docs/HANDBOOK.md`.
 
 Always open the agent at this root, never one level deeper. When a project subdirectory has its own `CLAUDE.md` or `CONTEXT.md`, that local file wins on conflict.
 
@@ -8,23 +8,35 @@ Always open the agent at this root, never one level deeper. When a project subdi
 
 ## 1. Workspace Map
 
+Gravity eats its own dogfood: the root holds only the auto-loader + shim + live indexes; the **stencils** live in `templates/` and the **read-docs** in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
+
 ```text
 ai-workspace/
-├── CLAUDE.md                       # This file. Rules for agents.
-├── MISSION.html                    # The workspace's own north star — the durable why behind these rules.
-├── HANDBOOK.md                     # Human-facing guide: workflows, slash commands, glossary.
-├── PROJECTS.md                     # Index of all projects across tiers.
-├── CLAUDE.template.md              # Per-project stable-identity stencil.
-├── CONTEXT.template.md             # Per-project session-handoff stencil.
-├── MISSION.template.html           # Per-project "why" stencil (optional four-doc pipeline, §6).
-├── IMPLEMENTATION_PLAN.template.md # Per-project "what/next" stencil (optional four-doc pipeline, §6).
-├── ARCHITECTURE.template.html      # Per-project "how it's built" stencil (optional fifth doc, §6). Also seeds ARCHITECTURE.<facet>.html deep-dives.
-├── SPEC.template.md                # Per-domain agent-loadable spec stencil — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules); paired with an ARCHITECTURE facet (optional; §6).
-├── GRAVITY.template.md             # Root-CLAUDE.md router block (Doc Map + read-first table + domain gate) for projects adopting .gravity/ (optional; §6).
-├── WALKTHROUGH.template.md         # Per-change "what got done + proof" stencil (optional, append-only; §6).
-├── DESIGN.template.md              # Per-project running-app UI design-system stencil (optional; §6).
-├── DOC_THEME.md                    # Shared theme for browser-read project HTML docs (distinct from DESIGN.md — §6).
-├── .gitignore                      # Defense-in-depth against accidental git init at root.
+├── CLAUDE.md                       # This file — the operating manual. Auto-loads; the one router.
+├── AGENTS.md                       # Codex-compatible shim; points to CLAUDE.md as canonical.
+├── README.md                       # Human entry point.
+├── PROJECTS.md                     # Live index of all projects across tiers.
+├── VERSION                         # Gravity system version (SemVer) — paired with a git tag vX.Y.Z (§2).
+├── CHANGELOG.md                    # How gravity's own rules/templates/commands evolved (major = a rule projects depend on breaks).
+├── .gitignore                      # Deny-all/whitelist: tracks only the portable skeleton (§2).
+│
+├── docs/                           # Human/browser READ-DOCS (rarely change):
+│   ├── HANDBOOK.md                 #   Human-facing guide: workflows, slash commands, glossary.
+│   ├── MISSION.html                #   The workspace's own north star — the durable why behind these rules.
+│   └── DESIGN.docs.md              #   Shared theme for browser-read project HTML docs (distinct from DESIGN.md — §6).
+│
+├── templates/                      # Per-project / per-domain STENCILS (copied, never auto-loaded):
+│   ├── CLAUDE.template.md          #   Per-project stable-identity stencil.
+│   ├── AGENTS.template.md          #   Per-project Codex-compatible shim; points to CLAUDE.md.
+│   ├── CONTEXT.template.md         #   Per-project session-handoff stencil.
+│   ├── MISSION.template.html       #   Per-project "why" stencil (optional four-doc pipeline, §6).
+│   ├── IMPLEMENTATION_PLAN.template.md  # Per-project "what/next" stencil (optional four-doc pipeline, §6).
+│   ├── ARCHITECTURE.template.html  #   Per-project "how it's built" stencil (optional fifth doc, §6). Also seeds ARCHITECTURE.<facet>.html deep-dives.
+│   ├── SPEC.template.md            #   Per-domain agent-loadable spec stencil — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules); paired with an ARCHITECTURE facet (optional; §6). Carries a first-class INTEGRATION VARIANT (Boundary Map + Change Order) for the cross-service `integration` domain (§5).
+│   ├── GRAVITY.template.md         #   Root-CLAUDE.md router block (Doc Map + read-first table + domain gate) for projects adopting .gravity/ (optional; §6).
+│   ├── WALKTHROUGH.template.md     #   Per-change "what got done + proof" stencil (optional, append-only; §6).
+│   └── DESIGN.template.md          #   Per-project running-app UI design-system stencil (optional; §6).
+│
 ├── .claude/commands/               # Workspace-level slash commands.
 ├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
 │
@@ -50,8 +62,9 @@ Never create files at the workspace root other than the meta files listed above.
 
 ## 2. Git Boundaries
 
-- Root is local-only. Never `git init` at `ai-workspace/`. Never push the workspace as an umbrella repo.
-- Version control lives in `repos/<project>/`. Each project is an independent repo with its own remote.
+- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the `*.template.*` stencils, `.claude/` commands+scripts, the root docs, `VERSION`, `CHANGELOG.md`) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `dormant/`, `archive/`, or `incubator/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
+- **Each project is its own independent repo** under `repos/<project>/`, with its own remote. Project version control never mixes with the skeleton repo above.
+- **Gravity itself is versioned** (SemVer): the system version lives in the root `VERSION` file + a git tag `vX.Y.Z`, with changes recorded in the root `CHANGELOG.md` (see it for the major/minor/patch rule — *major = a rule projects depend on breaks*). A project records the gravity version it adopted via the `> gravity: vX.Y` line in its root `CLAUDE.md` router (seeded from `GRAVITY.template.md`), so stale adoptions are detectable.
 - Junctions are transparent to `git` — commands run from inside a tier junction operate on the real `.git` in `repos/<project>/`.
 
 ---
@@ -69,7 +82,7 @@ A project's real files live in **one of two places**:
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
 - Never use File Explorer drag-drop to move folders containing `node_modules` or `.venv` — it sometimes performs file-by-file copies and thrashes the disk. Use `mv` (bash) or `Move-Item` (PowerShell).
 
-**For step-by-step procedures** (new project, bring in existing, promote from incubator, including PowerShell + Bash code), see **HANDBOOK.md**. For the common new-project case, use `/init-project <name>`.
+**For step-by-step procedures** (new project, bring in existing, promote from incubator, including PowerShell + Bash code), see **`docs/HANDBOOK.md`**. For the common new-project case, use `/init-project <name>`.
 
 ---
 
@@ -88,6 +101,8 @@ When a project contains multiple services that talk to each other, treat them as
 
 - Before editing across services, locate the contract file in the project root (`GLOBAL_RULES.md`, `CONTRACT.md`, or the project `CLAUDE.md`). It documents port assignments, base URLs, auth flow, shared schema locations. If none exists and you're changing a cross-service interface, create one first.
 - Data-mutation loop: update backend entity/DTO/schema first → run schema export if one exists → update frontend types and API client → verify the contract file still matches.
+- For projects on `.gravity/`, cross-service behavior may earn a normal domain named **`integration`**: `.gravity/integration/SPEC.md` owns the contracts *between* services/domains (API/client types, auth/session flow, ports/base URLs, queues/events, webhooks, shared env, database access boundaries, and the required change order). This is not a new project type; it is just the existing domain model applied to system boundaries. `SPEC.template.md` carries a first-class **integration variant** for authoring it — Minimal Shape becomes a **Boundary Map** (one row per seam + a local ports/base-URL table) and Generate becomes a **Change Order** (the strict cross-boundary edit sequence). `/new-spec <project> integration` uses it.
+- Keep small integration facts in `CONTRACT.md` when a full domain would be ceremony. Promote them to `.gravity/integration/SPEC.md` only when agents repeatedly change cross-boundary behavior, when rules need enforcement tags/tests, or when the change order is easy to break.
 
 ---
 
@@ -96,6 +111,7 @@ When a project contains multiple services that talk to each other, treat them as
 Each project in `repos/` (i.e. anything surfaced via `active/` or `dormant/`) has two files at its root:
 
 - **`<project>/CLAUDE.md` — stable identity.** What the project is, stack, run/test commands, conventions, gotchas. Rarely changes. Auto-loads when an agent opens at that subdir (works through the junction). Copy from `CLAUDE.template.md`.
+- **`<project>/AGENTS.md` — Codex-compatible shim.** Optional tiny pointer to `CLAUDE.md`; copy from `AGENTS.template.md` when a project should be discoverable by agents that look for `AGENTS.md`. Never duplicate rules here.
 - **`<project>/CONTEXT.md` — mutable handoff state.** Completed / Current State / Next Step. Updated every session. A **rolling snapshot of *now***, not a log — see *Keeping CONTEXT.md small* below. Copy from `CONTEXT.template.md`.
 
 Templates are stencils, not config — nothing loads them automatically.
@@ -128,7 +144,7 @@ The two mandatory files cover identity and now. A project with a real arc — mu
 
 | Doc | Question | Changes | Format |
 |---|---|---|---|
-| `MISSION.html` | **Why** — north star, principles, non-goals | rarely | HTML (browser-read; copy `MISSION.template.html`, theme in `DOC_THEME.md`) |
+| `MISSION.html` | **Why** — north star, principles, non-goals | rarely | HTML (browser-read; copy `MISSION.template.html`, theme in `DESIGN.docs.md`) |
 | `CLAUDE.md` | **How** — identity, stack, constraints | on refactors | Markdown (auto-loads) |
 | `IMPLEMENTATION_PLAN.md` | **What/next** — phases, locked decisions, the gate | per phase | Markdown (agent edits it; copy `IMPLEMENTATION_PLAN.template.md`) |
 | `CONTEXT.md` | **Now** — state + single next step | per session | Markdown (auto-loads) |
@@ -148,15 +164,16 @@ These docs answer *different* questions, so they shouldn't *collide* — but the
 | How it's built · seams · data contracts | **CLAUDE.md** Entry Points — or **ARCHITECTURE.html** when it outgrows a file map | "would a new contributor need this to navigate the code?" |
 | One facet's deep "how it's built" (human reference) | **`.gravity/<domain>/ARCHITECTURE.html`** — when one ARCHITECTURE page serves several domains | "is this the full rationale a *human* engineer reads for one domain?" |
 | One domain's spec — what to build + the walls (agent contract) | **`.gravity/<domain>/SPEC.md`** — the compact agent-loadable sheet: a Minimal Shape to build *from* + enforcement-tagged Rules that *fence* it, links up to its facet | "is this the short spec you'd hand an *agent* to make a change safely?" |
+| Contracts between domains/services | **`.gravity/integration/SPEC.md`** when present; otherwise `CONTRACT.md` / root `CLAUDE.md` | "could changing one part silently break another runtime, schema, generated client, auth flow, queue, or webhook?" |
 | The set of domains itself (existence · routing · why · status) | **`.gravity/` directory** + root `CLAUDE.md` (routing) + `MISSION.html` (why) + `IMPLEMENTATION_PLAN.md` (status) — **no registry file** | "which of the four rates does this domain-level fact change at?" |
 | App visual design · type · token contract · motion | **`<project>/DESIGN.md`** (copy `DESIGN.template.md`) — for UI projects | "would changing this alter the app's look or erase its personality?" |
-| Browser-read HTML-doc look (MISSION.html / ARCHITECTURE.html) | **DOC_THEME.md** | "is this about how a *doc page* renders, not the app?" |
+| Browser-read HTML-doc look (MISSION.html / ARCHITECTURE.html) | **DESIGN.docs.md** | "is this about how a *doc page* renders, not the app?" |
 
-**`DESIGN.md` vs `DOC_THEME.md` — don't conflate.** `DESIGN.md` owns the *running app's* visual identity (the thing users operate); `DOC_THEME.md` owns the look of *browser-read project docs*. A project may have both — keep app design in `DESIGN.md` and the doc theme separate (a per-project doc-theme file may be named `DESIGN.docs.md`, as in agent-view-desktop). `DESIGN.md` is **recognized only when present** and **never mandated** — copy `DESIGN.template.md` only for projects with a UI worth protecting; skip it for libraries, CLIs, and scripts. (Heads-up: one project, `antigravity--pptx-template-manager`, uses `DESIGN.md` for a *JSON schema contract*, not UI — a legacy exception predating this rule, not the convention.)
+**`DESIGN.md` vs `DESIGN.docs.md` — don't conflate.** `DESIGN.md` owns the *running app's* visual identity (the thing users operate); `DESIGN.docs.md` owns the look of *browser-read project docs*. A project may have both — keep app design in `DESIGN.md` and the doc theme separate (a per-project doc-theme file may be named `DESIGN.docs.md`, as in agent-view-desktop). `DESIGN.md` is **recognized only when present** and **never mandated** — copy `DESIGN.template.md` only for projects with a UI worth protecting; skip it for libraries, CLIs, and scripts. (Heads-up: one project, `antigravity--pptx-template-manager`, uses `DESIGN.md` for a *JSON schema contract*, not UI — a legacy exception predating this rule, not the convention.)
 
 The overlap to watch is the **architectural seam**. MISSION owns the one-sentence *principle* ("everything reduces to one Session shape" / "the JSON deck-spec is the interface"); CLAUDE.md (or ARCHITECTURE.html) owns the *mechanics* (which files, the gotcha) and points back — *"preserve the seam (MISSION §04)"* — instead of re-describing it. Same for non-goals vs constraints: a strategic "we don't do X" lives in MISSION; the operational "doing X breaks the build" lives in CLAUDE.md.
 
-**Optional fifth doc — `ARCHITECTURE.html` (how it's built).** Most projects describe their architecture adequately in CLAUDE.md's *Entry Points* (a file map) plus the one-line seam in MISSION — leave it there. A project whose "how it's built" genuinely outgrows a file map — multiple services, non-obvious data flow, several contributors — may add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme in `DOC_THEME.md`) as the canonical home for component boundaries, the seam's mechanics, data contracts, and build/deploy shape. It is **recognized only when present** (like MISSION.html — `/mission` reads it, `/triage` checks it) and **never mandated**; don't add it where a file map already serves. For cross-service contracts specifically, §5's `CONTRACT.md`/`GLOBAL_RULES.md` is this same idea living at the service boundary.
+**Optional fifth doc — `ARCHITECTURE.html` (how it's built).** Most projects describe their architecture adequately in CLAUDE.md's *Entry Points* (a file map) plus the one-line seam in MISSION — leave it there. A project whose "how it's built" genuinely outgrows a file map — multiple services, non-obvious data flow, several contributors — may add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme in `DESIGN.docs.md`) as the canonical home for component boundaries, the seam's mechanics, data contracts, and build/deploy shape. It is **recognized only when present** (like MISSION.html — `/mission` reads it, `/triage` checks it) and **never mandated**; don't add it where a file map already serves. For cross-service contracts specifically, §5's `CONTRACT.md`/`GLOBAL_RULES.md` is this same idea living at the service boundary.
 
 **Optional: the `.gravity/` directory — where the heavy docs live (faceted projects).** Faceting (a deep-dive + an agent rule-sheet per domain) works, but the files pile up at the project root and bury the two that matter most. The fix is a **`.gravity/` directory** that holds *everything except* the two auto-loaders — `CLAUDE.md` and `CONTEXT.md` — plus `README.md` (the user guide). The leading dot is deliberate: a `CLAUDE.md` *inside* `.gravity/` would not auto-load, so the **root `CLAUDE.md` stays the one and only router**.
 
@@ -174,9 +191,12 @@ Inside, docs are grouped **by subject domain, not by doc-type**. The top level h
 
 Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITECTURE.html` owns the full human rationale**; the paired **`SPEC.md` is the spec an agent loads** and links *up* to its ARCHITECTURE rather than restating it; add a `SPEC.md` **only for domains an agent actually changes** (read-only domains stay HTML-only). A SPEC is **two halves at once**: *generative* — a **Minimal Shape** + a 3-step **Generate loop** an agent instantiates a correct unit *from*; and *limiting* — a **Rules** checklist where **every rule carries an enforcement tag** (`[lint]` / `[type]` / `[test:name]` / `[review]` / `[—]`) naming the wall that catches a violation, so generation is bounded and the contract never lies about which rules are real walls vs reviewer judgment. Behavioral domains (endpoints, parsers, retrieval) add a **Behavioral Contract** of `given/when/then` invariants, each bound to its test. Keep the rate-of-change boundary so SPEC doesn't swallow PLAN: **SPEC holds what's true of every valid unit forever; PLAN holds the intent of this change; WALKTHROUGH holds its proof.** Enforce specs with a linter where the rules are checkable (`knowledge-viewer`'s `npm run lint:docs` is the reference implementation — its `doc/SPEC.md` is the worked example of the tagged form).
 
+**Optional integration domain — service-aware gravity, not a new topology.** If a project has multiple runnable parts, generated clients, shared persistence, queues, webhooks, or auth/session behavior crossing boundaries, it may add `.gravity/integration/` like any other domain. The integration SPEC owns the boundary contract and change order; the service/domain SPECs still own their internals. Example: in a React + Spring Boot + Oracle project, `web/SPEC.md` owns React client conventions, `api/SPEC.md` owns controller/DTO rules, `data/SPEC.md` owns migrations/schema, and `integration/SPEC.md` owns the HTTP/API envelope, generated types, auth/session flow, local ports/base URLs, and the rule that React never connects to Oracle directly. Before cross-boundary edits, load `.gravity/integration/SPEC.md` first, then the affected domain SPECs.
+
 **How an agent uses it** (the discipline that keeps faceting from sprawling):
 - **Navigate** from the root `CLAUDE.md` Doc Map — never guess paths.
 - **Before changing a domain**, load that domain's `.gravity/<domain>/SPEC.md` (the contract); open `ARCHITECTURE.html` only when you need the rationale.
+- **Before changing a boundary**, load `.gravity/integration/SPEC.md` when present (or `CONTRACT.md` for smaller projects), then load every affected domain SPEC. Boundary changes include API shape, generated types, auth/session behavior, ports/base URLs, shared env, queues/events, webhooks, or data access rules between services.
 - **Touch the doc that matches the change's rate:** *now* → `CONTEXT.md`; *what/next* → the domain's `PLAN.*.md`; *rules* → `SPEC.md`; *how-it's-built* → `ARCHITECTURE.html`; *why* → `MISSION.html`. Don't write *now* into MISSION or *why* into CONTEXT.
 - **Adding a feature?** Run the gate first — *is it a domain?* (its own principle + non-goal, rules worth a SPEC, a multi-step arc) or just a `PLAN.*.md` slice under an existing domain. Mint a folder only when it earns its own gravity, and **wire all four indexes** (Doc Map, router table, MISSION row, PLAN spine) so it's never orphaned.
 
@@ -194,7 +214,8 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 - **`/retire <name>`** ends the lifecycle (the destructive twin of `/init-project`): prints a read-only **risk card** (remote? commits? uncommitted? referenced by another project?), then on your choice either **archives** (junction → `archive/`, real files kept, reversible) or **deletes** (every junction detached + real folder removed, permanent). Backed by `retire_project.py`, which detaches junctions with `rmdir`/`unlink` — never `rm -rf` through a junction — then reconciles `PROJECTS.md` and regenerates the dashboard.
 - **`/adopt-gravity <project>`** retrofits the `.gravity/` doc system (§6) into an existing project: creates `.gravity/`, relocates the heavy docs out of the project root (everything but `CLAUDE.md`/`CONTEXT.md`/`README.md`) with `git mv`, organizes them by domain folder, and seeds the root `CLAUDE.md` router block from `GRAVITY.template.md`. For projects that outgrew the flat root.
 - **`/new-domain <project> <domain>`** mints one domain inside an existing `.gravity/`: creates `.gravity/<domain>/` with a starter `PLAN.md`, then **wires all four indexes** so it's never orphaned (Doc Map + read-first table in `CLAUDE.md`, the why/principle row in `MISSION.html`, the status row in `IMPLEMENTATION_PLAN.md`). Runs the *is-it-a-domain?* gate first.
+- **`/cut-release [project]`** cuts a versioned release with one **Change Order**, context-aware: **no arg → bumps gravity itself** (`VERSION` + tag on the `ai-workspace` skeleton repo, §2); **`<project>` → bumps that project** (its manifest + tag on its repo). It resolves the current version from the version source *and* the latest git tag (stops on drift), proposes the major/minor/patch bump **from the changelog's `[Unreleased]` evidence and confirms it**, runs the project's real gate (refusing to tag red code), then renames `[Unreleased]` → `[X.Y.Z] - <date>` (date from the system), bumps the version source, commits, and tags — **stopping before push** (the push stays the user's checkpoint). Built so a weaker agent can't invent a version, hardcode a date, or tag a failing gate.
 - **`/new-spec <project> <domain>`** authors (or retrofits) one domain's `SPEC.md` from `SPEC.template.md` — the generative **Minimal Shape** + enforcement-tagged **Rules**. Its substance is a **verification procedure that keeps every tag honest**: find the real gate in `package.json` (never invent one), read the code for the true shape, and tag each rule **only from evidence** (`[lint]` only if the linter checks it, `[test:x]` only if the test exists) — **under-claim to `[review]` when unsure**. Then wires the Doc-Map + router-table rows and runs the gate to prove it. Built so a *weaker* agent can't fabricate enforcement; `knowledge-viewer`'s `doc/SPEC.md` (lint pole) and `search/SPEC.md` (review pole) are the worked examples.
 - **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc, **doc collisions** — the same fact restated across MISSION and CLAUDE.md, per the §6 ownership rule — and, for `.gravity/` projects, **index drift** between the domain folders and the four registry owners: a folder with no Doc-Map / MISSION-row / PLAN-status entry, or a row pointing at a folder that's gone), and orphans — producing a one-page report. Read-only by default. Use weekly.
 - **`/mission <project>`** re-orients on a single project: reads its four docs — plus `ARCHITECTURE.html` if present, and the `.gravity/` Doc Map + per-domain status spine for faceted projects (§6) — and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.
-- **`HANDBOOK.md`** is the human-facing guide — workflows, slash command cheat sheet, glossary. Not auto-loaded; agents may read it when explicitly asked.
+- **`docs/HANDBOOK.md`** is the human-facing guide — workflows, slash command cheat sheet, glossary. Not auto-loaded; agents may read it when explicitly asked.

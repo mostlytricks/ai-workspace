@@ -33,7 +33,7 @@ You are running `/adopt-gravity` from `ai-workspace/` to move project `$ARGUMENT
    - `README.md` / `CONTEXT.md` pointers into the moved docs.
    Report what you changed; flag anything outside the repo you can't fix (external skills, IDE files).
 
-5. **Seed the router.** Copy the three sections from `GRAVITY.template.md` into the project's **root `CLAUDE.md`** (replacing any existing flat "Docs:" pointer / Document-Authoring section): the **Doc Map**, the **read-first router table**, and the **Adding a domain** gate. Fill the Doc Map tree and the router table from the actual domains you just created.
+5. **Seed the router.** Copy the three sections from `templates/GRAVITY.template.md` into the project's **root `CLAUDE.md`** (replacing any existing flat "Docs:" pointer / Document-Authoring section): the **Doc Map**, the **read-first router table**, and the **Adding a domain** gate. Fill the Doc Map tree and the router table from the actual domains you just created. Also drop the **Codex shim** if absent: `[ -f AGENTS.md ] || cp <workspace-root>/templates/AGENTS.template.md AGENTS.md` — so the project is discoverable by agents that look for `AGENTS.md` and reach the same router. Never overwrite an existing `AGENTS.md`.
 
 6. **Establish the four registry owners** (CLAUDE.md §6 — the directory is the registry, there's no registry file):
    - **routing** → the root `CLAUDE.md` Doc Map + router table (done in step 5);

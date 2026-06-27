@@ -20,10 +20,13 @@ The point of this command is the **gate** ("is this even a domain?") and the **i
    - a "how it's built" beyond a file map → wants an `ARCHITECTURE.html`
    - a multi-step arc, not a single PR → wants a `PLAN.*.md`
    - a one-line *why* + non-goal that should win arguments → wants a MISSION row
+   - for `integration`: boundaries between services/domains such as API/client types, auth/session, ports/base URLs, shared env, queues/events, webhooks, database access boundaries, or required change order
+
+   integration is reserved for contracts between services/domains, not a new project type.
 
    If it fails the gate, **don't mint a folder.** Say so and recommend the alternative: a `PLAN.<slug>.md` slice under an existing domain, or an `ops/` folder for cross-cutting work. Stop there unless the user overrides.
 
-2. **Create the folder, minimal.** Make `.gravity/<domain>/` and a starter `.gravity/<domain>/PLAN.md` — usually the *only* file on day one (docs are recognized only when present). Seed `PLAN.md` with the domain's intent, an `○ planned` status, and the first concrete next step. Add `SPEC.md` / `ARCHITECTURE.html` only if the user says they're needed now.
+2. **Create the folder, minimal.** Make `.gravity/<domain>/` and a starter `.gravity/<domain>/PLAN.md` — usually the *only* file on day one (docs are recognized only when present). Seed `PLAN.md` with the domain's intent, an `○ planned` status, and the first concrete next step. Add `SPEC.md` / `ARCHITECTURE.html` only if the user says they're needed now. Exception: for an `integration` domain, prefer creating `SPEC.md` immediately (via `/new-spec`, which uses the template's **INTEGRATION VARIANT** — Boundary Map + Change Order) when the user is asking the agent to prepare cross-boundary coding rules; otherwise `CONTRACT.md` is enough.
 
 3. **Wire all four registry indexes** (this is the part that's easy to forget — do every one):
    - **Doc Map** in the root `CLAUDE.md` → add the `<domain>/ …` line.

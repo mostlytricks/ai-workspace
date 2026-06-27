@@ -36,6 +36,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - Flag rows whose `last-touched` date disagrees with the project's CONTEXT.md `Last touched`.
    - Flag entries in `repos/` that have no junction in any tier — these are orphans (storage with no view), unless `PROJECTS.md` lists them under "Not surfaced in a tier (intentional)".
    - Flag projects junctioned into more than one tier at once — only one tier per project.
+   - **Missing Codex shim:** flag any project with a `CLAUDE.md` but **no `AGENTS.md`** — it won't be discoverable by agents that look for `AGENTS.md` (Codex). The fix is `cp templates/AGENTS.template.md <project>/AGENTS.md`. New projects get it automatically via `/init-project` / `/promote`; this catches ones created before the shim existed.
 
 7. **Doc-pipeline drift** (only for projects that adopted the optional four-doc pipeline — have `MISSION.html` and/or `IMPLEMENTATION_PLAN.md`):
    - **Non-goal drift:** does anything in CONTEXT.md Completed / Current State push toward something MISSION lists under Current Non-Goals? Flag it — this is the highest-value catch.
@@ -68,6 +69,7 @@ Projects on disk with no CONTEXT.md. Either initialize them or move to archive/.
 ## Index drift
 PROJECTS.md disagrees with disk. Reconcile:
 - <description of each mismatch>
+- 🧩 <name> | NO AGENTS.md — Codex shim missing; `cp templates/AGENTS.template.md <project>/AGENTS.md`
 
 ## Doc-pipeline drift
 Only for projects on the four-doc pipeline. Omit if none.

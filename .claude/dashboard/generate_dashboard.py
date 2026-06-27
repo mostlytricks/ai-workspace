@@ -12,7 +12,7 @@ Why this shape:
 
 Design: the visual system is specified in DESIGN.dashboard.md (premium glassmorphism,
 deep-navy palette, luminous glow gradients). This is the dashboard's OWN identity and is
-deliberately distinct from the muted-teal flat theme used for reading docs (DOC_THEME.md).
+deliberately distinct from the muted-teal flat theme used for reading docs (DESIGN.docs.md).
 
 Run from anywhere:
     python .claude/dashboard/generate_dashboard.py

@@ -10,21 +10,21 @@
 # --- root meta files (the skeleton) ---
 !.gitignore
 !README.md
+!AGENTS.md
 !CLAUDE.md
-!MISSION.html
-!HANDBOOK.md
 !PROJECTS.md
+!CHANGELOG.md
+!VERSION
 
-# --- per-project stencils + shared doc theme ---
-!CLAUDE.template.md
-!CONTEXT.template.md
-!MISSION.template.html
-!IMPLEMENTATION_PLAN.template.md
-!ARCHITECTURE.template.html
-!DOC_THEME.md
-!SPEC.template.md
-!WALKTHROUGH.template.md
-!DESIGN.template.md
+# --- read-docs: human/browser guides (docs/) ---
+# HANDBOOK.md (workflows), MISSION.html (the workspace's why), DESIGN.docs.md (HTML-doc theme)
+!docs/
+!docs/**
+
+# --- per-project stencils (templates/) ---
+# All *.template.* — copied into new projects by the commands/scripts.
+!templates/
+!templates/**
 
 # --- workspace tooling (commands, scripts, dashboard generator) ---
 !.claude/

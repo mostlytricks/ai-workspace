@@ -70,10 +70,11 @@ ai-workspace/
 ## Repo layout
 
 ```text
-CLAUDE.md            # Agent operating manual (rules & invariants)
-HANDBOOK.md          # Human guide: workflows, command cheatsheet, glossary
+CLAUDE.md            # Agent operating manual (rules & invariants) — auto-loads
+AGENTS.md            # Codex-compatible shim → points to CLAUDE.md
 PROJECTS.md          # Live index of every project + current focus
-CLAUDE.template.md   # Per-project stable-identity stencil
-CONTEXT.template.md  # Per-project session-handoff stencil
+VERSION  CHANGELOG.md # Gravity's own SemVer + changelog
+docs/                # Human/browser read-docs: HANDBOOK.md, MISSION.html, DESIGN.docs.md
+templates/           # Per-project/-domain stencils (all *.template.*)
 .claude/commands/    # Workspace slash commands
 ```

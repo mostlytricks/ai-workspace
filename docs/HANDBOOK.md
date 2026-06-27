@@ -33,7 +33,13 @@ Run from the `ai-workspace/` root in Claude Code.
 | `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` and the `.gravity/` Doc Map if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
 | `/adopt-gravity <name>` | Retrofit the `.gravity/` doc system into a doc-heavy project: relocate the heavy docs out of the root into per-domain `.gravity/` folders (`git mv`), seed the root-`CLAUDE.md` router, wire the four registry owners. Proposes the move table and confirms before touching disk; doesn't commit. |
 | `/new-domain <name> <domain>` | Mint one domain inside a project's `.gravity/`: run the *is-it-a-domain?* gate, create `.gravity/<domain>/PLAN.md`, and wire all four indexes (Doc Map, router table, MISSION row, status spine) so it's never orphaned. |
+| `/new-spec <name> <domain>` | Author (or retrofit) one domain's `SPEC.md` from `SPEC.template.md` — the generative Minimal Shape + enforcement-tagged Rules. Finds the real gate, tags each rule only from evidence, wires the Doc-Map + router rows, runs the gate to prove it. |
+| `/cut-release [name]` | Cut a versioned release with one Change Order. **No arg → bumps gravity itself** (`VERSION` + tag on the workspace skeleton repo); **`<name>` → bumps that project** (its manifest + tag). Resolves the version (stops on tag-vs-file drift), proposes + confirms the major/minor/patch bump from the changelog's `[Unreleased]`, runs the gate (won't tag red code), rewrites the changelog, bumps, commits, tags — **stops before push**. |
+| `/retire <name>` | End a project's lifecycle: print a read-only risk card (remote? commits? uncommitted? referenced elsewhere?), then on your choice **archive** (junction → `archive/`, reversible) or **delete** (detach every junction, remove the real folder, permanent). Reconciles `PROJECTS.md` + regenerates the dashboard. |
 | `/dashboard` | One-screen status across all four tiers; active projects on the full pipeline also show their mission + current phase. Regenerates the visual HTML dashboard. |
+| `/open-dashboard` | The one-tap visual shortcut: regenerate the HTML dashboard from `PROJECTS.md` and **open it in the browser** — no terminal report. Use when you just want to *see* the dashboard. |
+| `/open-mission [project]` | Open a project's `MISSION.html` in the browser (root or `.gravity/`); no arg opens the workspace's own. Authored doc — just locates + launches, never regenerates. |
+| `/open-architecture [project] [facet]` | Open a project's `ARCHITECTURE.html` in the browser — the system overview, or a named facet (`.gravity/<facet>/ARCHITECTURE.html`). Locates + launches; never regenerates. No arg → explains gravity's own architecture lives in `CLAUDE.md §1`. |
 
 ---
 
@@ -43,7 +49,7 @@ Every project carries two files: `CLAUDE.md` (stable identity) and `CONTEXT.md` 
 
 | Doc | Answers | Changes | Why this format |
 |---|---|---|---|
-| `MISSION.html` | **Why** — north star, principles, non-goals | rarely | HTML — a stable thing you *read* in a browser; styled via `DOC_THEME.md` |
+| `MISSION.html` | **Why** — north star, principles, non-goals | rarely | HTML — a stable thing you *read* in a browser; styled via `DESIGN.docs.md` |
 | `CLAUDE.md` | **How** — identity, stack, constraints | on refactors | Markdown — auto-loads into the agent |
 | `IMPLEMENTATION_PLAN.md` | **What/next** — phases, locked decisions, the gate | per phase | Markdown — the agent edits it, so clean diffs win |
 | `CONTEXT.md` | **Now** — state + the one next step | per session | Markdown — auto-loads into the agent |
@@ -52,7 +58,7 @@ It's **opt-in**. Most projects don't need it; the overhead only pays off when th
 
 **One concern, one home.** These docs answer different questions, so they shouldn't collide — but a fact written in two of them drifts into two different facts. Each concern has one canonical owner; another doc that needs it *links* rather than restates. Why → `MISSION.html`; how-to-behave/stack/secrets → `CLAUDE.md`; what's-next → `IMPLEMENTATION_PLAN.md`; now → `CONTEXT.md`. The classic overlap is the architectural seam: MISSION owns the one-line *principle*, CLAUDE.md owns the *mechanics* and points back. `/triage` flags collisions (the same fact restated across docs).
 
-**Optional fifth doc — `ARCHITECTURE.html`.** When "how it's built" outgrows CLAUDE.md's Entry Points (multiple services, non-obvious data flow, several contributors), add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme via `DOC_THEME.md`) as the canonical home for component boundaries, the seam's mechanics, and data contracts. Recognized when present (`/mission` reads it, `/triage` checks it), never mandated — a file map in CLAUDE.md is enough for most projects.
+**Optional fifth doc — `ARCHITECTURE.html`.** When "how it's built" outgrows CLAUDE.md's Entry Points (multiple services, non-obvious data flow, several contributors), add a browser-read `ARCHITECTURE.html` (copy `ARCHITECTURE.template.html`, theme via `DESIGN.docs.md`) as the canonical home for component boundaries, the seam's mechanics, and data contracts. Recognized when present (`/mission` reads it, `/triage` checks it), never mandated — a file map in CLAUDE.md is enough for most projects.
 
 ---
 
@@ -116,8 +122,8 @@ Otherwise prefer `repos/`. Same-drive `mv` is metadata-only and instant, so brin
 $name = "<name>"
 New-Item -ItemType Directory -Path "repos\$name" | Out-Null
 New-Item -ItemType Junction   -Path "active\$name" -Target "repos\$name" | Out-Null
-Copy-Item CLAUDE.template.md  "repos\$name\CLAUDE.md"
-Copy-Item CONTEXT.template.md "repos\$name\CONTEXT.md"
+Copy-Item templates\CLAUDE.template.md  "repos\$name\CLAUDE.md"
+Copy-Item templates\CONTEXT.template.md "repos\$name\CONTEXT.md"
 Set-Location "active\$name"
 git init
 ```
@@ -127,8 +133,8 @@ git init
 name="<name>"
 mkdir -p "repos/$name"
 python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
-cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
-cp CONTEXT.template.md "repos/$name/CONTEXT.md"
+cp templates/CLAUDE.template.md  "repos/$name/CLAUDE.md"
+cp templates/CONTEXT.template.md "repos/$name/CONTEXT.md"
 cd "active/$name"
 git init
 ```
@@ -157,8 +163,8 @@ $name = "old-thing"
 Remove-Item -Recurse -Force "$src\node_modules","$src\.venv","$src\target","$src\build" -ErrorAction SilentlyContinue
 Move-Item   $src "repos\$name"
 New-Item    -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
-if (-not (Test-Path "repos\$name\CLAUDE.md"))  { Copy-Item CLAUDE.template.md  "repos\$name\CLAUDE.md" }
-if (-not (Test-Path "repos\$name\CONTEXT.md")) { Copy-Item CONTEXT.template.md "repos\$name\CONTEXT.md" }
+if (-not (Test-Path "repos\$name\CLAUDE.md"))  { Copy-Item templates\CLAUDE.template.md  "repos\$name\CLAUDE.md" }
+if (-not (Test-Path "repos\$name\CONTEXT.md")) { Copy-Item templates\CONTEXT.template.md "repos\$name\CONTEXT.md" }
 Set-Location "active\$name"
 # reinstall deps, then edit ../../PROJECTS.md
 ```
@@ -170,8 +176,8 @@ name="old-thing"
 rm -rf "$src/node_modules" "$src/.venv" "$src/target" "$src/build"
 mv "$src" "repos/$name"
 python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
-[ -f "repos/$name/CLAUDE.md" ]  || cp CLAUDE.template.md  "repos/$name/CLAUDE.md"
-[ -f "repos/$name/CONTEXT.md" ] || cp CONTEXT.template.md "repos/$name/CONTEXT.md"
+[ -f "repos/$name/CLAUDE.md" ]  || cp templates/CLAUDE.template.md  "repos/$name/CLAUDE.md"
+[ -f "repos/$name/CONTEXT.md" ] || cp templates/CONTEXT.template.md "repos/$name/CONTEXT.md"
 cd "active/$name"
 # reinstall deps, then edit ../../PROJECTS.md
 ```
@@ -187,8 +193,8 @@ cd "active/$name"
 $src  = "C:\path\to\old-thing"
 $name = "old-thing"
 New-Item -ItemType Junction -Path "active\$name" -Target $src | Out-Null
-if (-not (Test-Path "$src\CLAUDE.md"))  { Copy-Item CLAUDE.template.md  "$src\CLAUDE.md" }
-if (-not (Test-Path "$src\CONTEXT.md")) { Copy-Item CONTEXT.template.md "$src\CONTEXT.md" }
+if (-not (Test-Path "$src\CLAUDE.md"))  { Copy-Item templates\CLAUDE.template.md  "$src\CLAUDE.md" }
+if (-not (Test-Path "$src\CONTEXT.md")) { Copy-Item templates\CONTEXT.template.md "$src\CONTEXT.md" }
 ```
 
 **Bash:**
@@ -196,8 +202,8 @@ if (-not (Test-Path "$src\CONTEXT.md")) { Copy-Item CONTEXT.template.md "$src\CO
 src="C:/path/to/old-thing"
 name="old-thing"
 python .claude/scripts/link_project.py "active/$name" "$src"   # junction (Win) / symlink (POSIX)
-[ -f "$src/CLAUDE.md" ]  || cp CLAUDE.template.md  "$src/CLAUDE.md"
-[ -f "$src/CONTEXT.md" ] || cp CONTEXT.template.md "$src/CONTEXT.md"
+[ -f "$src/CLAUDE.md" ]  || cp templates/CLAUDE.template.md  "$src/CLAUDE.md"
+[ -f "$src/CONTEXT.md" ] || cp templates/CONTEXT.template.md "$src/CONTEXT.md"
 ```
 
 ---
@@ -222,8 +228,8 @@ Move-Item "incubator\$name" "repos\$name"
 New-Item -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
 Set-Location "active\$name"
 if (-not (Test-Path ".git"))       { git init }
-if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\CLAUDE.template.md  CLAUDE.md }
-if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\CONTEXT.template.md CONTEXT.md }
+if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\templates\CLAUDE.template.md  CLAUDE.md }
+if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\templates\CONTEXT.template.md CONTEXT.md }
 ```
 
 **Bash:**
@@ -233,8 +239,8 @@ mv "incubator/$name" "repos/$name"
 python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
 cd "active/$name"
 [ -d ".git" ]       || git init
-[ -f "CLAUDE.md" ]  || cp ../../CLAUDE.template.md  CLAUDE.md
-[ -f "CONTEXT.md" ] || cp ../../CONTEXT.template.md CONTEXT.md
+[ -f "CLAUDE.md" ]  || cp ../../templates/CLAUDE.template.md  CLAUDE.md
+[ -f "CONTEXT.md" ] || cp ../../templates/CONTEXT.template.md CONTEXT.md
 ```
 
 ---
@@ -248,21 +254,21 @@ When a project has grown a real arc and you keep re-deriving "what was this for 
    **Bash:**
    ```bash
    name="<name>"
-   [ -f "repos/$name/MISSION.html" ]             || cp MISSION.template.html             "repos/$name/MISSION.html"
-   [ -f "repos/$name/IMPLEMENTATION_PLAN.md" ]   || cp IMPLEMENTATION_PLAN.template.md   "repos/$name/IMPLEMENTATION_PLAN.md"
+   [ -f "repos/$name/MISSION.html" ]             || cp templates/MISSION.template.html             "repos/$name/MISSION.html"
+   [ -f "repos/$name/IMPLEMENTATION_PLAN.md" ]   || cp templates/IMPLEMENTATION_PLAN.template.md   "repos/$name/IMPLEMENTATION_PLAN.md"
    ```
 
    **PowerShell:**
    ```powershell
    $name = "<name>"
-   if (-not (Test-Path "repos\$name\MISSION.html"))           { Copy-Item MISSION.template.html           "repos\$name\MISSION.html" }
-   if (-not (Test-Path "repos\$name\IMPLEMENTATION_PLAN.md")) { Copy-Item IMPLEMENTATION_PLAN.template.md "repos\$name\IMPLEMENTATION_PLAN.md" }
+   if (-not (Test-Path "repos\$name\MISSION.html"))           { Copy-Item templates\MISSION.template.html           "repos\$name\MISSION.html" }
+   if (-not (Test-Path "repos\$name\IMPLEMENTATION_PLAN.md")) { Copy-Item templates\IMPLEMENTATION_PLAN.template.md "repos\$name\IMPLEMENTATION_PLAN.md" }
    ```
 
 2. **Fill `MISSION.html` first** (the why) — open it in a browser as you go. The `.lede` line matters most: `/dashboard` and `/mission` read it verbatim. Nail the **Current Non-Goals** section — that's what keeps an agent on-mission and what `/triage` checks recent work against.
 3. **Then `IMPLEMENTATION_PLAN.md`** (the what/next) — list the phases done/next/todo, the locked decisions, and the gate (the exact commands a phase must pass). Move the multi-phase arc *out* of `CONTEXT.md` and into here; leave `CONTEXT.md` holding only *now*.
 4. Run `/mission <name>` to sanity-check it reads well and produces useful questions.
-5. The `MISSION.html` styling comes preloaded from the theme; if you hand-roll other HTML docs, match `DOC_THEME.md`.
+5. The `MISSION.html` styling comes preloaded from the theme; if you hand-roll other HTML docs, match `DESIGN.docs.md`.
 
 > Or just ask the agent: *"adopt the full doc pipeline for `<name>`"* — it'll copy the templates and help you fill them.
 
@@ -277,6 +283,8 @@ It's **opt-in and recognized only when present** — for projects that outgrew t
 **Retrofit an existing project** — run `/adopt-gravity <name>`. The agent inventories the root, proposes a before→after move table (grouping docs by domain — *you confirm the boundaries*), `git mv`s them into `.gravity/<domain>/` folders, fixes cross-references, seeds the root-`CLAUDE.md` router from `GRAVITY.template.md`, and wires the four registry owners (directory · CLAUDE.md routing · MISSION why-rows · IMPLEMENTATION_PLAN status). It stops to confirm before moving anything and doesn't commit.
 
 **Add a domain later** — run `/new-domain <name> <domain>`. It runs the *is-it-a-domain?* gate first (most features are a `PLAN.*.md` slice under an existing domain, not a new folder), then creates `.gravity/<domain>/PLAN.md` and **wires all four indexes** so the domain is never orphaned. The full gate + lifecycle lives in the project's root `CLAUDE.md` "Adding a domain" section (seeded from `GRAVITY.template.md`).
+
+**Add an integration layer** — use the normal domain flow with the reserved name `integration` when a project has cross-boundary rules that repeatedly affect more than one service/domain: API/client type generation, auth/session flow, ports/base URLs, shared env, queues/events, webhooks, database access boundaries, or required change order. Keep small facts in `CONTRACT.md`; promote to `.gravity/integration/SPEC.md` when agents need a durable, enforcement-tagged contract before coding across boundaries. This is service-aware gravity, not a separate project topology.
 
 > Or just ask the agent: *"move `<name>` onto the `.gravity/` doc system"* / *"add a `<domain>` domain to `<name>`"*.
 
@@ -296,11 +304,12 @@ It's **opt-in and recognized only when present** — for projects that outgrew t
 - **`MISSION.html`** — optional per-project "why" doc: north star, principles, non-goals. The slowest-changing of the four docs; read in a browser. Copy from `MISSION.template.html`. Part of the [four-doc pipeline](#the-four-doc-pipeline-optional).
 - **`IMPLEMENTATION_PLAN.md`** — optional per-project "what/next" doc: phase roadmap, locked decisions, the verification gate, open questions. Changes per phase; the agent edits it. Copy from `IMPLEMENTATION_PLAN.template.md`. The multi-phase arc lives here; `CONTEXT.md` holds only *now*.
 - **Four-doc pipeline** — the optional `MISSION.html` + `CLAUDE.md` + `IMPLEMENTATION_PLAN.md` + `CONTEXT.md` set, ordered by how often each changes (rarely → per-session). Opt-in for ambitious `active/` projects. See workspace `CLAUDE.md` §6.
-- **`ARCHITECTURE.html`** — optional per-project *fifth* doc: the canonical "how it's built" (component boundaries, the seam's mechanics, data contracts, build/deploy shape). Add only when "how it's built" outgrows CLAUDE.md's Entry Points. Browser-read; copy from `ARCHITECTURE.template.html`, styled via `DOC_THEME.md`. Recognized when present, never mandated. See workspace `CLAUDE.md` §6.
+- **`ARCHITECTURE.html`** — optional per-project *fifth* doc: the canonical "how it's built" (component boundaries, the seam's mechanics, data contracts, build/deploy shape). Add only when "how it's built" outgrows CLAUDE.md's Entry Points. Browser-read; copy from `ARCHITECTURE.template.html`, styled via `DESIGN.docs.md`. Recognized when present, never mandated. See workspace `CLAUDE.md` §6.
 - **`.gravity/`** — optional per-project directory that holds the heavy docs (everything but the root `CLAUDE.md` + `CONTEXT.md` + `README.md`), organized **by subject domain** rather than doc-type. Top level carries the cross-cutting `MISSION.html` / `ARCHITECTURE.html` / `IMPLEMENTATION_PLAN.md` / `DESIGN.md`; each `<domain>/` folder carries whichever of `ARCHITECTURE.html` (human *how*) · `SPEC.md` (agent *rules*) · `PLAN.*.md` (*what/next*) it needs. The directory **is** the domain registry — no registry file. Adopt with `/adopt-gravity`, extend with `/new-domain`. Recognized when present, never mandated (for projects that outgrew the flat root). `knowledge-viewer` is the worked example. See workspace `CLAUDE.md` §6.
 - **Domain (`.gravity/`)** — a durable subject area an agent repeatedly navigates and changes, with its own *principle* and non-goal — earns a `.gravity/<domain>/` folder. Not every feature is a domain; a one-off is a `PLAN.*.md` slice under an existing domain. The *is-it-a-domain?* gate lives in the project's root `CLAUDE.md` (seeded from `GRAVITY.template.md`).
+- **Integration domain** — optional `.gravity/integration/` folder for contracts between services/domains: API/client type flow, auth/session, ports/base URLs, shared env, queues/events, webhooks, database access boundaries, and required change order. Use it when `CONTRACT.md` is too small/flat for repeated agent work; do not use it for internal backend, frontend, or schema rules.
 - **Doc ownership** — the rule that each concern has one canonical owner doc; other docs *link* to it rather than restate it (why → MISSION, how → CLAUDE.md, what/next → PLAN, now → CONTEXT, how-it's-built → CLAUDE.md/ARCHITECTURE.html). Prevents the same fact drifting into two different facts. `/triage` flags **doc collisions** — a fact restated across docs. See workspace `CLAUDE.md` §6.
-- **`DOC_THEME.md`** — the shared warm-terminal theme for browser-read project HTML docs (`MISSION.html` and any hand-rolled architecture/design page). Stylesheet + skeleton to copy.
+- **`DESIGN.docs.md`** — the shared warm-terminal theme for browser-read project HTML docs (`MISSION.html` and any hand-rolled architecture/design page). Stylesheet + skeleton to copy.
 - **`PROJECTS.md`** — workspace-level project index at the root. Source of truth for which tier each project lives in.
 - **`HANDBOOK.md`** — this file. Human-facing guide. Not auto-loaded into agent context.
 - **Stale** — for `active/` projects, untouched >14 days. `/triage` flags these. Very stale (>30 days) should probably move to `dormant/`.
@@ -315,5 +324,5 @@ It's **opt-in and recognized only when present** — for projects that outgrew t
 - `CLAUDE.md` — agent operating manual (rules and invariants).
 - `PROJECTS.md` — current project index.
 - `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project`, `/triage`, `/mission`, `/adopt-gravity`, and `/new-domain` do).
-- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `ARCHITECTURE.template.html` · `SPEC.template.md` · `DOC_THEME.md` — the optional pipeline stencils (four-doc + optional fifth + agent spec) and the HTML doc theme.
+- `MISSION.template.html` · `IMPLEMENTATION_PLAN.template.md` · `ARCHITECTURE.template.html` · `SPEC.template.md` · `DESIGN.docs.md` — the optional pipeline stencils (four-doc + optional fifth + agent spec) and the HTML doc theme.
 - `GRAVITY.template.md` — the root-`CLAUDE.md` router block (Doc Map + read-first table + domain gate) for projects adopting the `.gravity/` doc system.
