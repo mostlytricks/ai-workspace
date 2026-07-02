@@ -30,9 +30,10 @@
 !.claude/
 !.claude/**
 
-# Generated, local-only dashboard output. The generator script stays tracked
-# (it's whitelisted above via .claude/**); this regenerated HTML is not.
+# Generated, local-only dashboard output. The generator scripts stay tracked
+# (whitelisted above via .claude/**); the regenerated HTML is not.
 .claude/dashboard/dashboard.html
+.claude/dashboard/cosmos/
 
 # Python bytecode from the helper scripts — never part of the tracked skeleton.
 .claude/**/__pycache__/

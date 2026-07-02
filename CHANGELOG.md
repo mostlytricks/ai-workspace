@@ -19,7 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **`/cosmos <project>` — the gravity star-system view** (`.claude/dashboard/generate_cosmos.py`): renders one `.gravity/` project as a cosmos — MISSION as the star, each domain a planet whose **size is doc mass, orbit distance is spine status** (◑ active inner · ✓ stable mid · ○ planned outer), and **orbit speed is activity** (PLAN count · mass · ×1.6 if active · recency boost); a ring marks a SPEC (unringed = unfenced domain at a glance), a moon marks `ARCHITECTURE.html`, satellites are `PLAN.*.md` slices in transit. Every fact is scanned live from the four registry owners — no hand-kept data, so a wrong-looking sky means index drift (`/triage`). Two renderers, one scanner: `--mode 2d` (SVG + CSS, the readable instrument) and `--mode 3d` (hand-rolled canvas perspective — drag to orbit, wheel to zoom; no libraries, no CDN, single local file). **Themeable** via `--theme`: `nebula` (default, cool indigo), `ember` (warm gold), `aurora` (deep-sea green), `void` (monochrome). Project tokens resolve through `resolve_project.py` aliases; output is gitignored under `.claude/dashboard/cosmos/`.
 
 ## [1.3.0] - 2026-07-02
 

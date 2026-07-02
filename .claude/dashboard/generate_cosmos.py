@@ -1,0 +1,632 @@
+#!/usr/bin/env python3
+"""
+generate_cosmos.py — render a project's .gravity/ as a star system (the cosmos view).
+
+The conceptual map of one project, complementing the tabular dashboard:
+
+    Star   = MISSION (the why — everything orbits it)
+    Planet = domain (.gravity/<domain>/), size = doc mass
+    Ring   = SPEC.md (the walls)         Moon = ARCHITECTURE.html (human how)
+    Satellites = PLAN.*.md (intent in transit)
+    Orbit distance = status (◑ active inner · ✓ stable mid · ○ planned outer)
+    Orbit speed = activity (PLAN count · doc mass · status · file recency)
+
+Everything is scanned live from the same four registry owners /triage checks:
+the .gravity/ folder list, the IMPLEMENTATION_PLAN.md status spine, and
+MISSION.html's per-domain rows. No hand-kept data; if the cosmos looks wrong,
+the indexes are wrong (run /triage).
+
+Two renderers, one scanner: --mode 2d (SVG+CSS, the readable instrument) and
+--mode 3d (hand-rolled canvas perspective, the orbitable observatory). Both are
+single self-contained local HTML files — no libraries, no CDN, no build step.
+
+Usage:
+    python .claude/dashboard/generate_cosmos.py <project-or-alias>
+        [--mode 2d|3d|both] [--theme nebula|ember|aurora|void] [--open]
+    python .claude/dashboard/generate_cosmos.py --list-themes
+
+Output: .claude/dashboard/cosmos/<project>[.3d].html (gitignored — regenerate).
+"""
+from __future__ import annotations
+
+import argparse
+import html as html_mod
+import json
+import math
+import re
+import sys
+import time
+import webbrowser
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from resolve_project import resolve  # noqa: E402
+
+STATUS_ORDER = {"◑": 0, "✓": 1, "○": 2}
+STATUS_LABEL = {"◑": "active", "✓": "stable", "○": "planned"}
+
+# ---------------------------------------------------------------------------
+# Themes — every color either renderer uses. "nebula" is the default (cool
+# indigo, white-blue star); "ember" is the original warm-gold look.
+# ---------------------------------------------------------------------------
+THEMES: dict[str, dict] = {
+    "nebula": {  # cool indigo · white-blue star · ice-blue activity
+        "bg": "#070b16", "bg2": "#0e1630", "panel": "#0a101f", "card": "#0d1526",
+        "line": "#1c2740", "ink": "#dfe6f4", "dim": "#8b98b8",
+        "star": ["#f4f8ff", "#9db8ff", "#22398f"],
+        "star_glow": "#9db8ff", "star_label": "#0d1c52",
+        "status": {"◑": "#7aa2ff", "✓": "#63d3a6", "○": "#56617f"},
+        "grad": {"◑": ["#e6eeff", "#3757c9"], "✓": ["#d2f5e0", "#2e7d5b"],
+                 "○": ["#8fa3c8", "#39445e"]},
+        "sat": "#a9c4ff", "ring": "#c9d6f2", "moon": "#b8c6e6",
+        "bgstar": "#cdd8f0", "guard": "#d99",
+    },
+    "ember": {  # the original — warm gold star, amber activity
+        "bg": "#070b16", "bg2": "#0d1428", "panel": "#0a101f", "card": "#0d1526",
+        "line": "#1c2740", "ink": "#dfe6f4", "dim": "#8b98b8",
+        "star": ["#fff7dc", "#ffd166", "#b0500f"],
+        "star_glow": "#ffd166", "star_label": "#5a3403",
+        "status": {"◑": "#ffb84d", "✓": "#7fd4a8", "○": "#5a6b8c"},
+        "grad": {"◑": ["#ffe3ae", "#c76b1d"], "✓": ["#d2f5e0", "#2e7d5b"],
+                 "○": ["#8fa3c8", "#39445e"]},
+        "sat": "#ffd166", "ring": "#c9d6f2", "moon": "#b8c6e6",
+        "bgstar": "#cdd8f0", "guard": "#d99",
+    },
+    "aurora": {  # deep-sea green · teal star · mint activity
+        "bg": "#04100c", "bg2": "#0a1f18", "panel": "#071711", "card": "#0b1d16",
+        "line": "#173428", "ink": "#dcf2e8", "dim": "#84a898",
+        "star": ["#eafff6", "#57e0b1", "#0b5c44"],
+        "star_glow": "#57e0b1", "star_label": "#043326",
+        "status": {"◑": "#57e0b1", "✓": "#6db9ed", "○": "#4c6a5e"},
+        "grad": {"◑": ["#dcfff2", "#1e8a67"], "✓": ["#d9edfb", "#2a6b9c"],
+                 "○": ["#8fb8a8", "#2e4a3f"]},
+        "sat": "#a7f3d0", "ring": "#c6ead9", "moon": "#a8cfc0",
+        "bgstar": "#cdeadd", "guard": "#e8a",
+    },
+    "void": {  # monochrome — for screenshots and quiet moods
+        "bg": "#050507", "bg2": "#101014", "panel": "#0a0a0d", "card": "#111116",
+        "line": "#26262e", "ink": "#e8e8ec", "dim": "#8a8a94",
+        "star": ["#ffffff", "#c9c9d2", "#4a4a55"],
+        "star_glow": "#c9c9d2", "star_label": "#26262e",
+        "status": {"◑": "#e8e8ec", "✓": "#9a9aa4", "○": "#4a4a55"},
+        "grad": {"◑": ["#ffffff", "#7a7a86"], "✓": ["#d5d5dc", "#55555f"],
+                 "○": ["#8a8a94", "#2e2e36"]},
+        "sat": "#d5d5dc", "ring": "#b5b5c0", "moon": "#9a9aa4",
+        "bgstar": "#d5d5dc", "guard": "#c99",
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Scanner — reads the four registry owners live from disk.
+# ---------------------------------------------------------------------------
+def strip_tags(s: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", s)).strip()
+
+
+def scan(project: Path) -> dict:
+    g = project / ".gravity"
+    if not g.is_dir():
+        sys.exit(f"no .gravity/ in {project} — the cosmos needs a faceted project "
+                 "(see workspace CLAUDE.md §6 / adopt with /adopt-gravity)")
+
+    # 1) domains = the directory (the registry IS the folder list)
+    domains: dict[str, dict] = {}
+    now = time.time()
+    for d in sorted(p for p in g.iterdir() if p.is_dir()):
+        entries = [p for p in d.iterdir() if p.is_file()]
+        files = sorted(p.name for p in entries)
+        newest = max((p.stat().st_mtime for p in entries), default=0)
+        age_days = (now - newest) / 86400 if newest else 999
+        domains[d.name] = {
+            "name": d.name,
+            "spec": "SPEC.md" in files,
+            "arch": "ARCHITECTURE.html" in files,
+            "plans": [f for f in files if f.startswith("PLAN")],
+            "files": files,
+            "age_days": age_days,
+            "status": "○", "spine": "", "why": "", "nongoal": "",
+        }
+
+    # 2) status spine from IMPLEMENTATION_PLAN.md
+    plan = g / "IMPLEMENTATION_PLAN.md"
+    goal = ""
+    if plan.exists():
+        text = plan.read_text(encoding="utf-8", errors="replace")
+        for m in re.finditer(r"^\|\s*`([\w-]+)`\s*\|\s*([✓◑○])\s*\|\s*(.+?)\s*\|\s*$",
+                             text, re.M):
+            name, status, spine = m.group(1), m.group(2), m.group(3)
+            if name in domains:
+                domains[name]["status"] = status
+                domains[name]["spine"] = re.sub(r"\*\*(.+?)\*\*", r"\1", spine)
+        gm = re.search(r"^goal:\s*(.+?)(?=^\S|\Z)", text, re.M | re.S)
+        if gm:
+            goal = re.sub(r"\s+", " ", gm.group(1)).strip()
+
+    # 3) per-domain why from MISSION.html rows.
+    #    td captures must not cross a </tr>: a two-column table earlier in the
+    #    file would otherwise backtrack across rows and swallow domain rows.
+    mission = g / "MISSION.html"
+    title = project.name
+    if mission.exists():
+        mtext = mission.read_text(encoding="utf-8", errors="replace")
+        tm = re.search(r"<title>(.*?)</title>", mtext, re.S)
+        if tm:
+            title = strip_tags(tm.group(1))
+        row_td = r"((?:(?!</tr>).)*?)"
+        for m in re.finditer(
+                r"<tr><td><code>([\w-]+)</code></td><td>" + row_td
+                + r"</td><td>" + row_td + r"</td></tr>", mtext, re.S):
+            name = m.group(1)
+            if name in domains:
+                domains[name]["why"] = strip_tags(m.group(2))
+                domains[name]["nongoal"] = strip_tags(m.group(3))
+
+    return {"project": project.name, "title": title, "goal": goal,
+            "domains": list(domains.values())}
+
+
+def prepare(data: dict) -> list[dict]:
+    """Sort by status (active in, planned out) and compute the orbit physics."""
+    doms = sorted(data["domains"],
+                  key=lambda d: (STATUS_ORDER[d["status"]], d["name"]))
+    for i, d in enumerate(doms):
+        mass = len(d["files"])
+        # activity drives speed: more work on the domain = faster orbit
+        work = 3 * len(d["plans"]) + mass
+        if d["status"] == "◑":
+            work *= 1.6                      # actively-worked domains run hot
+        work *= 1 + max(0.0, (21 - d["age_days"]) / 21)  # touched lately = hotter
+        d.update(
+            r=150 + i * 42, ang0=(i * 137.508 + 210) % 360,
+            size=9 + min(mass, 8) * 1.6, mass=mass,
+            work=round(work, 1), period=round(max(16, 260 / (1 + work / 8))),
+        )
+    return doms
+
+
+# ---------------------------------------------------------------------------
+# Shared HTML pieces (panel + cards are identical in both renderers)
+# ---------------------------------------------------------------------------
+def panel_css(t: dict) -> str:
+    return f"""
+  :root {{ --bg:{t["bg"]}; --ink:{t["ink"]}; --dim:{t["dim"]}; --line:{t["line"]}; }}
+  * {{ box-sizing:border-box }}
+  #panel {{ width:340px; border-left:1px solid var(--line); padding:18px 20px;
+    overflow-y:auto; background:{t["panel"]} }}
+  #panel h1 {{ font-size:15px; margin:0 0 2px }}
+  .goal {{ color:var(--dim); font-size:12.5px; margin-bottom:14px }}
+  .census {{ font-size:12px; color:var(--dim); margin-bottom:14px }}
+  .census b {{ color:var(--ink) }}
+  .card {{ display:none; border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; margin-bottom:12px; background:{t["card"]} }}
+  .card.on {{ display:block; animation:fadein .25s }}
+  @keyframes fadein {{ from {{ opacity:0; transform:translateY(4px) }} }}
+  .card-h {{ display:flex; align-items:center; gap:8px; margin-bottom:8px }}
+  .card-h code {{ font-size:14px; font-weight:700 }}
+  .dot {{ width:10px; height:10px; border-radius:50% }}
+  .st {{ margin-left:auto; font-size:11.5px; color:var(--dim) }}
+  .why {{ font-size:13px; margin-bottom:6px }}
+  .ng {{ font-size:12px; color:{t["guard"]}; margin-bottom:6px }}
+  .spine {{ font-size:12px; color:var(--dim); margin-bottom:8px }}
+  .chips {{ display:flex; flex-wrap:wrap; gap:5px }}
+  .chip {{ font-size:11px; padding:2px 8px; border-radius:20px; border:1px solid var(--line) }}
+  .chip-spec {{ color:{t["ring"]} }} .chip-arch {{ color:{t["moon"]} }}
+  .chip-plan {{ color:{t["sat"]} }} .chip-none {{ color:#666 }}
+  .orb {{ font-size:11.5px; color:var(--dim); margin-top:8px }}
+  .path {{ font-family:monospace; font-size:11px; color:#556; margin-top:8px }}
+  #hint {{ color:var(--dim); font-size:12.5px }}
+  #legend {{ position:absolute; left:16px; bottom:12px; font-size:11.5px;
+    color:var(--dim); background:{t["panel"]}cc; border:1px solid var(--line);
+    border-radius:8px; padding:8px 12px }}
+  #legend span {{ margin-right:14px }}"""
+
+
+def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
+    esc = html_mod.escape
+    cards = []
+    for i, d in enumerate(doms):
+        docs = []
+        if d["spec"]:
+            docs.append('<span class="chip chip-spec">⊚ SPEC — the walls</span>')
+        if d["arch"]:
+            docs.append('<span class="chip chip-arch">☾ ARCHITECTURE — the how</span>')
+        for p in d["plans"]:
+            docs.append(f'<span class="chip chip-plan">· {esc(p)}</span>')
+        if not docs:
+            docs.append('<span class="chip chip-none">docs pending</span>')
+        why = esc(d["why"]) or "<em>no MISSION row — unwired? (/triage would flag)</em>"
+        ng = f'<div class="ng">guard — {esc(d["nongoal"])}</div>' if d["nongoal"] else ""
+        spine = f'<div class="spine">{esc(d["spine"][:400])}</div>' if d["spine"] else ""
+        touched = ("today" if d["age_days"] < 1 else
+                   f'{d["age_days"]:.0f}d ago' if d["age_days"] < 900 else "long ago")
+        cards.append(
+            f'<div class="card" id="card-{i}">'
+            f'<div class="card-h"><span class="dot" style="background:{t["status"][d["status"]]}"></span>'
+            f'<code>{esc(d["name"])}</code><span class="st">{d["status"]} {STATUS_LABEL[d["status"]]}</span></div>'
+            f'<div class="why">{why}</div>{ng}{spine}'
+            f'<div class="chips">{"".join(docs)}</div>'
+            f'<div class="orb">orbital period {d["period"]}s · activity {d["work"]} · touched {touched}</div>'
+            f'<div class="path">.gravity/{esc(d["name"])}/</div></div>')
+
+    panel = f"""<aside id="panel">
+  <h1>{esc(data["title"])}</h1>
+  <div class="goal">{esc(data["goal"][:220])}</div>
+  <div class="census"><b>{len(doms)}</b> domains ·
+    <b>{sum(1 for d in doms if d["spec"])}</b> ringed (SPEC) ·
+    <b>{sum(len(d["plans"]) for d in doms)}</b> PLAN satellites in transit</div>
+  <div id="hint">HINT_TEXT</div>
+  <div class="card" id="card-sun">
+    <div class="card-h"><span class="dot" style="background:{t["star"][1]}"></span>
+    <code>MISSION</code><span class="st">☀ the center of gravity</span></div>
+    <div class="why">{esc(data["goal"][:300])}</div>
+    <div class="path">.gravity/MISSION.html</div></div>
+  {"".join(cards)}
+</aside>"""
+
+    counts = {s: sum(1 for d in doms if d["status"] == s) for s in "◑✓○"}
+    legend = (f'<span>☀ mission</span><span>● domain (size = doc mass)</span>'
+              f'<span>⊚ ring = SPEC</span><span>☾ moon = ARCHITECTURE</span>'
+              f'<span>· sats = PLANs</span><span>speed = activity</span>'
+              f'<span style="color:{t["status"]["◑"]}">◑ active {counts["◑"]}</span>'
+              f'<span style="color:{t["status"]["✓"]}">✓ stable {counts["✓"]}</span>'
+              f'<span style="color:{t["status"]["○"]}">○ planned {counts["○"]}</span>')
+    return panel, legend
+
+
+# ---------------------------------------------------------------------------
+# 2D renderer — SVG + CSS animation (the readable instrument)
+# ---------------------------------------------------------------------------
+def render_2d(data: dict, t: dict) -> str:
+    doms = prepare(data)
+    orbits, planets = [], []
+    for i, d in enumerate(doms):
+        r, ang, pr = d["r"], d["ang0"], d["size"]
+        color = t["status"][d["status"]]
+        dash = ' stroke-dasharray="4 7"' if d["status"] == "○" else ""
+        orbits.append(f'<circle cx="0" cy="0" r="{r}" class="orbit"{dash}/>')
+
+        body = [f'<circle r="{pr}" fill="url(#g{STATUS_ORDER[d["status"]]})" '
+                f'stroke="{color}" stroke-width="1.2" class="body"/>']
+        if d["spec"]:
+            body.append(f'<ellipse rx="{pr*1.9}" ry="{pr*0.55}" class="ring" '
+                        f'transform="rotate(-24)"/>')
+        if d["arch"]:
+            body.append(f'<circle cx="{pr+9}" cy="{-pr-4}" r="3.2" class="moon"/>')
+        for k in range(len(d["plans"])):
+            sa = math.radians(140 + k * 26)
+            sx, sy = (pr + 8) * math.cos(sa), (pr + 8) * math.sin(sa)
+            body.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="1.8" class="sat"/>')
+        body.append(f'<text y="{pr+15}" class="lbl">{d["name"]}</text>')
+        pulse = ' data-pulse="1"' if d["status"] == "◑" else ""
+
+        delay = -(ang / 360) * d["period"]
+        anim = f"animation-duration:{d['period']}s;animation-delay:{delay:.1f}s"
+        planets.append(
+            f'<g class="carrier" style="{anim}">'
+            f'<g class="planet" transform="translate({r},0)" data-i="{i}"{pulse}>'
+            f'<g class="counter" style="{anim}">{"".join(body)}</g></g></g>')
+
+    stars = "".join(
+        f'<circle cx="{(i*263)%1100-550}" cy="{(i*389)%1100-550}" '
+        f'r="{0.6+(i%3)*0.5}" class="bgstar" '
+        f'style="animation-delay:{(i%7)*0.9}s"/>' for i in range(90))
+    grads = "".join(
+        f'<radialGradient id="g{STATUS_ORDER[s]}">'
+        f'<stop offset="0%" stop-color="{t["grad"][s][0]}"/>'
+        f'<stop offset="100%" stop-color="{t["grad"][s][1]}"/></radialGradient>'
+        for s in "◑✓○")
+    svg = (
+        f'<svg id="cosmos" viewBox="-550 -550 1100 1100"><defs>'
+        f'<radialGradient id="gsun"><stop offset="0%" stop-color="{t["star"][0]}"/>'
+        f'<stop offset="45%" stop-color="{t["star"][1]}"/>'
+        f'<stop offset="100%" stop-color="{t["star"][2]}"/></radialGradient>{grads}</defs>'
+        f'{stars}{"".join(orbits)}'
+        f'<g id="sun"><circle r="52" fill="url(#gsun)"/><circle r="52" class="corona"/>'
+        f'<text y="4" class="sun-lbl">MISSION</text></g>'
+        f'{"".join(planets)}</svg>')
+
+    panel, legend = cards_html(doms, data, t)
+    panel = panel.replace("HINT_TEXT", "Busier domains orbit faster. Hovering a "
+                          "planet holds it still — click it (or the star) for its readout.")
+    esc = html_mod.escape
+    return f"""<!doctype html><html lang="en"><meta charset="utf-8">
+<title>{esc(data["project"])} — gravity cosmos</title>
+<style>{panel_css(t)}
+  body {{ margin:0; display:flex; height:100vh; overflow:hidden; color:var(--ink);
+    background:radial-gradient(1200px 800px at 35% 45%, {t["bg2"]} 0%, var(--bg) 60%);
+    font:14px/1.5 "Segoe UI",system-ui,sans-serif }}
+  #view {{ flex:1; position:relative }}
+  #cosmos {{ width:100%; height:100% }}
+  .carrier.hold, .carrier.hold .counter {{ animation-play-state:paused }}
+  .bgstar {{ fill:{t["bgstar"]}; opacity:.35; animation:twinkle 5s ease-in-out infinite }}
+  @keyframes twinkle {{ 50% {{ opacity:.08 }} }}
+  .orbit {{ fill:none; stroke:var(--line); stroke-width:1 }}
+  .carrier {{ animation:orbit linear infinite; transform-origin:0 0 }}
+  .counter {{ animation:orbit linear infinite reverse; transform-origin:0 0 }}
+  @keyframes orbit {{ to {{ transform:rotate(360deg) }} }}
+  .planet {{ cursor:pointer }}
+  .planet .body {{ transition:filter .2s }}
+  .planet:hover .body {{ filter:brightness(1.5) drop-shadow(0 0 14px currentColor) }}
+  .planet[data-pulse] .body {{ animation:pulse 3.2s ease-in-out infinite }}
+  @keyframes pulse {{ 50% {{ filter:drop-shadow(0 0 10px {t["status"]["◑"]}) }} }}
+  .ring {{ fill:none; stroke:{t["ring"]}; stroke-width:1.1; opacity:.65 }}
+  .moon {{ fill:{t["moon"]} }}
+  .sat  {{ fill:{t["sat"]}; opacity:.9 }}
+  .lbl {{ fill:var(--dim); font-size:12px; text-anchor:middle; letter-spacing:.4px }}
+  .planet:hover .lbl {{ fill:var(--ink) }}
+  .corona {{ fill:none; stroke:{t["star_glow"]}; stroke-width:2; opacity:.35;
+    animation:corona 4s ease-in-out infinite }}
+  @keyframes corona {{ 50% {{ transform:scale(1.18); opacity:.08 }} }}
+  #sun {{ cursor:pointer }}
+  .sun-lbl {{ fill:{t["star_label"]}; font-size:11px; font-weight:700;
+    text-anchor:middle; letter-spacing:1.5px }}
+</style>
+<div id="view">{svg}<div id="legend">{legend}</div></div>
+{panel}
+<script>
+  const show = id => {{
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('on'));
+    document.getElementById('hint').style.display = 'none';
+    document.getElementById(id).classList.add('on');
+  }};
+  document.querySelectorAll('.planet').forEach(p => {{
+    p.addEventListener('click', () => show('card-' + p.dataset.i));
+    const carrier = p.closest('.carrier');
+    p.addEventListener('mouseenter', () => carrier.classList.add('hold'));
+    p.addEventListener('mouseleave', () => carrier.classList.remove('hold'));
+  }});
+  document.getElementById('sun').addEventListener('click', () => show('card-sun'));
+</script>
+</html>"""
+
+
+# ---------------------------------------------------------------------------
+# 3D renderer — canvas + hand-rolled perspective (the orbitable observatory)
+# ---------------------------------------------------------------------------
+def render_3d(data: dict, t: dict) -> str:
+    doms = prepare(data)
+    payload = json.dumps([{
+        "name": d["name"], "status": d["status"], "spec": d["spec"],
+        "plans": len(d["plans"]), "arch": d["arch"],
+        "r": d["r"], "ang0": d["ang0"], "size": d["size"], "period": d["period"],
+    } for d in doms], ensure_ascii=False)
+    theme_js = json.dumps({
+        "line": t["line"], "ink": t["ink"], "dim": t["dim"], "bg": t["bg"],
+        "bg2": t["bg2"], "bgstar": t["bgstar"], "ring": t["ring"],
+        "moon": t["moon"], "sat": t["sat"], "star": t["star"],
+        "starGlow": t["star_glow"], "starLabel": t["star_label"],
+        "status": t["status"], "grad": t["grad"],
+    }, ensure_ascii=False)
+
+    panel, legend = cards_html(doms, data, t)
+    panel = panel.replace("HINT_TEXT", "Drag the sky to orbit, wheel to zoom. Hover "
+                          "holds a planet — click it (or the star) for its readout.")
+    legend += "<span>drag = orbit camera · wheel = zoom</span>"
+    esc = html_mod.escape
+    return f"""<!doctype html><html lang="en"><meta charset="utf-8">
+<title>{esc(data["project"])} — gravity cosmos 3D</title>
+<style>{panel_css(t)}
+  body {{ margin:0; display:flex; height:100vh; overflow:hidden; color:var(--ink);
+    background:var(--bg); font:14px/1.5 "Segoe UI",system-ui,sans-serif }}
+  #view {{ flex:1; position:relative; cursor:grab }}
+  #view.dragging {{ cursor:grabbing }}
+  canvas {{ display:block; width:100%; height:100% }}
+  #legend {{ pointer-events:none }}
+</style>
+<div id="view"><canvas id="c"></canvas><div id="legend">{legend}</div></div>
+{panel}
+<script>
+const DOMS = {payload};
+const T = {theme_js};
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const view = document.getElementById('view');
+let W, H, DPR = Math.min(devicePixelRatio || 1, 2);
+function resize() {{
+  W = view.clientWidth; H = view.clientHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}}
+resize(); addEventListener('resize', resize);
+
+let yaw = 0.6, pitch = 0.42, dist = 980;
+const F = 640;
+let hover = -1, dragging = false, lastX = 0, lastY = 0, moved = 0;
+let sunHit = {{ x: -999, y: -999, r: 0 }};
+
+const STARS = Array.from({{length: 260}}, (_, i) => {{
+  const a = i * 2.399963, z = 1 - 2 * ((i + .5) / 260);
+  const r = Math.sqrt(1 - z * z), R = 2600;
+  return {{ x: R*r*Math.cos(a), y: R*z*.6, z: R*r*Math.sin(a),
+           s: .5 + (i % 3) * .45, tw: i % 7 }};
+}});
+DOMS.forEach(d => d.ang = d.ang0 * Math.PI / 180);
+
+function project(x, y, z) {{
+  let cx =  x * Math.cos(yaw) + z * Math.sin(yaw);
+  let cz = -x * Math.sin(yaw) + z * Math.cos(yaw);
+  let cy =  y * Math.cos(pitch) - cz * Math.sin(pitch);
+  cz     =  y * Math.sin(pitch) + cz * Math.cos(pitch) + dist;
+  if (cz < 40) cz = 40;
+  const s = F / cz;
+  return {{ sx: W/2 + cx*s, sy: H/2 + cy*s, s, z: cz }};
+}}
+
+function planetGlyph(d, p, tms) {{
+  const R = Math.max(2.5, d.size * p.s * 1.35);
+  const depth = Math.max(.25, Math.min(1, 1.65 - p.z / 1100));
+  ctx.globalAlpha = depth;
+  if (d.spec) {{
+    ctx.strokeStyle = T.ring; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.ellipse(p.sx, p.sy, R*1.95, R*1.95*Math.abs(Math.sin(pitch))*.62 + R*.14, -0.42, 0, Math.PI*2);
+    ctx.globalAlpha = depth * .6; ctx.stroke(); ctx.globalAlpha = depth;
+  }}
+  const g = ctx.createRadialGradient(p.sx - R*.35, p.sy - R*.35, R*.1, p.sx, p.sy, R);
+  const cols = T.grad[d.status];
+  g.addColorStop(0, cols[0]); g.addColorStop(1, cols[1]);
+  if (d.status === '◑') {{
+    const pulse = 6 + 4 * Math.sin(tms / 520 + d.r);
+    ctx.shadowColor = T.status['◑']; ctx.shadowBlur = pulse * p.s * 2;
+  }}
+  if (hover === d.i) {{ ctx.shadowColor = T.status[d.status]; ctx.shadowBlur = 22; }}
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.sx, p.sy, R, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = T.status[d.status]; ctx.lineWidth = 1.2; ctx.stroke();
+  if (d.arch) {{
+    ctx.fillStyle = T.moon; ctx.beginPath();
+    ctx.arc(p.sx + R + 8*p.s, p.sy - R - 3*p.s, Math.max(1.4, 3.2*p.s), 0, Math.PI*2); ctx.fill();
+  }}
+  for (let k = 0; k < d.plans; k++) {{
+    const sa = tms/1400 + k * 2*Math.PI/Math.max(3, d.plans);
+    ctx.fillStyle = T.sat; ctx.beginPath();
+    ctx.arc(p.sx + (R+7)*Math.cos(sa), p.sy + (R+7)*Math.sin(sa)*.5, 1.8, 0, Math.PI*2); ctx.fill();
+  }}
+  ctx.fillStyle = hover === d.i ? T.ink : T.dim;
+  ctx.font = '12px "Segoe UI",sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(d.name, p.sx, p.sy + R + 15);
+  ctx.globalAlpha = 1;
+  d.hx = p.sx; d.hy = p.sy; d.hr = Math.max(R + 6, 14);
+}}
+
+let last = performance.now();
+function frame(tms) {{
+  const dt = Math.min(50, tms - last); last = tms;
+  if (!dragging) yaw += dt * 0.000045;
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createRadialGradient(W*.4, H*.45, 60, W*.4, H*.45, Math.max(W,H)*.8);
+  bg.addColorStop(0, T.bg2); bg.addColorStop(1, T.bg);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  for (const s of STARS) {{
+    const p = project(s.x, s.y, s.z);
+    ctx.globalAlpha = .12 + .25 * Math.abs(Math.sin(tms/5000 + s.tw));
+    ctx.fillStyle = T.bgstar;
+    ctx.beginPath(); ctx.arc(p.sx, p.sy, s.s, 0, Math.PI*2); ctx.fill();
+  }}
+  ctx.globalAlpha = 1;
+
+  for (const d of DOMS) {{
+    ctx.strokeStyle = T.line; ctx.lineWidth = 1;
+    if (d.status === '○') ctx.setLineDash([4, 7]);
+    ctx.beginPath();
+    for (let k = 0; k <= 90; k++) {{
+      const a = k / 90 * 2 * Math.PI;
+      const p = project(d.r * Math.cos(a), 0, d.r * Math.sin(a));
+      k ? ctx.lineTo(p.sx, p.sy) : ctx.moveTo(p.sx, p.sy);
+    }}
+    ctx.stroke(); ctx.setLineDash([]);
+  }}
+
+  const drawn = [];
+  DOMS.forEach((d, i) => {{
+    d.i = i;
+    if (hover !== i) d.ang += dt/1000 * 2*Math.PI / d.period;
+    drawn.push({{ d, p: project(d.r * Math.cos(d.ang), 0, d.r * Math.sin(d.ang)) }});
+  }});
+  drawn.push({{ sun: true, p: project(0, 0, 0) }});
+  drawn.sort((a, b) => b.p.z - a.p.z);
+  for (const it of drawn) {{
+    if (it.sun) {{
+      const R = 52 * it.p.s * 1.35, p = it.p;
+      const corona = 1 + .09 * Math.sin(tms/900);
+      ctx.shadowColor = T.starGlow; ctx.shadowBlur = 60 * it.p.s;
+      const g = ctx.createRadialGradient(p.sx, p.sy, R*.1, p.sx, p.sy, R*corona);
+      g.addColorStop(0, T.star[0]); g.addColorStop(.45, T.star[1]); g.addColorStop(1, T.star[2]);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.sx, p.sy, R*corona, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = T.starLabel; ctx.font = 'bold 11px "Segoe UI",sans-serif';
+      ctx.textAlign = 'center'; ctx.fillText('MISSION', p.sx, p.sy + 4);
+      sunHit = {{ x: p.sx, y: p.sy, r: R + 8 }};
+    }} else planetGlyph(it.d, it.p, tms);
+  }}
+  requestAnimationFrame(frame);
+}}
+requestAnimationFrame(frame);
+
+view.addEventListener('pointerdown', e => {{
+  dragging = true; moved = 0; lastX = e.clientX; lastY = e.clientY;
+  view.classList.add('dragging'); view.setPointerCapture(e.pointerId);
+}});
+view.addEventListener('pointermove', e => {{
+  if (dragging) {{
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    moved += Math.abs(dx) + Math.abs(dy);
+    yaw += dx * 0.005;
+    pitch = Math.max(0.05, Math.min(1.35, pitch + dy * 0.004));
+    lastX = e.clientX; lastY = e.clientY;
+  }} else {{
+    const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    hover = -1;
+    for (const d of DOMS)
+      if (d.hx !== undefined && (mx-d.hx)**2 + (my-d.hy)**2 < d.hr**2) hover = d.i;
+    view.style.cursor = (hover >= 0 || (mx-sunHit.x)**2 + (my-sunHit.y)**2 < sunHit.r**2)
+      ? 'pointer' : 'grab';
+  }}
+}});
+view.addEventListener('pointerup', e => {{
+  view.classList.remove('dragging');
+  if (dragging && moved < 6) {{
+    const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    if ((mx-sunHit.x)**2 + (my-sunHit.y)**2 < sunHit.r**2) show('card-sun');
+    else if (hover >= 0) show('card-' + hover);
+  }}
+  dragging = false;
+}});
+view.addEventListener('wheel', e => {{
+  e.preventDefault();
+  dist = Math.max(380, Math.min(2200, dist * (1 + e.deltaY * 0.0012)));
+}}, {{ passive: false }});
+
+function show(id) {{
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('on'));
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById(id).classList.add('on');
+}}
+</script>
+</html>"""
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+def main() -> None:
+    ap = argparse.ArgumentParser(description="Render a project's .gravity/ as a star system.")
+    ap.add_argument("project", nargs="?", help="project name or alias (resolve_project.py)")
+    ap.add_argument("--mode", choices=("2d", "3d", "both"), default="2d")
+    ap.add_argument("--theme", choices=sorted(THEMES), default="nebula")
+    ap.add_argument("--open", action="store_true", help="open the result in the browser")
+    ap.add_argument("--list-themes", action="store_true")
+    args = ap.parse_args()
+
+    if args.list_themes:
+        for name, t in THEMES.items():
+            print(f"{name:8} star {t['star'][1]} · active {t['status']['◑']} · bg {t['bg']}")
+        return
+    if not args.project:
+        ap.error("project required (or --list-themes)")
+
+    name, path = resolve(args.project)  # exits with candidates if ambiguous
+    data = scan(path)
+    theme = THEMES[args.theme]
+    outdir = Path(__file__).resolve().parent / "cosmos"
+    outdir.mkdir(exist_ok=True)
+
+    outputs = []
+    if args.mode in ("2d", "both"):
+        out = outdir / f"{name}.html"
+        out.write_text(render_2d(data, theme), encoding="utf-8")
+        outputs.append(out)
+    if args.mode in ("3d", "both"):
+        out = outdir / f"{name}.3d.html"
+        out.write_text(render_3d(data, theme), encoding="utf-8")
+        outputs.append(out)
+
+    for out in outputs:
+        print(f"cosmos[{args.theme}]: {len(data['domains'])} domains -> {out}")
+    if args.open:
+        for out in outputs:
+            webbrowser.open(out.as_uri())
+
+
+if __name__ == "__main__":
+    main()
