@@ -17,6 +17,7 @@ Human-facing guide for working in `ai-workspace/`. The agent's operating rules l
 | Give a long-lived project a "why" doc and a phase roadmap | [Adopt the full doc pipeline](#adopt-the-full-doc-pipeline) |
 | Move a doc-heavy project's docs into a `.gravity/` directory | `/adopt-gravity <name>` ([Adopt the `.gravity/` doc system](#adopt-the-gravity-doc-system)) |
 | Add a new domain to a `.gravity/` project | `/new-domain <name> <domain>` |
+| Land on an existing legacy system (f/e + b/e's + DB) | `/excavate <name>` ([Adopt gravity on an existing (brownfield) system](#adopt-gravity-on-an-existing-brownfield-system)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -39,6 +40,7 @@ Run from the `ai-workspace/` root in Claude Code.
 | `/retire <name>` | End a project's lifecycle: print a read-only risk card (remote? commits? uncommitted? referenced elsewhere?), then on your choice **archive** (junction → `archive/`, reversible) or **delete** (detach every junction, remove the real folder, permanent). Reconciles `PROJECTS.md` + regenerates the dashboard. |
 | `/dashboard` | One-screen status across all four tiers; active projects on the full pipeline also show their mission + current phase. Regenerates the visual HTML dashboard. |
 | `/open-dashboard` | The one-tap visual shortcut: regenerate the HTML dashboard from `PROJECTS.md` and **open it in the browser** — no terminal report. Use when you just want to *see* the dashboard. |
+| `/excavate <name>` | Survey a **brownfield** system and author its integration contract from code evidence: scans endpoints, MyBatis/JPA↔tables, frontend calls, and service links; joins them on table name / path+method / base URL; writes the two-doc minimum + a **cited Boundary Map** (`.gravity/integration/SPEC.md`) + regenerable `structural/` dumps. Unknowns stay `OPEN:`; proposes domains without minting; confirms before writing; never touches the DB. See "Adopt gravity on an existing (brownfield) system". |
 | `/cosmos <name> [3d\|both] [theme]` | Render one `.gravity/` project as a **star system**: MISSION at the core, domains orbiting at activity speed (busier = faster), SPEC rings, ARCHITECTURE moons, PLAN satellites. All scanned live from the registry indexes — a wrong sky means index drift. `3d` gives the drag-to-orbit canvas view; themes: `nebula` (default) / `ember` / `aurora` / `void`. Output gitignored under `.claude/dashboard/cosmos/`. |
 | `/open-mission [project]` | Open a project's `MISSION.html` in the browser (root or `.gravity/`); no arg opens the workspace's own. Authored doc — just locates + launches, never regenerates. |
 | `/open-architecture [project] [facet]` | Open a project's `ARCHITECTURE.html` in the browser — the system overview, or a named facet (`.gravity/<facet>/ARCHITECTURE.html`). Locates + launches; never regenerates. No arg → explains gravity's own architecture lives in `CLAUDE.md §1`. |
@@ -289,6 +291,23 @@ It's **opt-in and recognized only when present** — for projects that outgrew t
 **Add an integration layer** — use the normal domain flow with the reserved name `integration` when a project has cross-boundary rules that repeatedly affect more than one service/domain: API/client type generation, auth/session flow, ports/base URLs, shared env, queues/events, webhooks, database access boundaries, or required change order. Keep small facts in `CONTRACT.md`; promote to `.gravity/integration/SPEC.md` when agents need a durable, enforcement-tagged contract before coding across boundaries. This is service-aware gravity, not a separate project topology.
 
 > Or just ask the agent: *"move `<name>` onto the `.gravity/` doc system"* / *"add a `<domain>` domain to `<name>`"*.
+
+---
+
+## Adopt gravity on an existing (brownfield) system
+
+Everything above assumes you're *authoring* a project. Landing on a **mature system you didn't write** — one frontend, several backends, a database, MyBatis `mapper.xml` or JPA in the middle — inverts the flow: **archaeology before authorship**. Same gravity containers, opposite fill order. The one structural difference: the **`integration` domain comes first, not last** — on brownfield, the seams are exactly what you don't know and what will hurt you.
+
+The intake order:
+
+1. **Two-doc minimum, day one (~30 min).** Root `CLAUDE.md` = what you learn getting it running: the services table, ports, run commands, where each part lives. `CONTEXT.md` = why you're here + the single next step. Nothing else yet.
+2. **`.gravity/integration/SPEC.md` seeded early, filled as you dig.** Use `SPEC.template.md`'s integration variant. The **Boundary Map** gets one row per seam you *confirm* (web → api, api → api, api → DB via mapper/JPA) — **every row cites the file it came from; a seam you can't trace is an `OPEN:` line, never a guess.** The **Change Order** records the edit sequence you reverse-engineer (typically DB → mapper/entity → DTO → controller → client → component) — mark it *draft* until you've shipped through it once.
+3. **Join the tiers on three keys**: **table name** (DB ↔ mapper/entity), **path + method** (frontend call ↔ controller), **base URL / queue name** (backend ↔ backend). What doesn't join is a *finding* — a dead endpoint, an unreached table, an external consumer — and belongs in the report, not the map.
+4. **Structural dumps are regenerable.** Extracted inventories (endpoint→service→mapper→table chains, component→endpoint calls) live in `.gravity/integration/structural/` with a "never hand-edit, re-extract" header — the same discipline as generated code.
+5. **Domains are discovered, not invented.** Mint `.gravity/<domain>/` folders from the system's real modules (one per service, or `web`/`api`/`data`), via `/new-domain` and its gate. Legacy modules enter the status spine as **✓ stable** — it's shipped, working software; a domain flips ◑ only when your work lands on it.
+6. **Verified semantics only with citations.** Glossary entries for cryptic columns and coded values, business rules — each fact names the endpoint/table/column it came from.
+
+**`/excavate <name>` automates steps 1–4**: it scans the code (never the DB), presents the inventory for confirmation, then writes the two-doc minimum, the cited Boundary Map, and the structural dumps — leaving the un-traceable honestly `OPEN:`.
 
 ---
 
