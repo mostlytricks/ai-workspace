@@ -11,6 +11,9 @@
   spec-first, human-gated, deep-linked slice. done/todo phases stay one-liners; you only write the
   full spec for the phase you're about to build, then collapse it to a one-liner once it ships
   (its detail survives in git history + the phase's WALKTHROUGH.md).
+
+  TWO SHAPES: arc-shaped projects use the Phase roadmap (default, below); projects that GROW by
+  accreting features use the SLICE-QUEUE VARIANT further down instead. Keep one, delete the other.
 -->
 
 # <project> — Implementation plan & resume sheet
@@ -77,6 +80,36 @@ Mirrors the project gate but is scoped to *this* slice; the result becomes the p
 
 ### Phase 4 — <name> · todo
 Sketch only — expand into the full spec above when it becomes "next".
+
+<!-- ============================================================================
+     SLICE-QUEUE VARIANT (growing projects) — one template, two shapes (like the
+     SPEC template's integration variant). Use this INSTEAD of the Phase roadmap
+     above when the project accretes features (analyze → agent → dashboard →
+     security …) rather than marching through an arc — phases would be fake.
+     Delete whichever shape you don't use. Everything below the variant (Locked
+     decisions, Open questions, The gate) applies to both shapes unchanged.
+     ============================================================================ -->
+
+## Slice queue
+
+Rolling lanes instead of numbered phases. Rules:
+- **Exactly one slice in `now`.** It still gets the full four-block spec treatment
+  (Goal / User review required / Proposed changes / Verification) — inline here or,
+  better, in its domain `PLAN.<slug>.md` (link, don't restate; seed from `PLAN.template.md`).
+- `next` is ordered and short (≤3). `later` is an unordered pool, not a commitment.
+- A shipped slice leaves the queue: status `✓` moves to the Domain status spine; its
+  detail survives in git history + its `WALKTHROUGH.md`.
+- New slices enter via `/interview <project> <feature>` (the intake ritual: the
+  is-it-a-domain gate + the given/when/then Scenario).
+
+| Lane | Slice | Domain PLAN | Status |
+|---|---|---|---|
+| now | <the one slice in flight> | `.gravity/<domain>/PLAN.<slug>.md` | ◑ |
+| next | <…> | `<…>` | ○ |
+| next | <…> | `<…>` | ○ |
+| later | <… unordered pool …> | `<…>` | ○ |
+
+<!-- ===================== END SLICE-QUEUE VARIANT ===================== -->
 
 ## Locked decisions
 

@@ -120,7 +120,12 @@ This is the compact agent-loadable contract for `<domain>` — enough to **build
 
 <!-- OPTIONAL — only for domains with behavior, not just shape (endpoints, parsers, retrieval, migrations).
      Each line is a given/when/then invariant of the domain (true forever, not just this change), bound to the
-     test that proves it. Delete this whole section for shape-only domains (most docs/schemas). Don't pad. -->
+     test that proves it. Delete this whole section for shape-only domains (most docs/schemas). Don't pad.
+     SEED SOURCE: the domain PLAN's **Scenario** block (given/when/then captured at feature intake by
+     /interview). Promote a scenario here ONLY once a named test asserts it — until then it stays intent
+     in the PLAN, not contract here. -->
+
+
 
 - `[test:<name>]` given `<state>`, when `<action>` → `<observable outcome>`
 - `[test:<name>]` given `<state>`, when `<action>` → `<observable outcome>`
