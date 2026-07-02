@@ -19,6 +19,10 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.3.0] - 2026-07-02
+
 ### Added
 - **`check.py spec` — the spec-honesty checker** (first slice of the *conformance* half named in v1.2.0): verifies every `.gravity/<domain>/SPEC.md` against the repo's reality so enforcement tags can't silently rot after `/new-spec` made them honest at authoring. FAILs on provable lies — `SPEC_UNFILLED` (template leftovers like `<FILL` / `[test:name]`), `GATE_DEAD` (the Gate names an npm script or path that no longer exists; scripts resolved through root + workspace `package.json`s), `TAG_DEAD` (a `[test:<name>]` matching no script and no test-ish file) — and WARNs on weak signals (`GATE_MISSING`, `TAG_UNBACKED`, `RULES_UNTAGGED`); non-npm projects skip all npm-based checks (under-claim, never fabricate). Prints a per-domain **tag census** (`review 11 · lint 4 …`) — the walls-vs-judgment snapshot. `/triage` now runs it per `.gravity/` project (new 🔬 flag) alongside `consistency`; `selftest` proves both checkers (honest fixture passes; a dead gate, dead tag, and template leftover are each caught). HTML comments are stripped before scanning — the enforcement legend legitimately spells the tag grammar (`[test:name]`) inside a comment (caught by the `/new-spec` golden-scenario replay below and fixed; the initially-reported "live catch" in `knowledge-viewer`'s integration SPEC was this false positive).
 - **`/interview <project>`** — structured elicitation, the content-seeding twin of the structural commands: `/init-project` seeds stencils and `/new-spec` extracts truth from code, but a new or stuck project's *why/walls/shape/gate/next* exists only in the user's head. Gap-scans first (never asks what the docs already answer), asks five themes **strawman-first** (a guess to correct beats a blank question; corrections carry more signal), follows up only on contradictions, routes each answer to its one owner-doc (§6), and writes unresolved items as visible **`OPEN:`** lines — the `/new-spec` honesty rule pointed at a human: never fabricate intent. Ambition-gated (small tools get two docs, no MISSION/PLAN ceremony); ends with a read-back confirmation; never commits. Two modes, one core: **seed** (blank/partial docs) and **re-interview** (only the OPEN items of a stuck project).
@@ -55,7 +59,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.3.0
 [1.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.0.0
