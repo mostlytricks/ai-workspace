@@ -19,6 +19,10 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.4.0] - 2026-07-03
+
 ### Added
 - **Golden scenario for `/excavate`** (`.claude/scenarios/excavate/`) — guards against the *fabricated seam*: a Boundary-Map row for a connection that doesn't exist, or real seams silently missed. The fixture is a virgin fake legacy system (no `.gravity/`, no `CLAUDE.md` — the command creates them): a JS frontend + two Spring Boot services (MyBatis + Oracle config) with exactly **three real seams and two traps** — a dead frontend call (`/api/ghost/stats`, no controller serves it) and an orphaned mapper statement (`selectAuditTrail` on `LEGACY_AUDIT`, no interface method, no caller) — both provably not seams, so the assertion is deterministic. `expect.json` gains two generic content assertions: **`require_content`** (evidence that must be mapped somewhere) and **`forbid_in_section`** (the traps may appear as findings but never inside `## Boundary Map`). Two checker fixes the brownfield path forced: **a domain can only be unwired from an index that exists** (`consistency` now skips absent MISSION/PLAN with an `INDEX_ABSENT` WARN — a two-doc + `.gravity/integration/` brownfield project is a sanctioned state, no longer a false FAIL), and `selftest` skips `.gravity`-less fixtures as virgin input. Replayed both directions: honest excavation **PASSED**; an injected ghost seam correctly **FAILED**.
 - **Brownfield adoption path — `/excavate <project>` + the intake order** (CLAUDE.md §5 "brownfield inversion", HANDBOOK "Adopt gravity on an existing (brownfield) system"). Gravity's docs-then-code flow inverts on a mature system you didn't author (a frontend + several backends + a database): **archaeology before authorship**, and the **`integration` domain comes first, not last** — the seams are what you don't know. The intake order: two-doc minimum → `.gravity/integration/SPEC.md` with a **Boundary Map filled from code evidence** (every row cites its source file; untraceable seams stay `OPEN:`) → regenerable `structural/` dumps → domains minted from *discovered* modules (entering the spine ✓ stable — shipped software). `/excavate` automates the survey as the archaeology twin of `/new-spec`: scans four seam inventories (endpoints · MyBatis `mapper.xml`/JPA ↔ tables · frontend calls · service↔service links), joins on the three keys (table name · path+method · base URL/queue), presents for confirmation, then writes the docs — unjoinable evidence becomes findings (dead endpoints, unreached tables, dynamic SQL), never a guessed seam. Reads code, never the database; proposes domains without minting; doesn't commit.
@@ -62,7 +66,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.4.0
 [1.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.3.0
 [1.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.1.0
