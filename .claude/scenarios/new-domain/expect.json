@@ -1,0 +1,6 @@
+{
+  "command": "/new-domain fixture-app scoring",
+  "expect_domain": "scoring",
+  "require_files": ["PLAN.md"],
+  "notes": "After the agent runs the command against a copy of fixture/, the 'scoring' domain must exist with a PLAN.md and be wired into all four registry indexes (Doc Map, router table, MISSION row, PLAN status spine) with nothing orphaned."
+}

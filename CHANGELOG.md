@@ -19,7 +19,11 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Golden-scenario harness for gravity's own commands** (`.claude/scenarios/`) — gravity now tests the commands that *claim* to wire things up. A scenario is a triple: `(command, golden-input fixture, deterministic structural assertions)`. The agent step (running the command) stays manual; the assertion is a script. First scenario: **`/new-domain`** — copies a clean one-domain fixture, the agent adds a second domain, and the checker proves it's wired into all four registry indexes with nothing orphaned (catches the half-wired/orphaned-domain bug).
+- **`check.py` — structural-invariant checker** (`.claude/scenarios/check.py`) — `check_gravity_consistency(project_dir)` reads the four registry owners (Doc Map, router table, MISSION "system in N domains" row, `IMPLEMENTATION_PLAN.md` status spine) and reports `UNDERWIRED` domains and `ORPHAN_ROUTE` rows via heuristic slug-match. CLI: `consistency` (one project), `scenario` (assert a golden-scenario's postconditions), `selftest` (proves the checker against a good + deliberately-broken fixture).
+- **`/triage` runs `check.py`** — the `.gravity/` registry-drift flag is now mechanical instead of by-hand: triage shells out to `check.py consistency` per `.gravity/` project, so triage and the `/new-domain` scenario share one checker and agree by construction.
+- **Project aliases — `resolve_project.py`** (`.claude/scripts/`) — a short token resolves to a canonical project with **no central registry** (PROJECTS.md stays the workspace index, not an alias table). The alias is a per-project identity fact, so a project **declares its own** via a `> alias: <slug>` line in its root `CLAUDE.md` (seeded from `CLAUDE.template.md`, next to the `> gravity:` stamp) — authoritative and owned per project. Resolution order: exact name → **declared alias** → unique acronym as a convenience (`amos` = architecture-memory-os, short ≤2-char tail segments like `os` kept whole) → unique substring (`compass`), refusing to guess when ambiguous. So a project gets a free derived alias immediately and can *claim* an intentional one. `check.py --project <alias>` resolves them; other project-taking commands can adopt the same helper. First declared alias: **`amos`** (architecture-memory-os).
 
 ## [1.1.0] - 2026-06-27
 

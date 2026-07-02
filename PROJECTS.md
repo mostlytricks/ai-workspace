@@ -12,13 +12,14 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 
 - antigravity--pptx-template-manager          | Python (google-adk + python-pptx)   | 2026-06-03 | just activated; make the initial commit (13 untracked files, .gitignore already correct) after a `test_generation.py` smoke run
 - knowledge-viewer                            | Node/TS workspaces (server+client)  | 2026-06-13 | local markdown/HTML knowledge viewer (wikilink graph + backlinks + ⌘K + AI chat); on the full doc pipeline, real telos = PKM → collect reports → surface **issues & risks** (graph = risk surface). **Strategy reordered to search-first:** Phase 2.5 (hybrid retrieval) now lands before Phase 2 (importance/status encoding) so ~1000 docs are findable before the reports→findings→triage arc. Phase 2.5 half-built + uncommitted: `server/src/search/{corpus,lexical,semantic}.ts` written (BM25 + OpenAI-compatible embeddings) but the merge layer + wiring are missing. Not coupled to AMOS (deliberate). Next: add `hybrid.ts`, wire `/api/search` + the chat tool + ⌘K, gate, commit
-- local-llmstxt-server                        | Node/TS (Fastify + Vite/React)      | 2026-06-07 | Phases 1-7 done (docs-split, health checks, dashboard signals, agent view, trust metadata, refresh history, write protection); write guard is a shared `server/write-protect.ts` (`requireWriteAccess`, per-handler); first `docs/walkthroughs/` entry written (typecheck+build green). Next: commit in-flight trust-metadata + refresh-history + write-protection, then Phase 8 (Search)
+- local-llmstxt-server                        | Node/TS (Fastify + Vite/React)      | 2026-06-27 | `.gravity` synced to v1.0 (stamp + Codex shim + ingest/namespace registry). Phases 1-8 + Track R complete locally, including Search (`/api/search`, `docs-import search`), protected-source ingest path, vue namespace, and release scaffolding. Next: commit the whole pending slice, then cut `v0.1.0`; after that surface search in UI + `llms-txt-reader`.
 - multi-system-maintenance-agent-system       | Claude Code subagents + git + JSONL | 2026-06-03 | Phases 0-6 done (build complete, standalone). Next: attach a real service + wire read-only DB MCP
-- agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-06-03 | multi-Claude orchestrator: Phase 6→10 arc pushed to origin (github.com/mostlytricks/agent-view-desktop, feat/orchestration @ 51e7a17) — session mgr + tool policy, ~/.flux plugin, transcript viewer, flux tools + shared memory, supervisor spawn/await workers, Overview dashboard + handoff, memory persistence + theme system. Phase 11 (Tier 3 resume = "Take control ▶" fork-resumes an external transcript live) built on top, UNCOMMITTED. Next: live smoke test, then commit. See IMPLEMENTATION_PLAN.md
+- agent-view-desktop                          | Electron 33 + Vite + React 18 + TS  | 2026-06-27 | `.gravity` adopted v1.0; root `CLAUDE.md` is now the router and heavy docs live under `.gravity/`. Existing Phase 12/13 runtime-adapter + version-matrix work remains uncommitted. Next: run `npm run typecheck` + `npm run build`, then the Gate 0 live smoke test before committing or starting Phase 14.
 - api-server-managing-agent                  | Knowledge base + Claude Code skill (targets Spring Boot + Oracle) | 2026-06-04 | full doc set written (MISSION/CLAUDE/PLAN/CONTEXT) — method-first, read-only, two-layer knowledge seam. Next: Phase 1 — knowledge model + templates + a sample Spring Boot + Oracle schema (resolve sample-source + store-format open Qs first)
-- architecture-memory-os                      | TS/Node MCP core (SQLite-indexed Markdown graph) | 2026-06-27 | AMOS — institutional architecture-memory layer; docs re-gravitied (`.gravity/MISSION.html`, `.gravity/ARCHITECTURE.html`, `.gravity/IMPLEMENTATION_PLAN.md`; root `CLAUDE.md` is the router). Phases 1–4 built & green (typecheck + 30/30 vitest incl. eval set + capture + hybrid retrieval + temporal/traversal). 4 of 5 retrieval modes live; 11-node seed corpus. No commits yet. Next: Phase 5 — MCP server wiring + run the eval set through the MCP surface
+- architecture-memory-os                      | TS/Node MCP core (SQLite-indexed Markdown graph) | 2026-07-01 | AMOS — institutional architecture-memory layer; docs on `.gravity/` (root `CLAUDE.md` is the router). **Phases 1–7 built & green (typecheck + 54/54 vitest, 2026-07-01)** incl. MCP server (8 tools), directed `impact`, and the PMO change/risk governance report; 13-node seed corpus. 3 early pre-`.gravity` commits on `master`; the whole current slice (`.gravity/` move + Phase 6/7 + new tests) is uncommitted, no remote. Next: commit the slice + add a remote, then scope the sizing aid vs multi-format ingest
 - my-personal-accountant | tbd | 2026-06-20 | scaffolded, fill in CLAUDE.md
 - lecture-note | self-contained HTML lecture decks | 2026-06-27 | initialized: portable 16:9 slide-deck project with embedded CSS/JS template (`templates/lecture.template.html`), `lectures/` target folder, README, and project docs. Next: choose the general design theme, then tune template tokens before first real lecture
+- capability-compass                           | tbd (Python + embeddings, prototype) | 2026-06-28 | **engineer capability-intelligence**: map each engineer as a capability vector (skills/projects/HR/git signals) so leaders answer "who do we need for the next big bet?" (frontier model, OLTP→AI transition) from evidence. First surface = a visual vector-space capability map. Next: decide the vector-space spine (seeded taxonomy vs LLM-embedded skills), then seed 5-10 fake engineers + render the first map
 
 ## incubator/
 
@@ -50,16 +51,17 @@ _Where each project sits on the gravity-v1.0 conventions. The **dashboard render
 |---|---|---|---|---|
 | knowledge-viewer | `v1.0` | `.gravity` | ✓ | ✓ |
 | architecture-memory-os | `v1.0` | `.gravity` | — | ✓ |
-| local-llmstxt-server | — | `.gravity` | ✓ | ✓ |
-| lecture-note | — | `.gravity` | — | ✓ |
+| local-llmstxt-server | `v1.0` | `.gravity` | ✓ | ✓ |
+| lecture-note | — | flat | — | ✓ |
+| capability-compass | `v1.1` | `.gravity` | — | ✓ |
 | multi-system-maintenance-agent-system | — | flat | ✓ | ✓ |
-| agent-view-desktop | — | flat | — | ✓ |
+| agent-view-desktop | `v1.0` | `.gravity` | — | ✓ |
 | api-server-managing-agent | — | flat | — | ✓ |
 | antigravity--pptx-template-manager | — | flat | — | ✓ |
 | my-personal-accountant | — | flat | — | ✓ |
 | antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
 
-Next adoption moves: stamp the three `.gravity` projects (`local-llmstxt-server`, `lecture-note`, `architecture-memory-os` already stamped → just needs `rel`); then decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp.
+Next adoption moves: decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp; add release light-layer only where a project is ready to cut versions.
 
 ---
 
