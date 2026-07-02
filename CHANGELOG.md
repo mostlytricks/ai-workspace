@@ -19,7 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **`check.py spec` — the spec-honesty checker** (first slice of the *conformance* half named in v1.2.0): verifies every `.gravity/<domain>/SPEC.md` against the repo's reality so enforcement tags can't silently rot after `/new-spec` made them honest at authoring. FAILs on provable lies — `SPEC_UNFILLED` (template leftovers like `<FILL` / `[test:name]`), `GATE_DEAD` (the Gate names an npm script or path that no longer exists; scripts resolved through root + workspace `package.json`s), `TAG_DEAD` (a `[test:<name>]` matching no script and no test-ish file) — and WARNs on weak signals (`GATE_MISSING`, `TAG_UNBACKED`, `RULES_UNTAGGED`); non-npm projects skip all npm-based checks (under-claim, never fabricate). Prints a per-domain **tag census** (`review 11 · lint 4 …`) — the walls-vs-judgment snapshot. `/triage` now runs it per `.gravity/` project (new 🔬 flag) alongside `consistency`; `selftest` proves both checkers (honest fixture passes; a dead gate, dead tag, and template leftover are each caught). First live catch: the literal `[test:name]` leftover in `knowledge-viewer/.gravity/integration/SPEC.md`.
 
 ## [1.2.0] - 2026-07-02
 

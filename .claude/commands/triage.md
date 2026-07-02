@@ -49,6 +49,11 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
      python .claude/scenarios/check.py consistency --project repos/<name>
      ```
      It mechanically reads all four registry owners and reports `UNDERWIRED` (a `.gravity/<domain>/` folder missing from the Doc Map, the router table, the MISSION "system in N domains" row, or the `IMPLEMENTATION_PLAN.md` status spine — an orphaned domain the next agent won't find) and `ORPHAN_ROUTE` (a `.gravity/<domain>/` reference whose folder is gone). Fold every `FAIL` into the 🧭 flag below; surface `WARN`s (orphan routes, a domain folder with no `PLAN*.md`) only when notable. The same core (`check_gravity_consistency`) backs the `/new-domain` golden-scenario, so triage and the scenario agree by construction. If `check.py` is somehow unavailable, fall back to checking the four indexes by hand; also still flag a domain with a `SPEC.md` but **no router-table row** in `CLAUDE.md` (the checker treats that as a WARN, not a FAIL).
+   - **SPEC honesty rot** (only for `.gravity/` projects that have `SPEC.md` files): a SPEC's enforcement tags are only worth what they can prove — `/new-spec` makes them honest at authoring, but a renamed test or deleted npm script silently turns a wall into a lie. **Run the checker:**
+     ```bash
+     python .claude/scenarios/check.py spec --project repos/<name>
+     ```
+     It verifies each `.gravity/<domain>/SPEC.md` against the repo's reality and reports as FAILs: `SPEC_UNFILLED` (template leftovers like `<FILL` / `[test:name]`), `GATE_DEAD` (the Gate names an npm script or path that no longer exists), and `TAG_DEAD` (a `[test:<name>]` pointing at no script and no test file) — fold those into the 🔬 flag below. Surface the WARNs (`GATE_MISSING`, `TAG_UNBACKED`, `RULES_UNTAGGED`) only as a one-line per-project note — they mark SPECs that predate the tagged form, not active lies. The per-domain **tag census** it prints (`review 11 · lint 4 …`) is worth quoting when a domain is heavily `[review]` — it shows how much of that contract is real walls vs judgment.
 
 8. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
 
@@ -82,6 +87,7 @@ Only for projects on the four-doc pipeline. Omit if none.
 - 📄 <name> | no MISSION.html on an ambitious project — consider adopting the pipeline
 - 🔁 <name> | DOC COLLISION — "<fact>" restated in MISSION + CLAUDE.md; make the non-owner a reference
 - 🧭 <name> | .gravity REGISTRY DRIFT — domain "<domain>" unwired (missing Doc-Map/MISSION/status row), or a row points at a gone folder
+- 🔬 <name> | SPEC HONESTY — <domain>/SPEC.md <finding> (dead Gate/tag or template leftover); untagged/gate-less SPECs noted in one line
 
 ## Recommended actions
 A short numbered list of the 3-5 most important triage moves the user should make this week. Be specific — name projects and the action (fill stencil / prune / demote / archive / fix index row).

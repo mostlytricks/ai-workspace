@@ -19,9 +19,16 @@ region. Fixtures are author-controlled, so this is robust enough; harden with
 machine-readable anchors only if real projects start tripping it.
 
 Usage:
-  python check.py consistency --project DIR
+  python check.py consistency --project DIR|alias
+  python check.py spec        --project DIR|alias
   python check.py scenario   --scenario SCENARIO_DIR --actual DIR
   python check.py selftest
+
+`spec` is the honesty checker: it verifies every `.gravity/<domain>/SPEC.md`'s
+Gate command and enforcement tags against the repo's reality (package.json
+scripts, test files), so a SPEC can't silently keep claiming walls that no
+longer exist. Same under-claiming philosophy as `consistency`: FAIL only on
+what is provably dead, WARN on weak signals, stay silent where we can't verify.
 
 Importable too: `from check import check_gravity_consistency` returns the
 findings list, so `/triage` can call the same core.
@@ -30,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import sys
@@ -193,6 +201,187 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
 
 
 # --------------------------------------------------------------------------- #
+# the spec-honesty check
+# --------------------------------------------------------------------------- #
+
+# Template leftovers that mean a SPEC.md was never fully filled in.
+UNFILLED_PATTERNS = ("<FILL", "[FILL", "[test:name]", "\\<domain\\>", "<domain>")
+
+# The recognized enforcement-tag grammar (SPEC.template.md legend). Order
+# matters: "lint warn" before "lint". `[-]` is tolerated as ASCII for `[—]`.
+TAG_RE = re.compile(r"\[(lint warn|lint|type|test:[^\]]+|review|—|-)\]")
+
+_GATE_RE = re.compile(r"\*{0,2}gate:", re.IGNORECASE)
+
+# Never descend into these when hunting for test files.
+_SKIP_DIRS = {"node_modules", "dist", "build", "out", "coverage",
+              ".venv", "venv", "__pycache__", ".next"}
+
+
+def _gate_line(spec_text: str) -> str:
+    """The SPEC's `**Gate:** …` line (whole line, prose included). '' if none."""
+    for line in spec_text.splitlines():
+        if _GATE_RE.match(line.strip()):
+            return line
+    return ""
+
+
+def spec_tag_census(spec_text: str) -> dict[str, int]:
+    """Occurrence count per tag family — the 'walls vs judgment' snapshot."""
+    census: dict[str, int] = {}
+    for tag in TAG_RE.findall(spec_text):
+        key = "test" if tag.startswith("test:") else ("—" if tag == "-" else tag)
+        census[key] = census.get(key, 0) + 1
+    return census
+
+
+def _npm_reality(project: Path) -> tuple[dict[str, str] | None, list[Path]]:
+    """(merged npm scripts, workspace dirs) from the root package.json plus one
+    level of workspaces. Scripts are None when there is no root package.json —
+    not an npm project, so every npm-based check must stay silent."""
+    root_pkg = project / "package.json"
+    if not root_pkg.exists():
+        return None, []
+
+    def _load(p: Path) -> dict:
+        try:
+            return json.loads(_read(p) or "{}")
+        except json.JSONDecodeError:
+            return {}
+
+    data = _load(root_pkg)
+    scripts: dict[str, str] = dict(data.get("scripts") or {})
+    patterns = data.get("workspaces") or []
+    if isinstance(patterns, dict):
+        patterns = patterns.get("packages") or []
+    ws_dirs: list[Path] = []
+    for pattern in patterns:
+        for pkg in sorted(project.glob(f"{pattern}/package.json")):
+            ws_dirs.append(pkg.parent)
+            scripts.update(_load(pkg).get("scripts") or {})
+    return scripts, ws_dirs
+
+
+def _path_exists_anywhere(project: Path, ws_dirs: list[Path], token: str) -> bool:
+    """A Gate-referenced path counts as alive if it exists relative to the
+    project root, any workspace dir, or .gravity/ (Gate lines legitimately
+    reference sibling domain docs like `doc/SPEC.md`)."""
+    return any((base / token).exists()
+               for base in [project, project / ".gravity", *ws_dirs])
+
+
+def _test_files(project: Path) -> list[Path]:
+    """Test-ish files a `[test:<name>]` may live in: *.test.* / *.spec.* files
+    anywhere, plus everything under tests/ test/ __tests__/ references/."""
+    hits: list[Path] = []
+    test_dir_names = {"tests", "test", "__tests__", "references"}
+    for root, dirs, files in os.walk(project):
+        dirs[:] = [d for d in dirs
+                   if d not in _SKIP_DIRS and not d.startswith(".")]
+        in_test_dir = bool(test_dir_names & set(Path(root).parts))
+        for fn in files:
+            if in_test_dir or re.search(r"\.(test|spec)\.", fn):
+                p = Path(root) / fn
+                try:
+                    if p.stat().st_size <= 2_000_000:
+                        hits.append(p)
+                except OSError:
+                    pass
+    return hits
+
+
+def check_spec_honesty(project_dir: str | Path) -> list[Finding]:
+    """Verify every .gravity/<domain>/SPEC.md against the repo's reality:
+    the Gate's npm scripts + paths must exist, every [test:<name>] must point
+    at a real script or test file, lint/type claims need something to back
+    them, and no template leftovers survive. Empty list == honest."""
+    project = Path(project_dir)
+    gravity = project / ".gravity"
+    if not gravity.is_dir():
+        return [Finding(FAIL, "STRUCTURE", "", "",
+                        f"no .gravity/ directory at {project}")]
+
+    findings: list[Finding] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def add(severity: str, code: str, slug: str, message: str) -> None:
+        key = (code, slug, message)
+        if key not in seen:
+            seen.add(key)
+            findings.append(Finding(severity, code, slug, "", message))
+
+    scripts, ws_dirs = _npm_reality(project)
+    test_files: list[Path] | None = None  # scanned lazily, once
+
+    for slug in sorted(discover_domains(gravity)):
+        spec_path = gravity / slug / "SPEC.md"
+        if not spec_path.exists():
+            continue
+        text = _read(spec_path)
+
+        # SPEC_UNFILLED — a template leftover is a lie by definition.
+        for pat in UNFILLED_PATTERNS:
+            if pat in text:
+                add(FAIL, "SPEC_UNFILLED", slug,
+                    f"SPEC.md still contains template leftover '{pat}'")
+
+        gate = _gate_line(text)
+        if not gate:
+            add(WARN, "GATE_MISSING", slug,
+                "SPEC.md has no 'Gate:' line — an agent has no command to prove a change")
+
+        census = spec_tag_census(text)
+
+        if scripts is not None:
+            # GATE_DEAD — every npm script / path named on the Gate line must exist.
+            for span in re.findall(r"`([^`]+)`", gate):
+                for script in re.findall(r"npm(?:\s+-w\s+\S+)?\s+run\s+([\w:.-]+)", span):
+                    if script not in scripts:
+                        add(FAIL, "GATE_DEAD", slug,
+                            f"Gate names `npm run {script}` but no such script exists in package.json")
+                for token in span.split():
+                    token = token.strip("(),;`—→")
+                    if ("/" in token and "." in Path(token).name
+                            and "://" not in token and "<" not in token
+                            and "*" not in token):
+                        if not _path_exists_anywhere(project, ws_dirs, token):
+                            add(FAIL, "GATE_DEAD", slug,
+                                f"Gate references path `{token}` which does not exist")
+
+            # TAG_DEAD — a [test:<name>] must resolve to a script or a test file.
+            for tag in TAG_RE.findall(text):
+                if not tag.startswith("test:"):
+                    continue
+                name = tag[5:].strip()
+                if name == "name" or name in scripts:
+                    continue  # 'name' is the template leftover, already FAILed above
+                if test_files is None:
+                    test_files = _test_files(project)
+                if not any(name in _read(p) for p in test_files):
+                    add(FAIL, "TAG_DEAD", slug,
+                        f"[test:{name}] — no npm script and no test-ish file mentions '{name}'")
+
+            # TAG_UNBACKED — lint/type claims need SOME lint/type reality.
+            hay = " ".join([gate, *scripts.keys(),
+                            *map(str, scripts.values())]).lower()
+            if (census.get("lint") or census.get("lint warn")) and "lint" not in hay:
+                add(WARN, "TAG_UNBACKED", slug,
+                    "[lint] tags present but no lint command in the Gate or package.json scripts")
+            if census.get("type") and not any(k in hay for k in ("tsc", "typecheck", "noemit")):
+                add(WARN, "TAG_UNBACKED", slug,
+                    "[type] tags present but no tsc/typecheck in the Gate or package.json scripts")
+
+        # RULES_UNTAGGED — a Rules section in the legacy fully-untagged form.
+        bullets = [ln for ln in _section(text, "Rules").splitlines()
+                   if ln.startswith("- ")]
+        if bullets and not any(re.match(r"-\s+`?\[", b) for b in bullets):
+            add(WARN, "RULES_UNTAGGED", slug,
+                f"## Rules has {len(bullets)} bullet(s), none carrying an enforcement tag")
+
+    return findings
+
+
+# --------------------------------------------------------------------------- #
 # CLI subcommands
 # --------------------------------------------------------------------------- #
 
@@ -227,6 +416,29 @@ def cmd_consistency(args) -> int:
     print(f"domains: {', '.join(sorted(domains)) or '(none)'}")
     if not findings:
         print("OK — all domains wired into all four indexes, no orphan routes.")
+        return 0
+    fails, warns = _print(findings)
+    print(f"{fails} fail(s), {warns} warning(s).")
+    return 1 if fails else 0
+
+
+def cmd_spec(args) -> int:
+    project = _resolve_project_arg(args.project)
+    gravity = Path(project) / ".gravity"
+    specs = sorted(slug for slug in discover_domains(gravity)
+                   if (gravity / slug / "SPEC.md").exists())
+    print(f"project: {project}")
+    if not specs:
+        print("no .gravity/<domain>/SPEC.md files — nothing to check.")
+        return 0
+    print("tag census per SPEC (walls vs judgment):")
+    for slug in specs:
+        census = spec_tag_census(_read(gravity / slug / "SPEC.md"))
+        pretty = " · ".join(f"{k} {v}" for k, v in census.items()) or "(no tags)"
+        print(f"  {slug}: {pretty}")
+    findings = check_spec_honesty(project)
+    if not findings:
+        print("OK — every Gate and tag verified (or honestly [review]/[—]).")
         return 0
     fails, warns = _print(findings)
     print(f"{fails} fail(s), {warns} warning(s).")
@@ -271,6 +483,25 @@ def cmd_scenario(args) -> int:
         return 1
     print(f"SCENARIO PASSED — '{domain}' wired into all four indexes, nothing orphaned.")
     return 0
+
+
+def _spec_fixture(root: Path) -> None:
+    """A minimal honest npm project: one domain SPEC whose Gate, [test:] tag,
+    and [lint] claim are all backed by reality. Used only by selftest."""
+    (root / ".gravity" / "model").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "package.json").write_text(json.dumps({
+        "scripts": {"check": "node check.js", "lint:model": "node lint.js"}
+    }), encoding="utf-8")
+    (root / "tests" / "model.test.js").write_text(
+        "// covers model-roundtrip\n", encoding="utf-8")
+    (root / ".gravity" / "model" / "SPEC.md").write_text(
+        "# SPEC.model.md\n\n"
+        "**Gate:** `npm run check` — exits non-zero on a violation.\n\n"
+        "## Rules\n\n"
+        "- `[lint]` every field is kebab-case (checked by `npm run lint:model`)\n"
+        "- `[test:model-roundtrip]` parse→serialize→parse is lossless\n"
+        "- `[review]` names stay domain-language\n", encoding="utf-8")
 
 
 def cmd_selftest(args) -> int:
@@ -318,6 +549,38 @@ def cmd_selftest(args) -> int:
             print(f"selftest: EXPECTED to catch under-wired '{seed_domain}' in the "
                   f"Doc Map, but the checker stayed silent.")
 
+    # --- spec-honesty half: an honest SPEC passes; each lie is caught. ---
+    with tempfile.TemporaryDirectory() as tmp:
+        good = Path(tmp) / "spec-good"
+        _spec_fixture(good)
+        good_fails = [f for f in check_spec_honesty(good) if f.severity == FAIL]
+        if good_fails:
+            ok = False
+            print("selftest: EXPECTED honest SPEC fixture to pass, but it FAILED:")
+            _print(good_fails)
+        else:
+            print("selftest: honest SPEC fixture passes (no FAIL findings).")
+
+        lies = {
+            "GATE_DEAD": ("npm run check", "npm run nope"),
+            "TAG_DEAD": ("[test:model-roundtrip]", "[test:vanished-test]"),
+            "SPEC_UNFILLED": ("## Rules", "## Rules\n\n<FILL: pending>"),
+        }
+        for code, (old, new) in lies.items():
+            bad = Path(tmp) / f"spec-bad-{code.lower()}"
+            _spec_fixture(bad)
+            spec_path = bad / ".gravity" / "model" / "SPEC.md"
+            spec_path.write_text(
+                spec_path.read_text(encoding="utf-8").replace(old, new),
+                encoding="utf-8")
+            caught = [f for f in check_spec_honesty(bad)
+                      if f.code == code and f.severity == FAIL]
+            if caught:
+                print(f"selftest: dishonest SPEC ('{new}') correctly caught -> {code}.")
+            else:
+                ok = False
+                print(f"selftest: EXPECTED {code} for '{new}', but the checker stayed silent.")
+
     print("SELFTEST PASSED" if ok else "SELFTEST FAILED")
     return 0 if ok else 1
 
@@ -338,6 +601,10 @@ def main(argv=None) -> int:
     c = sub.add_parser("consistency", help="check one .gravity/ project for drift")
     c.add_argument("--project", required=True, help="path to the project root")
     c.set_defaults(func=cmd_consistency)
+
+    h = sub.add_parser("spec", help="verify SPEC.md Gates + enforcement tags against reality")
+    h.add_argument("--project", required=True, help="path to the project root (or alias)")
+    h.set_defaults(func=cmd_spec)
 
     s = sub.add_parser("scenario", help="assert a golden-scenario's postconditions")
     s.add_argument("--scenario", required=True, help="path to the scenario dir (has expect.json)")
