@@ -19,6 +19,10 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.2.0] - 2026-07-02
+
 ### Added
 - **Golden-scenario harness for gravity's own commands** (`.claude/scenarios/`) — gravity now tests the commands that *claim* to wire things up. A scenario is a triple: `(command, golden-input fixture, deterministic structural assertions)`. The agent step (running the command) stays manual; the assertion is a script. First scenario: **`/new-domain`** — copies a clean one-domain fixture, the agent adds a second domain, and the checker proves it's wired into all four registry indexes with nothing orphaned (catches the half-wired/orphaned-domain bug).
 - **`check.py` — structural-invariant checker** (`.claude/scenarios/check.py`) — `check_gravity_consistency(project_dir)` reads the four registry owners (Doc Map, router table, MISSION "system in N domains" row, `IMPLEMENTATION_PLAN.md` status spine) and reports `UNDERWIRED` domains and `ORPHAN_ROUTE` rows via heuristic slug-match. CLI: `consistency` (one project), `scenario` (assert a golden-scenario's postconditions), `selftest` (proves the checker against a good + deliberately-broken fixture).
@@ -47,6 +51,7 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.0.0
