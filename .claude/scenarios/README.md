@@ -52,6 +52,8 @@ python .claude/scenarios/check.py scenario \
 
 Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`).
 
+**A domain can only be unwired from an index that exists.** A two-doc brownfield project (CLAUDE.md §5 brownfield inversion: `.gravity/integration/` with no MISSION/PLAN yet) is a sanctioned state — the checker skips the absent index files and emits one `INDEX_ABSENT` WARN each instead of FAILing every domain.
+
 ## The spec-honesty check (`check.py spec`)
 
 A SPEC.md's enforcement tags are a promise: `[lint]` means a linter really fails, `[test:x]` means test `x` really exists. `/new-spec` keeps that promise **at authoring** — `check.py spec` keeps it **over time**, catching the rot (a renamed test, a deleted npm script, a template leftover) that silently turns a wall into a lie. Same under-claiming philosophy as `consistency`: FAIL only on what is provably dead, WARN on weak signals, silence where we can't verify (e.g. non-npm projects skip all npm-based checks).
@@ -73,5 +75,8 @@ It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`)
 |---|---|---|
 | `/new-domain` | an orphaned domain — folder created but an index left unwired | `new-domain/` |
 | `/new-spec` | a fabricated wall — a SPEC whose Gate/tags claim enforcement that doesn't exist | `new-spec/` |
+| `/excavate` | a fabricated seam — a dead frontend call or orphaned mapper statement mapped as a live Boundary-Map row (or real seams missed) | `excavate/` |
 
-Add the next one (`/init-project`, `/adopt-gravity`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe. `selftest` automatically validates every `*/fixture` (consistency + spec honesty), so a rotted fixture can't silently make its scenario prove nothing.
+Beyond `expect_domain`/`require_files`/`spec_honesty`, `expect.json` supports two content assertions: **`require_content`** (`{file: [substrings]}` — evidence that must have been mapped somewhere) and **`forbid_in_section`** (`{file: {"## section": [substrings]}}` — e.g. the dead call may appear as a *finding* but never inside `## Boundary Map`). HTML comments are stripped before the forbid check.
+
+Add the next one (`/init-project`, `/adopt-gravity`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe. `selftest` automatically validates every `*/fixture` (consistency + spec honesty); a fixture with **no** `.gravity/` is skipped as virgin input — it's the raw material for a command that *creates* the `.gravity/` (`/excavate`).

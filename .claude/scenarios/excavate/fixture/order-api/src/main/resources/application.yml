@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//db-host:1521/MARTPDB
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+mybatis:
+  mapper-locations: classpath:mappers/*.xml
+
+inventory:
+  base-url: http://localhost:8082

@@ -1,0 +1,31 @@
+{
+  "command": "/excavate legacy-mart",
+  "expect_domain": "integration",
+  "require_files": [
+    "SPEC.md",
+    "structural/endpoints.md",
+    "structural/db-map.md",
+    "structural/frontend-calls.md",
+    "structural/service-links.md"
+  ],
+  "spec_honesty": true,
+  "require_content": {
+    "CLAUDE.md": ["integration", "order-api", "inventory-api", "8081", "8082"],
+    ".gravity/integration/SPEC.md": [
+      "/api/orders",
+      "/api/customers",
+      "/api/stock",
+      "ORDERS",
+      "CUSTOMERS",
+      "OPEN:",
+      "/api/ghost/stats",
+      "LEGACY_AUDIT"
+    ]
+  },
+  "forbid_in_section": {
+    ".gravity/integration/SPEC.md": {
+      "Boundary Map": ["/api/ghost", "LEGACY_AUDIT"]
+    }
+  },
+  "notes": "After the agent runs /excavate against a copy of fixture/, the project must have the two-doc minimum (CLAUDE.md naming both services + ports) and .gravity/integration/ with a SPEC + four structural dumps. The SPEC's Boundary Map must contain the three REAL seams (web->order-api /api/orders + /api/customers, order-api->inventory-api /api/stock, order-api->DB ORDERS/CUSTOMERS) and must NOT contain the dead frontend call (/api/ghost/stats matches no controller) or the orphaned mapper table (LEGACY_AUDIT's selectAuditTrail has no interface method and no caller) — both must instead appear as findings/OPEN items elsewhere in the SPEC. A fabricated seam is the exact bug this scenario catches."
+}

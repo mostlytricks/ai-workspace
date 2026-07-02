@@ -1,0 +1,8 @@
+{
+  "name": "legacy-mart-web",
+  "version": "0.3.1",
+  "private": true,
+  "scripts": {
+    "start": "webpack serve --port 3000"
+  }
+}

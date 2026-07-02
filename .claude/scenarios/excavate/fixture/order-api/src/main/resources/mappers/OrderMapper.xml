@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.legacy.mart.order.OrderMapper">
+
+  <resultMap id="orderMap" type="com.legacy.mart.order.OrderDto">
+    <id property="orderId" column="ORD_ID"/>
+    <result property="customerId" column="CUST_ID"/>
+    <result property="sku" column="SKU_CD"/>
+    <result property="status" column="STS_CD"/>
+  </resultMap>
+
+  <select id="selectOrders" resultMap="orderMap">
+    SELECT o.ORD_ID, o.CUST_ID, o.SKU_CD, o.STS_CD
+    FROM ORDERS o
+    WHERE o.STS_CD != 'X'
+    ORDER BY o.ORD_DT DESC
+  </select>
+
+  <select id="selectCustomerById" resultType="com.legacy.mart.order.CustomerDto">
+    SELECT c.CUST_ID AS customerId, c.CUST_NM AS name, c.GRD_CD AS grade
+    FROM CUSTOMERS c
+    WHERE c.CUST_ID = #{id}
+  </select>
+
+  <select id="selectAuditTrail" resultType="map">
+    SELECT a.AUD_ID, a.ORD_ID, a.CHG_TS, a.OLD_STS, a.NEW_STS
+    FROM LEGACY_AUDIT a
+    WHERE a.ORD_ID = #{orderId}
+    ORDER BY a.CHG_TS
+  </select>
+
+</mapper>

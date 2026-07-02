@@ -69,7 +69,7 @@ WARN = "WARN"
 @dataclass
 class Finding:
     severity: str   # FAIL | WARN
-    code: str       # UNDERWIRED | ORPHAN_ROUTE | MISSING_FILE | STRUCTURE
+    code: str       # UNDERWIRED | ORPHAN_ROUTE | MISSING_FILE | INDEX_ABSENT | STRUCTURE
     domain: str     # the slug it concerns ("" if structural)
     region: str     # which index/region ("" if n/a)
     message: str
@@ -148,8 +148,10 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
                         f"no .gravity/ directory at {project}")]
 
     claude = _read(project / "CLAUDE.md")
-    mission = _read(gravity / "MISSION.html")
-    plan = _read(gravity / "IMPLEMENTATION_PLAN.md")
+    mission_path = gravity / "MISSION.html"
+    plan_path = gravity / "IMPLEMENTATION_PLAN.md"
+    mission = _read(mission_path)
+    plan = _read(plan_path)
 
     doc_map = _section(claude, "Doc Map") or claude   # tolerate an unsplit CLAUDE.md
     router = _section(claude, "What to read before a change") or claude
@@ -159,17 +161,29 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
 
     domains = discover_domains(gravity)
 
+    # A domain can only be unwired from an index that EXISTS. A two-doc brownfield
+    # project (CLAUDE.md §5 brownfield inversion: .gravity/integration/ with no
+    # MISSION/PLAN yet) is a sanctioned state — skip those regions, WARN once.
+    if domains and not mission_path.exists():
+        findings.append(Finding(
+            WARN, "INDEX_ABSENT", "", "mission",
+            "no .gravity/MISSION.html — domain why-rows unchecked (two-doc/brownfield project?)"))
+    if domains and not plan_path.exists():
+        findings.append(Finding(
+            WARN, "INDEX_ABSENT", "", "plan",
+            "no .gravity/IMPLEMENTATION_PLAN.md — status spine unchecked (two-doc/brownfield project?)"))
+
     # UNDERWIRED — a folder missing from an index it's *required* to be in.
     # Required everywhere: Doc Map (navigation), MISSION row (why), PLAN spine (status).
     # Router-table row is gravity-gated: required ONLY once the domain has a SPEC.md
     # (CLAUDE.md §6 / GRAVITY.template — the router row is added when a SPEC exists).
     for slug in sorted(domains):
         folder = gravity / slug
-        checks = [
-            ("doc_map", _slug_in(doc_map, slug)),
-            ("mission", _slug_in(mission, slug)),
-            ("plan", _slug_in(spine, slug)),
-        ]
+        checks = [("doc_map", _slug_in(doc_map, slug))]
+        if mission_path.exists():
+            checks.append(("mission", _slug_in(mission, slug)))
+        if plan_path.exists():
+            checks.append(("plan", _slug_in(spine, slug)))
         if (folder / "SPEC.md").exists():
             checks.append(("router", _slug_in(router, slug)))
         for region_id, present in checks:
@@ -487,6 +501,29 @@ def cmd_scenario(args) -> int:
         for f in dishonest:
             print("  " + str(f))
         fails += len(dishonest)
+    # Optional: required substrings per file (evidence that must have been mapped).
+    for rel, needles in expect.get("require_content", {}).items():
+        text = _read(actual / rel)
+        for needle in needles:
+            if needle not in text:
+                print(f"  [FAIL] {rel} must contain '{needle}' but doesn't")
+                fails += 1
+    # Optional: forbidden substrings inside one `## section` of a file — e.g. a
+    # dead frontend call must never appear as a Boundary Map row (a seam that
+    # doesn't exist is a fabricated seam; it may appear elsewhere as a finding).
+    for rel, sections in expect.get("forbid_in_section", {}).items():
+        text = _strip_html_comments(_read(actual / rel))
+        for header, needles in sections.items():
+            sec = _section(text, header)
+            if not sec:
+                print(f"  [FAIL] {rel} has no '## {header}' section to check")
+                fails += 1
+                continue
+            for needle in needles:
+                if needle in sec:
+                    print(f"  [FAIL] {rel} '## {header}' must NOT contain "
+                          f"'{needle}' — that seam doesn't exist in the fixture")
+                    fails += 1
     # Surface warnings but don't fail on them.
     for f in findings:
         if f.severity == WARN:
@@ -535,7 +572,13 @@ def cmd_selftest(args) -> int:
 
     # Every scenario's golden fixture must itself be clean — consistency AND
     # spec honesty (a rotted fixture would make its scenario prove nothing).
+    # A fixture with NO .gravity/ is the input for a command that CREATES one
+    # (/excavate on a virgin brownfield system) — nothing to validate yet.
     for fx in sorted(Path(__file__).parent.glob("*/fixture")):
+        if not (fx / ".gravity").is_dir():
+            print(f"selftest: fixture {fx.parent.name}/fixture has no .gravity/ "
+                  f"(virgin input — the command under test creates it); skipped.")
+            continue
         fx_fails = [f for f in check_gravity_consistency(fx) if f.severity == FAIL]
         fx_fails += [f for f in check_spec_honesty(fx) if f.severity == FAIL]
         if fx_fails:
