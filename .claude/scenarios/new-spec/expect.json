@@ -1,0 +1,7 @@
+{
+  "command": "/new-spec fixture-app model",
+  "expect_domain": "model",
+  "require_files": ["SPEC.md"],
+  "spec_honesty": true,
+  "notes": "After the agent runs the command against a copy of fixture/, .gravity/model/SPEC.md must exist, the domain must stay wired into all four registry indexes (the router read-first cell now points at the SPEC), and check_spec_honesty must report zero FAILs — the Gate and every [lint]/[test:] tag verified against package.json + tests/. A fabricated wall (invented gate, dead test name, template leftover) is the exact bug this scenario catches."
+}

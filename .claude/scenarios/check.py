@@ -218,6 +218,13 @@ _SKIP_DIRS = {"node_modules", "dist", "build", "out", "coverage",
               ".venv", "venv", "__pycache__", ".next"}
 
 
+def _strip_html_comments(text: str) -> str:
+    """Drop <!-- … --> blocks: the enforcement legend legitimately spells out
+    the tag grammar (`[test:name]` etc.) inside a comment, and commented-out
+    template blocks are not active contract. Only what renders counts."""
+    return re.sub(r"<!--.*?-->", "", text, flags=re.S)
+
+
 def _gate_line(spec_text: str) -> str:
     """The SPEC's `**Gate:** …` line (whole line, prose included). '' if none."""
     for line in spec_text.splitlines():
@@ -227,9 +234,10 @@ def _gate_line(spec_text: str) -> str:
 
 
 def spec_tag_census(spec_text: str) -> dict[str, int]:
-    """Occurrence count per tag family — the 'walls vs judgment' snapshot."""
+    """Occurrence count per tag family — the 'walls vs judgment' snapshot.
+    HTML comments (the legend) don't count as claims."""
     census: dict[str, int] = {}
-    for tag in TAG_RE.findall(spec_text):
+    for tag in TAG_RE.findall(_strip_html_comments(spec_text)):
         key = "test" if tag.startswith("test:") else ("—" if tag == "-" else tag)
         census[key] = census.get(key, 0) + 1
     return census
@@ -317,7 +325,7 @@ def check_spec_honesty(project_dir: str | Path) -> list[Finding]:
         spec_path = gravity / slug / "SPEC.md"
         if not spec_path.exists():
             continue
-        text = _read(spec_path)
+        text = _strip_html_comments(_read(spec_path))
 
         # SPEC_UNFILLED — a template leftover is a lie by definition.
         for pat in UNFILLED_PATTERNS:
@@ -473,6 +481,12 @@ def cmd_scenario(args) -> int:
     for f in underwired:
         print("  " + str(f))
     fails += len(underwired)
+    # Optional: the authored SPEC must be honest (a fabricated wall = FAIL).
+    if expect.get("spec_honesty"):
+        dishonest = [f for f in check_spec_honesty(actual) if f.severity == FAIL]
+        for f in dishonest:
+            print("  " + str(f))
+        fails += len(dishonest)
     # Surface warnings but don't fail on them.
     for f in findings:
         if f.severity == WARN:
@@ -498,6 +512,10 @@ def _spec_fixture(root: Path) -> None:
     (root / ".gravity" / "model" / "SPEC.md").write_text(
         "# SPEC.model.md\n\n"
         "**Gate:** `npm run check` — exits non-zero on a violation.\n\n"
+        # The legend comment legitimately contains the literal tag grammar —
+        # it must NOT trip SPEC_UNFILLED/TAG_DEAD (comments are not contract).
+        "<!-- Legend: [lint] linter fails · [test:name] a named test asserts"
+        " · [review] human-only. -->\n\n"
         "## Rules\n\n"
         "- `[lint]` every field is kebab-case (checked by `npm run lint:model`)\n"
         "- `[test:model-roundtrip]` parse→serialize→parse is lossless\n"
@@ -514,17 +532,20 @@ def cmd_selftest(args) -> int:
         return 2
 
     ok = True
-    with tempfile.TemporaryDirectory() as tmp:
-        good = Path(tmp) / "good"
-        shutil.copytree(fixture, good)
-        good_findings = [f for f in check_gravity_consistency(good) if f.severity == FAIL]
-        if good_findings:
-            ok = False
-            print("selftest: EXPECTED good fixture to pass, but it FAILED:")
-            _print(good_findings)
-        else:
-            print("selftest: good fixture passes (no FAIL findings).")
 
+    # Every scenario's golden fixture must itself be clean — consistency AND
+    # spec honesty (a rotted fixture would make its scenario prove nothing).
+    for fx in sorted(Path(__file__).parent.glob("*/fixture")):
+        fx_fails = [f for f in check_gravity_consistency(fx) if f.severity == FAIL]
+        fx_fails += [f for f in check_spec_honesty(fx) if f.severity == FAIL]
+        if fx_fails:
+            ok = False
+            print(f"selftest: EXPECTED fixture {fx.parent.name}/fixture to be clean, but it FAILED:")
+            _print(fx_fails)
+        else:
+            print(f"selftest: fixture {fx.parent.name}/fixture is clean (consistency + spec honesty).")
+
+    with tempfile.TemporaryDirectory() as tmp:
         # Break it: strip the existing domain's line out of the Doc Map.
         bad = Path(tmp) / "bad"
         shutil.copytree(fixture, bad)

@@ -1,0 +1,9 @@
+{
+  "name": "fixture-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint:model": "node scripts/check-model.mjs",
+    "test": "node --test tests/"
+  }
+}

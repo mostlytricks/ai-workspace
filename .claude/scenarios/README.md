@@ -65,12 +65,13 @@ A SPEC.md's enforcement tags are a promise: `[lint]` means a linter really fails
 | `TAG_UNBACKED` | WARN | `[lint]`/`[type]` tags with no lint/typecheck anywhere in the Gate or scripts |
 | `RULES_UNTAGGED` | WARN | a `## Rules` section in the legacy fully-untagged form |
 
-It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`) — the at-a-glance view of how much of each contract is real walls vs reviewer judgment. `/triage` runs this per `.gravity/` project alongside `consistency`; `selftest` proves both checkers.
+It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`) — the at-a-glance view of how much of each contract is real walls vs reviewer judgment. HTML comments are stripped before scanning: the enforcement legend legitimately spells out the tag grammar (`[test:name]` etc.) inside a comment, and commented-out template blocks are not active contract. `/triage` runs this per `.gravity/` project alongside `consistency`; `selftest` proves both checkers.
 
 ## Scenarios
 
 | Command | Guards against | Folder |
 |---|---|---|
 | `/new-domain` | an orphaned domain — folder created but an index left unwired | `new-domain/` |
+| `/new-spec` | a fabricated wall — a SPEC whose Gate/tags claim enforcement that doesn't exist | `new-spec/` |
 
-Add the next one (`/init-project`, `/adopt-gravity`, `/new-spec`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe.
+Add the next one (`/init-project`, `/adopt-gravity`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe. `selftest` automatically validates every `*/fixture` (consistency + spec honesty), so a rotted fixture can't silently make its scenario prove nothing.
