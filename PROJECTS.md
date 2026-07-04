@@ -20,6 +20,8 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 - my-personal-accountant | tbd | 2026-06-20 | scaffolded, fill in CLAUDE.md
 - lecture-note | self-contained HTML lecture decks | 2026-06-27 | initialized: portable 16:9 slide-deck project with embedded CSS/JS template (`templates/lecture.template.html`), `lectures/` target folder, README, and project docs. Next: choose the general design theme, then tune template tokens before first real lecture
 - capability-compass                           | tbd (Python + embeddings, prototype) | 2026-06-28 | **engineer capability-intelligence**: map each engineer as a capability vector (skills/projects/HR/git signals) so leaders answer "who do we need for the next big bet?" (frontier model, OLTP→AI transition) from evidence. First surface = a visual vector-space capability map. Next: decide the vector-space spine (seeded taxonomy vs LLM-embedded skills), then seed 5-10 fake engineers + render the first map
+- astra | Python 3.13 + FastAPI (filesystem-as-registry) | 2026-07-04 | **ASTRA — Agent Skill Transfer & Registry App**: intranet skill catalog, adoption = paste one PowerShell command (no git at work). Day one: 4 slices shipped (adoption loop ✓ · guarded publish API + `astra-publish` skill · skills.sh-style UI · `latest` alias), 18-test gate green, 2 commits on `master`. Next: user picks — deprecate/yank, or intranet deploy (user's own task)
+- orbit | Directory conventions + agent skills (no app; stdlib-Python gates) | 2026-07-04 | **ORBIT — Organized Repository for Business & IT Tasks**: IT-manager work OS — numbered 10-year file tree + skills that do the filing (designed here, deployed at work; skills travel via astra). Day one: 4 slices on `.gravity/` — triage loop, restructure loop (filing SPEC w/ lifecycle & 7/9 budget), orbit-dashboard + pro v2 junk hunt (cleanup candidates, md5 dupes); gates green, walls resolved (renumber = migration; apps ok). Next: user picks — daily-note skill top candidate
 
 ## incubator/
 
@@ -59,6 +61,8 @@ _Where each project sits on the gravity-v1.0 conventions. The **dashboard render
 | api-server-managing-agent | — | flat | — | ✓ |
 | antigravity--pptx-template-manager | — | flat | — | ✓ |
 | my-personal-accountant | — | flat | — | ✓ |
+| astra | — | flat | — | ✓ |
+| orbit | `v1.4` | `.gravity` | — | ✓ |
 | antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
 
 Next adoption moves: decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp; add release light-layer only where a project is ready to cut versions.
