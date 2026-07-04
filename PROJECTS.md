@@ -61,7 +61,7 @@ _Where each project sits on the gravity-v1.0 conventions. The **dashboard render
 | api-server-managing-agent | — | flat | — | ✓ |
 | antigravity--pptx-template-manager | — | flat | — | ✓ |
 | my-personal-accountant | — | flat | — | ✓ |
-| astra | — | flat | — | ✓ |
+| astra | `v1.4` | flat | ✓ | ✓ |
 | orbit | `v1.4` | `.gravity` | — | ✓ |
 | antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
 
