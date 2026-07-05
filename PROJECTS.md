@@ -22,6 +22,7 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 - capability-compass                           | tbd (Python + embeddings, prototype) | 2026-06-28 | **engineer capability-intelligence**: map each engineer as a capability vector (skills/projects/HR/git signals) so leaders answer "who do we need for the next big bet?" (frontier model, OLTP→AI transition) from evidence. First surface = a visual vector-space capability map. Next: decide the vector-space spine (seeded taxonomy vs LLM-embedded skills), then seed 5-10 fake engineers + render the first map
 - astra | Python 3.13 + FastAPI (filesystem-as-registry) | 2026-07-04 | **ASTRA — Agent Skill Transfer & Registry App**: intranet skill catalog, adoption = paste one PowerShell command (no git at work). Day one: 4 slices shipped (adoption loop ✓ · guarded publish API + `astra-publish` skill · skills.sh-style UI · `latest` alias), 18-test gate green, 2 commits on `master`. Next: user picks — deprecate/yank, or intranet deploy (user's own task)
 - orbit | Directory conventions + agent skills (no app; stdlib-Python gates) | 2026-07-04 | **ORBIT — Organized Repository for Business & IT Tasks**: IT-manager work OS — numbered 10-year file tree + skills that do the filing (designed here, deployed at work; skills travel via astra). Day one: 4 slices on `.gravity/` — triage loop, restructure loop (filing SPEC w/ lifecycle & 7/9 budget), orbit-dashboard + pro v2 junk hunt (cleanup candidates, md5 dupes); gates green, walls resolved (renumber = migration; apps ok). Next: user picks — daily-note skill top candidate
+- pulsar | Claude Code skills + stdlib-Python gates (no app) | 2026-07-05 | **PULSAR — Personal Utility for Labor Stats, Announcements & Rewards**: personal HR skill set — HR-system exports → canonical ledger → Korean 52h overtime report; later notices + welfare guidance (design here, skills travel via astra; no real HR data in repo). Day one: hours+overtime loop shipped, gate green + FAIL-on-tamper verified. Next: user picks slice 2 — notice-digest or welfare-guide (interview shape)
 
 ## incubator/
 
@@ -63,6 +64,7 @@ _Where each project sits on the gravity-v1.0 conventions. The **dashboard render
 | my-personal-accountant | — | flat | — | ✓ |
 | astra | `v1.4` | flat | ✓ | ✓ |
 | orbit | `v1.4` | `.gravity` | — | ✓ |
+| pulsar | `v1.4` | flat | — | ✓ |
 | antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
 
 Next adoption moves: decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp; add release light-layer only where a project is ready to cut versions.
