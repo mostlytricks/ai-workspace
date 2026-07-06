@@ -18,6 +18,7 @@ Human-facing guide for working in `ai-workspace/`. The agent's operating rules l
 | Move a doc-heavy project's docs into a `.gravity/` directory | `/adopt-gravity <name>` ([Adopt the `.gravity/` doc system](#adopt-the-gravity-doc-system)) |
 | Add a new domain to a `.gravity/` project | `/new-domain <name> <domain>` |
 | Land on an existing legacy system (f/e + b/e's + DB) | `/excavate <name>` ([Adopt gravity on an existing (brownfield) system](#adopt-gravity-on-an-existing-brownfield-system)) |
+| Bring a project up to the current gravity version | `/sync-gravity <name>` ([Upgrade a project to a newer gravity](#upgrade-a-project-to-a-newer-gravity)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -34,6 +35,7 @@ Run from the `ai-workspace/` root in Claude Code.
 | `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` and the `.gravity/` Doc Map if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
 | `/interview <name> [<feature>]` | `/mission` in reverse: interview *you* to fill a project's docs. Gap-scans what exists, asks the five themes (telos, walls, shape, gate, now) strawman-first, writes each answer to its owner-doc, leaves unresolved items as visible `OPEN:` lines. For new projects ("fill in CLAUDE.md") and stuck ones (open questions blocking a phase). With `<feature>`: the growing-project intake ritual — runs the is-it-a-domain gate, captures the use scenario as `given/when/then`, writes a wired domain or a `PLAN.<slug>.md` slice + queue row. Doesn't commit. |
 | `/adopt-gravity <name>` | Retrofit the `.gravity/` doc system into a doc-heavy project: relocate the heavy docs out of the root into per-domain `.gravity/` folders (`git mv`), seed the root-`CLAUDE.md` router, wire the four registry owners. Proposes the move table and confirms before touching disk; doesn't commit. |
+| `/sync-gravity <name>` | Bring one project up to the current gravity version: re-copies the protocol card (`.gravity/GRAVITY.md`) fresh from the template, bumps the `> gravity: vX.Y` router stamp, verifies with `check.py`, reconciles the adoption table — and reports the changelog deltas needing judgment as a checklist, **never** auto-migrating them. Doesn't commit. See "Upgrade a project to a newer gravity". |
 | `/new-domain <name> <domain>` | Mint one domain inside a project's `.gravity/`: run the *is-it-a-domain?* gate, create `.gravity/<domain>/PLAN.md`, and wire all four indexes (Doc Map, router table, MISSION row, status spine) so it's never orphaned. |
 | `/new-spec <name> <domain>` | Author (or retrofit) one domain's `SPEC.md` from `SPEC.template.md` — the generative Minimal Shape + enforcement-tagged Rules. Finds the real gate, tags each rule only from evidence, wires the Doc-Map + router rows, runs the gate to prove it. |
 | `/cut-release [name]` | Cut a versioned release with one Change Order. **No arg → bumps gravity itself** (`VERSION` + tag on the workspace skeleton repo); **`<name>` → bumps that project** (its manifest + tag). Resolves the version (stops on tag-vs-file drift), proposes + confirms the major/minor/patch bump from the changelog's `[Unreleased]`, runs the gate (won't tag red code), rewrites the changelog, bumps, commits, tags — **stops before push**. |
@@ -308,6 +310,19 @@ The intake order:
 6. **Verified semantics only with citations.** Glossary entries for cryptic columns and coded values, business rules — each fact names the endpoint/table/column it came from.
 
 **`/excavate <name>` automates steps 1–4**: it scans the code (never the DB), presents the inventory for confirmation, then writes the two-doc minimum, the cited Boundary Map, and the structural dumps — leaving the un-traceable honestly `OPEN:`.
+
+---
+
+## Upgrade a project to a newer gravity
+
+Gravity itself is versioned (`VERSION` + `CHANGELOG.md` + git tag), and each adopted project pins the version it was built on in **two stamps**: the `> gravity: vX.Y` line in its root `CLAUDE.md` router, and — for `.gravity/` projects — the `gravity protocol · vX.Y` stamp in the embedded card (`.gravity/GRAVITY.md`). When gravity cuts a new release, projects don't upgrade themselves; they drift, visibly: `/triage` flags stale cards (📡), and the `PROJECTS.md` **Gravity adoption** table shows who's on what.
+
+**Run `/sync-gravity <name>`** to bring one project current. It does the two layers differently on purpose:
+
+- **Mechanical (applied for you):** re-copies the protocol card fresh from the template (it's a verbatim copy by contract — never hand-merged), bumps both stamps to the current `VERSION`, verifies with `check.py consistency`, and reconciles the adoption-table row.
+- **Judgment (reported, never auto-applied):** it reads every `CHANGELOG.md` section between the project's old stamp and now, and hands you a checklist of convention changes the project might violate — quoted from the changelog, one line each. Restructuring to satisfy a new convention is its own task; a sync never does it as a side effect.
+
+A minor-only delta usually means an empty checklist — re-copy, bump, done. It never commits; the diff is your review checkpoint. (Manual fallback: `cp templates/GRAVITY-PROTOCOL.template.md <project>/.gravity/GRAVITY.md`, fill the stamp from `VERSION`, edit the router's stamp line, run `/triage`.)
 
 ---
 
