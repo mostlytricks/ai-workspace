@@ -49,25 +49,25 @@ _Done, abandoned, or superseded. Read-only. Listed here only so you don't accide
 
 ## Gravity adoption
 
-_Where each project sits on the gravity-v1.0 conventions. The **dashboard renders this live from disk** (chips on every card, always accurate); this table is the at-a-glance markdown view — a snapshot reconciled like the tier rows above (run `/triage` if it drifts). **stamp** = the `> gravity: vX.Y` line in `CLAUDE.md` · **docs** = `.gravity/` faceted vs `flat` two-doc · **rel** = a `CHANGELOG.md` (release light-layer) · **codex** = the `AGENTS.md` shim._
+_Where each project sits on the gravity conventions (current system version: root `VERSION`). The **dashboard renders this live from disk** (chips on every card, always accurate); this table is the at-a-glance markdown view — a snapshot reconciled like the tier rows above (run `/triage` if it drifts). **stamp** = the `> gravity: vX.Y` line in `CLAUDE.md` · **docs** = `.gravity/` faceted vs `flat` two-doc · **card** = the `.gravity/GRAVITY.md` protocol-card stamp (`.gravity` projects only; `—` = missing → 📡 in `/triage`; `n/a` for flat projects) · **rel** = a `CHANGELOG.md` (release light-layer) · **codex** = the `AGENTS.md` shim._
 
-| Project | stamp | docs | rel | codex |
-|---|---|---|---|---|
-| knowledge-viewer | `v1.0` | `.gravity` | ✓ | ✓ |
-| architecture-memory-os | `v1.0` | `.gravity` | — | ✓ |
-| local-llmstxt-server | `v1.0` | `.gravity` | ✓ | ✓ |
-| lecture-note | — | flat | — | ✓ |
-| capability-compass | `v1.1` | `.gravity` | — | ✓ |
-| multi-system-maintenance-agent-system | — | flat | ✓ | ✓ |
-| agent-view-desktop | `v1.0` | `.gravity` | — | ✓ |
-| api-server-managing-agent | — | flat | — | ✓ |
-| antigravity--pptx-template-manager | — | flat | — | ✓ |
-| my-personal-accountant | — | flat | — | ✓ |
-| astra | `v1.4` | flat | ✓ | ✓ |
-| orbit | `v1.4` | `.gravity` | — | ✓ |
-| pulsar | `v1.4` | flat | — | ✓ |
-| agent-terraform | `v1.4` | `.gravity` | — | ✓ |
-| antigravity-based-project-plan-methodology _(dormant)_ | — | flat | — | — |
+| Project | stamp | docs | card | rel | codex |
+|---|---|---|---|---|---|
+| knowledge-viewer | `v1.0` | `.gravity` | — | ✓ | ✓ |
+| architecture-memory-os | `v1.0` | `.gravity` | — | — | ✓ |
+| local-llmstxt-server | `v1.0` | `.gravity` | — | ✓ | ✓ |
+| lecture-note | — | flat | n/a | — | ✓ |
+| capability-compass | `v1.1` | `.gravity` | — | — | ✓ |
+| multi-system-maintenance-agent-system | — | flat | n/a | ✓ | ✓ |
+| agent-view-desktop | `v1.0` | `.gravity` | — | — | ✓ |
+| api-server-managing-agent | — | flat | n/a | — | ✓ |
+| antigravity--pptx-template-manager | — | flat | n/a | — | ✓ |
+| my-personal-accountant | — | flat | n/a | — | ✓ |
+| astra | `v1.4` | flat | n/a | ✓ | ✓ |
+| orbit | `v1.4` | `.gravity` | — | — | ✓ |
+| pulsar | `v1.4` | flat | n/a | — | ✓ |
+| agent-terraform | `v1.4` | `.gravity` | — | — | ✓ |
+| antigravity-based-project-plan-methodology _(dormant)_ | — | flat | n/a | — | — |
 
 Next adoption moves: decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp; add release light-layer only where a project is ready to cut versions.
 

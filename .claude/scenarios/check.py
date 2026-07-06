@@ -70,6 +70,7 @@ WARN = "WARN"
 class Finding:
     severity: str   # FAIL | WARN
     code: str       # UNDERWIRED | ORPHAN_ROUTE | MISSING_FILE | INDEX_ABSENT | STRUCTURE
+                    # | PROTOCOL_MISSING | PROTOCOL_STALE
     domain: str     # the slug it concerns ("" if structural)
     region: str     # which index/region ("" if n/a)
     message: str
@@ -172,6 +173,32 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
         findings.append(Finding(
             WARN, "INDEX_ABSENT", "", "plan",
             "no .gravity/IMPLEMENTATION_PLAN.md — status spine unchecked (two-doc/brownfield project?)"))
+
+    # PROTOCOL — the embedded protocol card (.gravity/GRAVITY.md, copied from
+    # templates/GRAVITY-PROTOCOL.template.md) makes the repo self-describing
+    # when opened without the workspace. Absent, unstamped, or older than the
+    # workspace VERSION is drift, not breakage -> WARN, and the fix is always
+    # a re-copy (the card is never hand-edited).
+    card = _read(gravity / "GRAVITY.md")
+    if not card:
+        findings.append(Finding(
+            WARN, "PROTOCOL_MISSING", "", "",
+            "no .gravity/GRAVITY.md protocol card — the repo isn't self-describing "
+            "off-workspace; copy templates/GRAVITY-PROTOCOL.template.md and stamp it"))
+    else:
+        stamp = re.search(r"gravity protocol[^\n]*?v(\d+)\.(\d+)", card, re.IGNORECASE)
+        ws_ver = re.match(r"(\d+)\.(\d+)",
+                          _read(Path(__file__).resolve().parents[2] / "VERSION").strip())
+        if not stamp:
+            findings.append(Finding(
+                WARN, "PROTOCOL_STALE", "", "",
+                ".gravity/GRAVITY.md has no 'gravity protocol · vX.Y' stamp "
+                "(unfilled copy?) — re-copy the template and stamp from VERSION"))
+        elif ws_ver and (int(stamp[1]), int(stamp[2])) < (int(ws_ver[1]), int(ws_ver[2])):
+            findings.append(Finding(
+                WARN, "PROTOCOL_STALE", "", "",
+                f".gravity/GRAVITY.md is stamped v{stamp[1]}.{stamp[2]} but workspace "
+                f"gravity is v{ws_ver[1]}.{ws_ver[2]} — re-copy the template"))
 
     # UNDERWIRED — a folder missing from an index it's *required* to be in.
     # Required everywhere: Doc Map (navigation), MISSION row (why), PLAN spine (status).

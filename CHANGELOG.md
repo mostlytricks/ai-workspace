@@ -21,6 +21,21 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [1.6.0] - 2026-07-06
+
+### Added
+- **The embedded protocol card — `templates/GRAVITY-PROTOCOL.template.md` → `.gravity/GRAVITY.md`** (CLAUDE.md §6, the 12th stencil). Each project is its own independent repo (§2), so an agent that opens or clones one *without* the workspace found `.gravity/` full of SPECs and PLANs with no explanation of what they are or how to work them — the docs traveled, the protocol didn't. Now every `.gravity/` creation (`/adopt-gravity`, `/excavate`) embeds the **project-side** subset of the protocol as `.gravity/GRAVITY.md`: doc kinds + their rates of change, the navigation discipline (SPEC before a domain change, integration SPEC + Change Order before a boundary change, touch-the-doc-matching-the-rate), SPEC anatomy (Minimal Shape / enforcement tags / Behavioral Contract / the honesty rule), and the never-do list. Workspace rules (tiers, junctions, `PROJECTS.md`) are deliberately **not** embedded — one concern, one home, applied to gravity itself. The card is a **verbatim, versioned copy**: stamped `gravity protocol · vX.Y` from the root `VERSION` at copy time, never hand-edited per project (upgrade = re-copy). `GRAVITY.template.md`'s router block now points at it (and lists it in the Doc Map tree), so the pointer auto-loads wherever the repo goes. Drift is mechanical, not eyeballed: `check.py consistency` gains two WARNs — `PROTOCOL_MISSING` (`.gravity/` with no card) and `PROTOCOL_STALE` (unstamped/unfilled copy, or stamped older than the workspace `VERSION`) — folded into `/triage` as the new 📡 flag.
+- **`/sync-gravity <project>` — the upgrade ritual** the version stamps existed for but nothing performed: bringing one project from its adopted gravity version to the current one was three hand-edits with no home in any doc. The command splits the work into two layers on purpose — **mechanical, applied** (re-copy the protocol card verbatim from the template, bump the `> gravity: vX.Y` router stamp to `VERSION`, verify via `check.py consistency`, reconcile the adoption-table row) and **judgment, reported** (every `CHANGELOG.md` section between the old stamp and now is read, and convention changes the project might violate come back as a quoted checklist — a sync never restructures a project as a side effect). Built so a weaker agent can't invent a version: every version is read from `VERSION`, a stamp line, or a changelog heading. Human procedure: HANDBOOK "Upgrade a project to a newer gravity". The `PROJECTS.md` **Gravity adoption** table gains a **`card`** column (and drops its hardcoded "v1.0" wording), the HTML dashboard renders a live `card vX.Y` / `no-card` chip per `.gravity/` project, and `/triage` spot-checks the table against disk.
+
+## [1.5.0] - 2026-07-06
+
+_Backfilled at the v1.6.0 cut: this work originally shipped under a merge commit **labeled** "gravity v1.5.0" but without the release Change Order (no `VERSION` bump, no tag, no changelog section). This section and the `v1.5.0` tag (on `65ae0f2`, the last patch-loop commit) restore the tag+`VERSION` contract — the version lives in the tag and the file, never in prose._
+
+### Added
+- **The patch-loop ritual — `docs/PLAN.patch-loop.md`**: the 7-step patch→verify→re-plan discipline (preflight / anchor / state-snap / patch / verify / fork / re-plan) for landing risky slices safely, with its adoption decisions locked: an **N=3 bound** on the fix loop, **fixtures-as-drive**, and **snap-deleted-on-green**. Proven on two pilots — `knowledge-viewer` (stateless) and AMOS (stateful: `index.db` deliberately corrupted and restored byte-identical) — yielding findings **F1–F8**, the hard rules for a future `/patch-slice` skill (minting deferred until the wrapper earns it).
+- **`.claude/scripts/patch_slice.py` — the script core (weaker-agent walls)**: preflight / anchor / snap / verify / rollback / cleanup as mechanical walls encoding the pilot findings — F2 remedy on dirty trees, F4 bare-gate real exit codes, F6 stateful-path resolution order, F7 four-proof rollback (incl. `--probe` state functions), F8 CONTEXT-drift report; the N=3 fix-loop exits 75; the execution log survives `reset --hard`; the snap is retired only on proven rollback or green cleanup. Self-tested end-to-end on a fixture repo, both fork and fail branches. Remaining (deferred): the thin SKILL wrapper + a `.claude/scenarios/` fixture.
+- **`templates/SPEC.template.md` — optional `Stateful paths:` line under Gate**: names what git can't protect (databases, indexes, generated state) so the ritual's snapshot step knows exactly what to save before patching.
+
 ## [1.4.0] - 2026-07-03
 
 ### Added
@@ -67,6 +82,8 @@ evolution is in `git log`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
 [Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.4.0...HEAD
+[1.6.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.6.0
+[1.5.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.5.0
 [1.4.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.4.0
 [1.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.3.0
 [1.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.2.0

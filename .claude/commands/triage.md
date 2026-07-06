@@ -36,6 +36,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - Flag rows whose `last-touched` date disagrees with the project's CONTEXT.md `Last touched`.
    - Flag entries in `repos/` that have no junction in any tier — these are orphans (storage with no view), unless `PROJECTS.md` lists them under "Not surfaced in a tier (intentional)".
    - Flag projects junctioned into more than one tier at once — only one tier per project.
+   - **Gravity-adoption table drift:** spot-check the `PROJECTS.md` **Gravity adoption** rows against reality — a `stamp` cell that disagrees with the project's `> gravity: vX.Y` line, or a `card` cell that disagrees with `.gravity/GRAVITY.md` (missing card = `—`; flat projects stay `n/a`). The dashboard computes these live from disk, so a wrong table row is pure snapshot rot — flag it for reconciliation (`/sync-gravity` fixes the row when it syncs a project).
    - **Missing Codex shim:** flag any project with a `CLAUDE.md` but **no `AGENTS.md`** — it won't be discoverable by agents that look for `AGENTS.md` (Codex). The fix is `cp templates/AGENTS.template.md <project>/AGENTS.md`. New projects get it automatically via `/init-project` / `/promote`; this catches ones created before the shim existed.
 
 7. **Doc-pipeline drift** (only for projects that adopted the optional four-doc pipeline — have `MISSION.html` and/or `IMPLEMENTATION_PLAN.md`):
@@ -48,7 +49,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
      ```bash
      python .claude/scenarios/check.py consistency --project repos/<name>
      ```
-     It mechanically reads all four registry owners and reports `UNDERWIRED` (a `.gravity/<domain>/` folder missing from the Doc Map, the router table, the MISSION "system in N domains" row, or the `IMPLEMENTATION_PLAN.md` status spine — an orphaned domain the next agent won't find) and `ORPHAN_ROUTE` (a `.gravity/<domain>/` reference whose folder is gone). Fold every `FAIL` into the 🧭 flag below; surface `WARN`s (orphan routes, a domain folder with no `PLAN*.md`) only when notable. The same core (`check_gravity_consistency`) backs the `/new-domain` golden-scenario, so triage and the scenario agree by construction. If `check.py` is somehow unavailable, fall back to checking the four indexes by hand; also still flag a domain with a `SPEC.md` but **no router-table row** in `CLAUDE.md` (the checker treats that as a WARN, not a FAIL).
+     It mechanically reads all four registry owners and reports `UNDERWIRED` (a `.gravity/<domain>/` folder missing from the Doc Map, the router table, the MISSION "system in N domains" row, or the `IMPLEMENTATION_PLAN.md` status spine — an orphaned domain the next agent won't find) and `ORPHAN_ROUTE` (a `.gravity/<domain>/` reference whose folder is gone). It also WARNs `PROTOCOL_MISSING` / `PROTOCOL_STALE` — the embedded protocol card (`.gravity/GRAVITY.md`, what makes the repo self-describing when opened without the workspace) is absent, unstamped, or stamped older than the workspace `VERSION`; surface these as the 📡 flag below (the fix is always a re-copy of `templates/GRAVITY-PROTOCOL.template.md` with the stamp filled from `VERSION` — the card is never hand-edited). Fold every `FAIL` into the 🧭 flag below; surface `WARN`s (orphan routes, a domain folder with no `PLAN*.md`) only when notable. The same core (`check_gravity_consistency`) backs the `/new-domain` golden-scenario, so triage and the scenario agree by construction. If `check.py` is somehow unavailable, fall back to checking the four indexes by hand; also still flag a domain with a `SPEC.md` but **no router-table row** in `CLAUDE.md` (the checker treats that as a WARN, not a FAIL).
    - **SPEC honesty rot** (only for `.gravity/` projects that have `SPEC.md` files): a SPEC's enforcement tags are only worth what they can prove — `/new-spec` makes them honest at authoring, but a renamed test or deleted npm script silently turns a wall into a lie. **Run the checker:**
      ```bash
      python .claude/scenarios/check.py spec --project repos/<name>
@@ -87,6 +88,7 @@ Only for projects on the four-doc pipeline. Omit if none.
 - 📄 <name> | no MISSION.html on an ambitious project — consider adopting the pipeline
 - 🔁 <name> | DOC COLLISION — "<fact>" restated in MISSION + CLAUDE.md; make the non-owner a reference
 - 🧭 <name> | .gravity REGISTRY DRIFT — domain "<domain>" unwired (missing Doc-Map/MISSION/status row), or a row points at a gone folder
+- 📡 <name> | PROTOCOL CARD — .gravity/GRAVITY.md missing/unstamped/stale (v<X.Y> vs workspace v<X.Z>) — re-copy templates/GRAVITY-PROTOCOL.template.md
 - 🔬 <name> | SPEC HONESTY — <domain>/SPEC.md <finding> (dead Gate/tag or template leftover); untagged/gate-less SPECs noted in one line
 
 ## Recommended actions

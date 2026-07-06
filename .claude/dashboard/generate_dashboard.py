@@ -128,11 +128,15 @@ def esc(s: str) -> str:
 # the AGENTS.md Codex shim. Projects living at an external path (no repos/<name>)
 # return blanks — no chips, same as before.
 STAMP_RE = re.compile(r"gravity:\s*v(\d+\.\d+(?:\.\d+)?)", re.IGNORECASE)
+# The embedded protocol card's stamp (`> **gravity protocol · vX.Y**` in
+# .gravity/GRAVITY.md) — same pattern check.py's PROTOCOL_STALE check reads.
+CARD_RE = re.compile(r"gravity protocol[^\n]*?v(\d+\.\d+)", re.IGNORECASE)
 
 
 def gravity_adoption(name: str) -> dict:
     base = WORKSPACE_ROOT / "repos" / name
-    info = {"stamp": None, "docsys": None, "release": False, "shim": False}
+    info = {"stamp": None, "docsys": None, "release": False, "shim": False,
+            "card": None}
     claude = base / "CLAUDE.md"
     if not claude.exists():
         return info  # external-path or non-gravity project → no chips
@@ -145,6 +149,14 @@ def gravity_adoption(name: str) -> dict:
     info["docsys"] = "gravity" if (base / ".gravity").is_dir() else "flat"
     info["release"] = (base / "CHANGELOG.md").exists()
     info["shim"] = (base / "AGENTS.md").exists()
+    if info["docsys"] == "gravity":
+        try:
+            card_txt = (base / ".gravity" / "GRAVITY.md").read_text(
+                encoding="utf-8", errors="ignore")
+        except OSError:
+            card_txt = ""
+        c = CARD_RE.search(card_txt)
+        info["card"] = c.group(1) if c else None
     return info
 
 
@@ -159,6 +171,12 @@ def adoption_chips(name: str) -> str:
         chips.append('<span class="gv warn">unstamped</span>')
     if a["docsys"] == "gravity":
         chips.append('<span class="gv acc">.gravity</span>')
+        # The protocol card only applies to .gravity/ projects — a missing or
+        # unstamped .gravity/GRAVITY.md is the same drift /triage flags as 📡.
+        if a["card"]:
+            chips.append(f'<span class="gv on">card v{esc(a["card"])}</span>')
+        else:
+            chips.append('<span class="gv warn">no-card</span>')
     else:
         chips.append('<span class="gv dim">flat</span>')
     if a["release"]:
