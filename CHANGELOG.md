@@ -19,7 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **The embedded protocol card — `templates/GRAVITY-PROTOCOL.template.md` → `.gravity/GRAVITY.md`** (CLAUDE.md §6, the 12th stencil). Each project is its own independent repo (§2), so an agent that opens or clones one *without* the workspace found `.gravity/` full of SPECs and PLANs with no explanation of what they are or how to work them — the docs traveled, the protocol didn't. Now every `.gravity/` creation (`/adopt-gravity`, `/excavate`) embeds the **project-side** subset of the protocol as `.gravity/GRAVITY.md`: doc kinds + their rates of change, the navigation discipline (SPEC before a domain change, integration SPEC + Change Order before a boundary change, touch-the-doc-matching-the-rate), SPEC anatomy (Minimal Shape / enforcement tags / Behavioral Contract / the honesty rule), and the never-do list. Workspace rules (tiers, junctions, `PROJECTS.md`) are deliberately **not** embedded — one concern, one home, applied to gravity itself. The card is a **verbatim, versioned copy**: stamped `gravity protocol · vX.Y` from the root `VERSION` at copy time, never hand-edited per project (upgrade = re-copy). `GRAVITY.template.md`'s router block now points at it (and lists it in the Doc Map tree), so the pointer auto-loads wherever the repo goes. Drift is mechanical, not eyeballed: `check.py consistency` gains two WARNs — `PROTOCOL_MISSING` (`.gravity/` with no card) and `PROTOCOL_STALE` (unstamped/unfilled copy, or stamped older than the workspace `VERSION`) — folded into `/triage` as the new 📡 flag.
 
 ## [1.4.0] - 2026-07-03
 

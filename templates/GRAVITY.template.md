@@ -12,12 +12,15 @@ does not restate them. One concern, one home.
 
 > **Docs live in `.gravity/`.** This `CLAUDE.md` (identity, *how*) and `CONTEXT.md` (*now*) stay at the project root and auto-load; `README.md` is the user guide. Everything else — the *why*, *what/next*, and *how it's built* — is organized **by subject domain** under `.gravity/`. See the **Doc Map** below. One concern, one home — link, don't restate.
 
+> **Protocol card: read `.gravity/GRAVITY.md` before touching `.gravity/` docs.** It embeds the project-side gravity protocol (doc kinds + rates, navigation discipline, SPEC anatomy) so this repo is self-describing even when opened without the workspace. It's a versioned copy — never hand-edit; re-copy from the workspace on a gravity upgrade.
+
 ## Doc Map (`.gravity/`)
 
 Docs are grouped by **subject domain**, not by doc-type. A domain folder holds whichever of three kinds it needs — `ARCHITECTURE.html` (human deep-dive), `SPEC.md` (agent contract), `PLAN.*.md` (what/next) — named by *kind* because the folder already names the subject. **Recognized only when present.**
 
 ```
 .gravity/
+  GRAVITY.md                # the protocol card — how to work these docs (versioned copy, never hand-edit)
   MISSION.html              # why — north star (browser-read)
   ARCHITECTURE.html         # how — system overview (browser-read)
   IMPLEMENTATION_PLAN.md    # what/next — roadmap spine + per-domain status

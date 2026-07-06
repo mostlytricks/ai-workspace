@@ -41,12 +41,13 @@ Whatever joins cleanly becomes a Boundary-Map row. Whatever doesn't becomes a **
 Show the user the service inventory, the proposed Boundary Map, and the file list you intend to create. **Wait for confirmation** — this is someone's working system. Then write:
 
 1. **Two-doc minimum if missing**: root `CLAUDE.md` (services table, ports, run commands — only what Step 0/1 evidenced) + `CONTEXT.md` (why gravity landed here; Next Step). Copy from `templates/`; fill only evidenced fields, leave the rest as the stencil's `<FILL>`.
-2. **`.gravity/integration/SPEC.md`** from `SPEC.template.md`'s **integration variant**:
+2. **The protocol card** — creating `.gravity/` for the first time means embedding the project-side protocol so the repo is self-describing off-workspace: `cp templates/GRAVITY-PROTOCOL.template.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with major.minor from the workspace root `VERSION` file (never invent a version; the card is a verbatim copy, never tailored).
+3. **`.gravity/integration/SPEC.md`** from `SPEC.template.md`'s **integration variant**:
    - **Boundary Map** — one row per confirmed seam, each citing its source file.
    - **Ports / base URLs** table from the manifests.
    - **Change Order** — drafted from the discovered dependency direction (typically DB → mapper/entity → DTO → controller → client → component), explicitly marked *draft — confirm against how this team actually ships*.
    - Rules tagged honestly: almost everything starts `[review]` — there is no lint wall yet; **never** tag `[test:x]` unless the test exists.
-3. **`.gravity/integration/structural/`** — the regenerable dumps: `endpoints.md`, `db-map.md`, `frontend-calls.md`, `service-links.md`. Header on each: *auto-extracted by /excavate on <date> — regenerable, never hand-edit; re-run /excavate after structural change.*
+4. **`.gravity/integration/structural/`** — the regenerable dumps: `endpoints.md`, `db-map.md`, `frontend-calls.md`, `service-links.md`. Header on each: *auto-extracted by /excavate on <date> — regenerable, never hand-edit; re-run /excavate after structural change.*
 
 ## Step 4 — Findings & OPEN items (the honest remainder)
 
