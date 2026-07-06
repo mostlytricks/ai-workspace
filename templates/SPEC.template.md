@@ -29,6 +29,12 @@ This is the compact agent-loadable contract for `<domain>` — enough to **build
 
 **Gate:** `<FILL: the one command that proves a change, e.g. `npm run test:<domain> && npm run lint:docs`>` — exits non-zero on a violation, so run it after touching anything this spec governs.
 
+<!-- OPTIONAL — delete if this domain owns no gitignored state. Names the paths git can't
+     protect (SQLite DBs, ledgers, generated state) so the patch loop (ai-workspace
+     docs/PLAN.patch-loop.md, step 3) snapshots them to `.patch-snap/<sha>/` before a patch
+     and restores them on rollback. No line = nothing to snapshot. -->
+**Stateful paths:** `<FILL: gitignored paths a patch could mutate, e.g. `data/index.sqlite`, `ledger/`>`
+
 <!-- Enforcement legend — used in the Rules + Contract tags below. Keep it; it's what makes the contract honest.
      [lint]      a doc/static linter check fails on violation
      [type]      the type system / schema rejects it
