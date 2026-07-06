@@ -185,10 +185,26 @@ User picked Phase 12a (diagram drift check) — fittingly, a slice about drift d
 the stateless path (knowledge-viewer) and the stateful path (AMOS). Every step 1–7 has
 fired at least once; the fire-drill has restored both code-only and code+state damage.
 
+**2026-07-06 — SCRIPT CORE BUILT: `.claude/scripts/patch_slice.py`** (the weaker-agent
+walls, self-tested end-to-end on a fixture repo — both fork branches driven):
+
+| subcommand | wall it enforces |
+|---|---|
+| `preflight --gate` | dirty tree → F2 remedy text; red baseline refused; **F8 CONTEXT-drift report** (caught all 3 planted stale claims) |
+| `anchor --plan --slug` | branch + anchor SHA written into the PLAN by the script (can't be mistyped); refuses dirty tree / existing branch |
+| `snap --spec/--plan/--paths` | **F6 resolution order**; manifest.json; auto-gitignores `.patch-snap/`; warns when a declared path is git-tracked (a smell); "no paths declared" = clean skip |
+| `verify --gate --plan` | **F4: gate runs bare, real exit code**; attempt line appended by the script; **N=3 enforced — exit 75** with rollback instructions on exhaustion |
+| `rollback --to --gate --probe` | **F7 four proofs** (incl. "restored state functions" via `--probe`, loud SKIPPED warning without one); **execution log survives the reset** (F3 applied inward — the tool re-writes the PLAN after `reset --hard`); refuses to print PASS if any proof fails; retires the snap on PASS |
+| `cleanup` | snap deletion refused on a dirty tree (green-checkpoint retention rule) |
+
+Design notes: stdlib-only, UTF-8 file I/O everywhere (cp949-safe), ASCII console markers;
+`shell=True` for gate/probe is deliberate and documented (user-authored compound commands,
+terminal-equivalent trust). Self-test proved fail branches too: failing probe → "rollback
+NOT proven", snap kept; the PLAN accumulated the full forensic story (anchor → snap →
+3 attempts → failed rollback → proven rollback) across two hard resets.
+
 ## Next
 
-Mint **`/patch-slice`** from the evidence: steps 1–7 with F3 (drills only
-post-checkpoint), F4 (bare gate commands), F6 (stateful-paths fallback home), F7
-(four-proof rollback), F8 (preflight diffs CONTEXT vs repo) as hard rules — plus a
-`.claude/scenarios/` fixture so `/triage`-grade checking covers it. Then flip this
-plan to ✓ shipped.
+Wrap it: a thin **`/patch-slice`** SKILL.md that sequences the subcommands and owns the
+two judgment steps the script can't (writing the patch, writing the re-plan), plus a
+`.claude/scenarios/` fixture so `check.py` covers the script. Then flip this plan to ✓.
