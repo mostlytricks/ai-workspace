@@ -19,7 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Tracks — the direction axis in `IMPLEMENTATION_PLAN.template.md`.** The plan had two shapes (phase roadmap · slice queue) and the per-domain spine, but no home for a **named cross-domain direction** — a long-horizon intent ("compact queries everywhere") that isn't a phase (phases end; directions span) and isn't one domain's slice; projects were inventing it by hand (`local-llmstxt-server`'s "Track R"/"Track M"). The new optional **Tracks** section formalizes it as the third axis (spine = where is each *subject*; tracks = how far along is each *intent*) with anti-sprawl rules baked in: a track **holds no slices** (it's an index — status + links to the domain `PLAN.*.md` slices carrying it), **points up to the MISSION principle it serves** (no principle → scope creep, not a direction), is **capped at ~3 active**, and **retires when its residue is walls** (the direction lives on as enforcement-tagged SPEC rules; git keeps the row's history). Completes the direction pipeline: MISSION principle → track → domain PLAN slices → SPEC rules.
 
 ## [1.7.0] - 2026-07-07
 

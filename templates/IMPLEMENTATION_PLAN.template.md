@@ -86,8 +86,8 @@ Sketch only — expand into the full spec above when it becomes "next".
      SPEC template's integration variant). Use this INSTEAD of the Phase roadmap
      above when the project accretes features (analyze → agent → dashboard →
      security …) rather than marching through an arc — phases would be fake.
-     Delete whichever shape you don't use. Everything below the variant (Locked
-     decisions, Open questions, The gate) applies to both shapes unchanged.
+     Delete whichever shape you don't use. Everything below the variant (Tracks,
+     Locked decisions, Open questions, The gate) applies to both shapes unchanged.
      ============================================================================ -->
 
 ## Slice queue
@@ -110,6 +110,25 @@ Rolling lanes instead of numbered phases. Rules:
 | later | <… unordered pool …> | `<…>` | ○ |
 
 <!-- ===================== END SLICE-QUEUE VARIANT ===================== -->
+
+## Tracks (optional — the direction axis)
+
+<!-- A TRACK is a named cross-domain DIRECTION — a long-horizon intent ("compact queries
+     everywhere", "offline-first") that isn't a phase (phases end; directions span) and isn't
+     one domain's slice. Phases/slices answer "what ships next?"; the spine answers "where is
+     each domain?"; tracks answer "how far along is each *intent*?" — the third axis.
+     Delete this section if the project has no cross-domain direction yet. Rules:
+     - A track holds NO slices itself — it is an INDEX: its status + links to the domain
+       PLAN slices currently carrying it. Detail always lives down in the domains.
+     - Every track points UP to the MISSION principle it serves. No principle → it's scope
+       creep, not a direction: either earn the MISSION row first or drop the track.
+     - Hard cap ~3 active tracks. More than that isn't direction, it's drift with labels.
+     - A track RETIRES when its residue is walls: the direction's rules live on as
+       enforcement-tagged SPEC rules, and the track row is deleted (git keeps the history). -->
+
+| Track | Direction (→ MISSION §) | Carried by | Status |
+|---|---|---|---|
+| <name> | <one-line intent> (→ §03) | `.gravity/<domain>/PLAN.<slug>.md`, `.gravity/<other>/PLAN.<slug>.md` | ◑ |
 
 ## Locked decisions
 
