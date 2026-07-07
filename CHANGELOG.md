@@ -19,6 +19,10 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.8.0] - 2026-07-07
+
 ### Added
 - **`docs/INTRO.html` — the browser-read introduction to gravity.** The system had rules (`CLAUDE.md`), workflows (`HANDBOOK.md`), and a why (`MISSION.html`) — but no *front door*: the one page that explains what gravity **is** to someone (or some future you) meeting it cold. Eleven sections: the problem (agent sessions are powerful and amnesiac — state, rules, and intent evaporate), the workspace, the four-clocks doc model, `.gravity/` + the protocol card, SPEC anatomy (walls vs judgment + the honesty rule), the direction pipeline (MISSION principle → Track → slices → SPEC rules), brownfield archaeology (evidence pack + hub), the command lifecycle, versioning, and the philosophy (weaker-agent walls · honesty over completeness · ceremony must pay · intent is the scarce resource). Styled on the `DESIGN.docs.md` aurora theme and registered in `add_theme_switch.py`'s `WORKSPACE_DOCS`, so it carries the shared 5-theme switcher. Linked from `README.md` ("start here"), the `CLAUDE.md` §1 map, and HANDBOOK "See also".
 - **Tracks — the direction axis in `IMPLEMENTATION_PLAN.template.md`.** The plan had two shapes (phase roadmap · slice queue) and the per-domain spine, but no home for a **named cross-domain direction** — a long-horizon intent ("compact queries everywhere") that isn't a phase (phases end; directions span) and isn't one domain's slice; projects were inventing it by hand (`local-llmstxt-server`'s "Track R"/"Track M"). The new optional **Tracks** section formalizes it as the third axis (spine = where is each *subject*; tracks = how far along is each *intent*) with anti-sprawl rules baked in: a track **holds no slices** (it's an index — status + links to the domain `PLAN.*.md` slices carrying it), **points up to the MISSION principle it serves** (no principle → scope creep, not a direction), is **capped at ~3 active**, and **retires when its residue is walls** (the direction lives on as enforcement-tagged SPEC rules; git keeps the row's history). Completes the direction pipeline: MISSION principle → track → domain PLAN slices → SPEC rules.
@@ -90,6 +94,7 @@ evolution is in `git log`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
 [Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.4.0...HEAD
+[1.8.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.8.0
 [1.7.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.7.0
 [1.6.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.6.0
 [1.5.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.5.0
