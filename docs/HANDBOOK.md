@@ -311,6 +311,46 @@ The intake order:
 
 **`/excavate <name>` automates steps 1–4**: it scans the code (never the DB), presents the inventory for confirmation, then writes the two-doc minimum, the cited Boundary Map, and the structural dumps — leaving the un-traceable honestly `OPEN:`.
 
+### The DB evidence pack — when the code doesn't carry the queries
+
+Some systems defeat code archaeology on the DB side: dynamic/string-built SQL, logic in stored procedures, a shared database touched by repos you can't see. The missing evidence comes from the database's own **metadata**, collected **offline** as flat files by a read-only account — the agent never needs DB access, and **no row data is exported** (structure, comments, constraints, grants, activity stats only — no PII).
+
+**`templates/DB-EVIDENCE.template.md`** is both the shopping list you hand a DBA (exact Oracle queries per item, `information_schema` equivalents noted) and the pack's **manifest**. Everything lands in one place:
+
+```
+<project>/.gravity/integration/structural/db/
+  MANIFEST.md          # the checklist — each item `present (<date>)` or `OPEN:`
+  tables-columns.csv   # P1 — inventory + comments (the semantics)
+  constraints.csv      # P1 — PK/FK/UK: the entity graph
+  db-source.sql        # P2 — procedures/views/triggers (queries living in the DB)
+  grants.csv           # P2 — which account/service can touch which tables
+  rowcounts.csv        # P2 — live vs dead tables
+  activity.csv         # P3 — actually-executed SQL (DBA-assisted)
+  docs/                # human artifacts (ERD, table-definition sheets) — claims to verify
+```
+
+**Partial is fine by design** — collect P1 today and start; every absent item is an `OPEN:` row in the MANIFEST, never a blocker. `/excavate` consumes whatever is `present` (FK connectivity + name prefixes + shared grants cluster the tables into candidate *vertical business domains*, each citing its CSV) and, when no pack exists at all, seeds the empty MANIFEST so you leave with the shopping list.
+
+### Many services, many repos — the hub project
+
+When one system is spread across **many service repositories**, the cross-service gravity (the integration domain, the Boundary Map, the DB evidence pack) has no single repo to live in. The answer reuses the workspace's own root pattern: a **hub project** — a docs-only repo that tracks the system-level gravity while the service clones live *inside it, git-denied* (the same deny-all/whitelist trick `ai-workspace/.gitignore` uses on `repos/`):
+
+```
+repos/<system>/                # THE workspace project = the hub (its own git repo)
+  CLAUDE.md · CONTEXT.md · README.md    # router: the services table names each repo + where it lives
+  .gitignore                   # deny services/ — the hub commits docs + evidence ONLY
+  .gravity/
+    GRAVITY.md                 # protocol card
+    integration/
+      SPEC.md                  # Boundary Map + Change Order across ALL services
+      structural/              # code-scan dumps + db/ evidence pack (above)
+  services/                    # NOT tracked by the hub — each a full independent clone
+    <service-a>/               #   own .git, own remote
+    <service-b>/
+```
+
+Why this shape: `/excavate` gets one scan surface (`services/*/`) and the Boundary-Map citations use stable relative paths (`services/order-api/src/…`) that survive any machine; the hub repo stays a legal gravity project (it commits only what it owns — docs and evidence — so it is **not** the forbidden umbrella repo: service code is never committed, never submoduled). Each service repo keeps its own two-doc minimum (and optionally its own `.gravity/`) independently; the hub's `CLAUDE.md` services table is the router between them. One-or-two-service projects don't need this — a single repo with `.gravity/integration/` stays the simpler correct shape.
+
 ---
 
 ## Upgrade a project to a newer gravity

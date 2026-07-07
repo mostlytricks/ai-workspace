@@ -19,7 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **The DB evidence pack — `templates/DB-EVIDENCE.template.md` → `.gravity/integration/structural/db/`** (the 13th stencil). Brownfield's blind spot: when services carry no readable queries (dynamic/string-built SQL, logic in stored procedures, a shared DB touched by repos you can't see), code archaeology can't trace the DB half of the seams — and `/excavate` could only write one bare `OPEN:` line. The pack is the sanctioned substitute: **metadata CSVs a DBA exports offline** with a read-only account (tables+comments, PK/FK constraints, source-in-DB, grants, rowcounts, V$SQL activity — exact Oracle queries in the template, `information_schema` equivalents noted; **never row data**, so no PII leaves the DB). The template doubles as the pack's **MANIFEST**: every item optional, `present (<date>)` or `OPEN:` — **partial is fine by design**, P1 (columns+comments, FK graph) alone unblocks vertical-domain clustering (FK connectivity · name prefixes · shared grants/activity → candidate business domains, each citing its CSV). `/excavate` gains the pack as a **fifth inventory** when present, and **seeds the empty MANIFEST when absent** — the user leaves with the DBA shopping list, not a bare unknown.
+- **The hub project — gravity for many-repo systems** (HANDBOOK "Many services, many repos"). One system spread across many service repositories left the cross-service gravity (integration domain, Boundary Map, DB evidence) with no repo to live in. The hub reuses the workspace's own root pattern: a **docs-only project repo** whose `.gitignore` denies `services/`, where the independent service clones live (each its own `.git` + remote — never committed, never submoduled, so the hub is not the forbidden umbrella repo). One scan surface for `/excavate` (`services/*/`), stable relative citations (`services/<name>/src/…`), per-service two-doc minimums untouched. `/excavate` is now hub-aware (Step 0 detects the shape; never writes inside the service clones).
 
 ## [1.6.0] - 2026-07-06
 
