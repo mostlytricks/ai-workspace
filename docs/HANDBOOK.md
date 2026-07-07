@@ -398,6 +398,7 @@ A minor-only delta usually means an empty checklist — re-copy, bump, done. It 
 
 ## See also
 
+- `docs/INTRO.html` — the browser-read **introduction to gravity**: what it is, the doc model, the philosophy. The onboarding read; this handbook is the working reference.
 - `CLAUDE.md` — agent operating manual (rules and invariants).
 - `PROJECTS.md` — current project index.
 - `.claude/commands/` — slash command definitions (read these to understand exactly what `/init-project`, `/triage`, `/mission`, `/adopt-gravity`, and `/new-domain` do).

@@ -74,7 +74,7 @@ CLAUDE.md            # Agent operating manual (rules & invariants) — auto-load
 AGENTS.md            # Codex-compatible shim → points to CLAUDE.md
 PROJECTS.md          # Live index of every project + current focus
 VERSION  CHANGELOG.md # Gravity's own SemVer + changelog
-docs/                # Human/browser read-docs: HANDBOOK.md, MISSION.html, DESIGN.docs.md
+docs/                # Human/browser read-docs: INTRO.html (start here), HANDBOOK.md, MISSION.html, DESIGN.docs.md
 templates/           # Per-project/-domain stencils (all *.template.*)
 .claude/commands/    # Workspace slash commands
 ```
