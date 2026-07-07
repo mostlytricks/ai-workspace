@@ -153,6 +153,7 @@ WORKSPACE_DOCS = (
     "templates/MISSION.template.html",
     "templates/ARCHITECTURE.template.html",
     "docs/MISSION.html",
+    "docs/INTRO.html",
 )
 
 

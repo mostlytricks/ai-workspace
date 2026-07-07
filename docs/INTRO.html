@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gravity — an introduction</title>
+<style>
+:root {
+  --bg:#0A0E1A; --panel:rgba(17,24,43,0.66); --panel-2:rgba(26,36,64,0.55); --line:rgba(255,255,255,0.09);
+  --text-hi:#F3F4F6; --text:#cdd3e0; --text-mid:#9CA3AF; --faint:#717a8c;
+  --accent:#34e3e6; --accent-d:#00E5E8; --blue:#4FACFE; --amber:#FBBF24; --red:#FF4D6D;
+  --mono:'Fira Code',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0; color:var(--text); font-family:var(--sans); font-size:15px; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
+    radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
+    radial-gradient(700px 600px at 50% 120%, rgba(0,229,232,.06), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+.wrap { max-width:920px; margin:0 auto; padding:56px 28px 120px; }
+
+header.top { margin-bottom:14px; }
+.logo { display:inline-flex; align-items:center; gap:10px; margin-bottom:10px; }
+.logo .sq { width:13px; height:13px; border-radius:4px;
+  background:linear-gradient(135deg,#00A3A6,#00E5E8); box-shadow:0 0 14px -1px rgba(0,229,232,.85); }
+.logo .k { font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:.04em; }
+h1 { font-family:'Outfit',var(--sans); font-size:32px; line-height:1.18; margin:4px 0 6px; font-weight:700;
+  letter-spacing:-.02em; background:linear-gradient(135deg,#4FACFE,#F093FB);
+  -webkit-background-clip:text; background-clip:text; color:transparent; }
+.lede { color:var(--text-mid); font-size:16px; margin:0 0 8px; }
+
+h2 { font-size:20px; color:var(--text-hi); margin:52px 0 14px; font-weight:620;
+  padding-bottom:8px; border-bottom:1px solid var(--line); }
+h2 .n { color:var(--accent); font-family:var(--mono); font-size:14px; margin-right:10px; }
+h3 { font-size:15px; color:var(--text-hi); margin:26px 0 8px; font-weight:620; }
+p { margin:10px 0; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { color:var(--accent-d); text-decoration:underline; }
+strong { color:var(--text-hi); font-weight:620; }
+code { font-family:var(--mono); font-size:.86em; color:var(--accent);
+  background:var(--panel-2); border:1px solid var(--line); padding:1px 6px; border-radius:5px; }
+
+pre { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:18px 20px; overflow-x:auto; margin:16px 0;
+  font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--text-mid);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 8px 32px rgba(0,0,0,.22); }
+pre b { color:var(--accent); font-weight:600; }
+pre .c { color:var(--faint); } pre .a { color:var(--accent); } pre .b { color:var(--blue); }
+
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px; }
+th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--faint); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+td code { font-size:.9em; }
+tbody tr:hover { background:rgba(255,255,255,.02); }
+
+.cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 8px 32px rgba(0,0,0,.22);
+  transition:transform .25s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s; }
+.card:hover { transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 40px rgba(0,242,254,.15); }
+.card h4 { margin:0 0 6px; font-size:13.5px; color:var(--text-hi); display:flex; align-items:center; gap:8px; }
+.card p { margin:4px 0 0; font-size:13px; color:var(--text-mid); }
+.pill { font-family:var(--mono); font-size:10.5px; padding:1px 7px; border-radius:20px; border:1px solid var(--line); }
+.pill.live { color:var(--accent); border-color:rgba(0,229,232,.4); }
+.pill.mock { color:var(--amber); border-color:rgba(251,191,36,.4); }
+
+.note { border-left:3px solid var(--accent); background:var(--panel);
+  border-radius:0 12px 12px 0; padding:12px 16px; margin:18px 0; font-size:14px;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 8px 32px rgba(0,0,0,.22); }
+.note.warn { border-left-color:var(--amber); }
+.note.red { border-left-color:var(--red); }
+.note .lbl { font-weight:620; color:var(--text-hi); }
+
+ul, ol { margin:10px 0; padding-left:22px; }
+li { margin:5px 0; }
+
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 20px; margin:22px 0 0;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 8px 32px rgba(0,0,0,.22); }
+.toc ol { margin:0; columns:2; column-gap:32px; font-size:13.5px; }
+.toc a { color:var(--text-mid); }
+.toc a:hover { color:var(--accent-d); }
+
+footer { margin-top:70px; padding-top:18px; border-top:1px solid var(--line); color:var(--faint); font-size:12.5px; }
+@media (max-width:680px){ .cards, .toc ol { grid-template-columns:1fr; columns:1; } }
+@media (prefers-reduced-motion:reduce){ * { transition:none!important; } }
+
+  /* ===== aurora doc theme + 5-theme switcher (dashboard-matched) — appended; later rules win, custom CSS above preserved =====
+     Five palettes selected via <html data-theme>, ported from .claude/dashboard onto the doc token names.
+     Switching re-points every var(--token) already used above; the flourishes below are tokenized so they
+     adapt per theme. Custom diagram CSS above this block is left untouched. */
+  :root, html[data-theme="aurora"] {
+    --bg:#0A0E1A; --panel:rgba(17,24,43,0.70); --panel-2:rgba(26,36,64,0.80); --line:rgba(255,255,255,0.08);
+    --text-hi:#F3F4F6; --text:#CBD5E1; --text-mid:#9CA3AF; --faint:#717a8c;
+    --accent:#00E5E8; --accent-d:#4FACFE; --blue:#4FACFE; --amber:#FBBF24; --red:#FF4D6D;
+    --h1-grad:linear-gradient(135deg,#00F2FE 0%,#4FACFE 60%,#F093FB 130%);
+    --glow:rgba(0,229,232,.85); --hover-glow:rgba(0,242,254,.15); --shadow:0 8px 32px rgba(0,0,0,.22);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(0,229,232,.06), transparent 60%), #0A0E1A;
+  }
+  html[data-theme="daylight"] {
+    --bg:#F7F9FC; --panel:rgba(255,255,255,0.85); --panel-2:#eef2f8; --line:rgba(15,23,42,0.10);
+    --text-hi:#1E293B; --text:#334155; --text-mid:#64748B; --faint:#94A3B8;
+    --accent:#2563EB; --accent-d:#7C3AED; --blue:#2563EB; --amber:#B45309; --red:#DC2626;
+    --h1-grad:linear-gradient(135deg,#2563EB 0%,#4F46E5 60%,#7C3AED 130%);
+    --glow:rgba(37,99,235,.35); --hover-glow:rgba(37,99,235,.16); --shadow:0 8px 24px rgba(15,23,42,.08);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(37,99,235,.07), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(124,58,237,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(37,99,235,.05), transparent 60%), #F7F9FC;
+  }
+  html[data-theme="sandstone"] {
+    --bg:#FBF6EF; --panel:rgba(255,252,247,0.88); --panel-2:#f3ebdf; --line:rgba(120,80,40,0.14);
+    --text-hi:#3D2E22; --text:#5C4A38; --text-mid:#8C7A66; --faint:#a8957f;
+    --accent:#C2410C; --accent-d:#D97706; --blue:#D97706; --amber:#B45309; --red:#DC2626;
+    --h1-grad:linear-gradient(135deg,#C2410C 0%,#D97706 60%,#B45309 130%);
+    --glow:rgba(217,119,6,.40); --hover-glow:rgba(194,65,12,.16); --shadow:0 8px 24px rgba(90,60,30,.10);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(217,119,6,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(194,65,12,.07), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(180,83,9,.06), transparent 60%), #FBF6EF;
+  }
+  html[data-theme="forest"] {
+    --bg:#0C1A14; --panel:rgba(18,38,30,0.70); --panel-2:rgba(26,52,42,0.82); --line:rgba(255,255,255,0.07);
+    --text-hi:#E8F2EC; --text:#C5D8CE; --text-mid:#8BA89A; --faint:#6f897c;
+    --accent:#34D399; --accent-d:#A3E635; --blue:#10B981; --amber:#FBBF24; --red:#FB7185;
+    --h1-grad:linear-gradient(135deg,#34D399 0%,#10B981 60%,#A3E635 130%);
+    --glow:rgba(52,211,153,.70); --hover-glow:rgba(52,211,153,.16); --shadow:0 8px 32px rgba(0,0,0,.25);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(52,211,153,.09), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(163,230,53,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(16,185,129,.06), transparent 60%), #0C1A14;
+  }
+  html[data-theme="slate"] {
+    --bg:#16181D; --panel:rgba(30,33,40,0.72); --panel-2:rgba(42,46,55,0.85); --line:rgba(255,255,255,0.08);
+    --text-hi:#E5E7EB; --text:#C4C9D2; --text-mid:#9499A3; --faint:#6e727b;
+    --accent:#94A3B8; --accent-d:#CBD5E1; --blue:#CBD5E1; --amber:#FBBF24; --red:#FB7185;
+    --h1-grad:linear-gradient(135deg,#CBD5E1 0%,#94A3B8 60%,#64748B 130%);
+    --glow:rgba(148,163,184,.60); --hover-glow:rgba(148,163,184,.16); --shadow:0 8px 32px rgba(0,0,0,.30);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(148,163,184,.06), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(203,213,225,.05), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(148,163,184,.04), transparent 60%), #16181D;
+  }
+  /* tokenized flourishes — adapt to whichever theme is active */
+  body { background:var(--body-bg); background-attachment:fixed; line-height:1.7; transition:background .4s ease, color .3s ease; }
+  h1 {
+    font-family:'Outfit',var(--sans); font-weight:700; letter-spacing:-.02em;
+    background:var(--h1-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .logo .sq { background:var(--h1-grad); box-shadow:0 0 14px -1px var(--glow); }
+  h2 .n, .toc a:hover, a:hover { color:var(--accent-d); }
+  pre, .toc, .note, .card, .phase {
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow);
+  }
+  .card { transition:transform .25s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s; }
+  .card:hover { transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 40px var(--hover-glow); }
+
+  /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
+  .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
+  .themebar button {
+    font:600 11px/1 var(--sans); letter-spacing:.3px; cursor:pointer; color:var(--text-mid);
+    background:var(--panel); border:1px solid var(--line); border-radius:999px;
+    padding:6px 11px 6px 8px; display:inline-flex; align-items:center; gap:6px;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    transition:color .2s, border-color .2s, transform .2s, box-shadow .2s;
+  }
+  .themebar button:hover { color:var(--text-hi); transform:translateY(-1px); }
+  .themebar button.active { color:var(--text-hi); border-color:var(--accent); box-shadow:0 6px 20px var(--hover-glow); }
+  .themebar .sw { width:11px; height:11px; border-radius:50%; box-shadow:0 0 0 1px rgba(0,0,0,.18) inset; }
+  @media (max-width:760px){ .themebar { position:static; margin:0 0 18px; } }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+<script>/* no-FOUC theme init — shares the dashboard's 'dash-theme' key */(function(){var ok=['aurora','daylight','sandstone','forest','slate'];try{var t=localStorage.getItem('dash-theme');document.documentElement.setAttribute('data-theme',ok.indexOf(t)>=0?t:'aurora');}catch(e){document.documentElement.setAttribute('data-theme','aurora');}})();</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="sq"></span><span class="k">ai-workspace · gravity</span></div>
+    <h1>Gravity — an introduction</h1>
+    <p class="lede">A documentation-as-contract system for running many projects with AI coding agents — so your intent survives every session, machine, and model.</p>
+    <div class="toc"><ol>
+      <li><a href="#what">What gravity is</a></li>
+      <li><a href="#problem">The problem it solves</a></li>
+      <li><a href="#workspace">The workspace</a></li>
+      <li><a href="#docs">The doc model — four clocks</a></li>
+      <li><a href="#gravity-dir">.gravity/ and the protocol card</a></li>
+      <li><a href="#specs">SPECs — walls, not wishes</a></li>
+      <li><a href="#direction">Managing direction</a></li>
+      <li><a href="#brownfield">Brownfield — archaeology first</a></li>
+      <li><a href="#lifecycle">The lifecycle &amp; commands</a></li>
+      <li><a href="#versioning">Gravity is versioned</a></li>
+      <li><a href="#philosophy">The philosophy</a></li>
+    </ol></div>
+  </header>
+
+  <h2 id="what"><span class="n">01</span>What gravity is</h2>
+  <p><strong>Gravity</strong> is the operating manual + toolset of this workspace: a small set of documents with strict ownership rules, a directory convention (<code>.gravity/</code>), mechanical checkers, and slash commands — which together let AI coding agents work on many projects <em>without losing the thread</em>. The name is the core metaphor: every fact has exactly <strong>one home it gravitates to</strong>, and every project has enough mass (mission, rules, plan) that agents orbit it correctly instead of drifting.</p>
+  <p>It is not a framework you install. It's a discipline the workspace enforces: templates you copy, indexes that must stay wired, enforcement tags that must be honest, and checkers (<code>check.py</code>, <code>/triage</code>) that catch the drift mechanically.</p>
+
+  <h2 id="problem"><span class="n">02</span>The problem it solves</h2>
+  <p>Agent sessions are powerful and amnesiac. Between sessions, machines, and model generations, three things evaporate:</p>
+  <ul>
+    <li><strong>State</strong> — where was I? what's next? <em>(the resume problem)</em></li>
+    <li><strong>Rules</strong> — what must never break here? which conventions are real walls vs. taste? <em>(the safety problem)</em></li>
+    <li><strong>Intent</strong> — why does this exist? what are we deliberately <em>not</em> doing? <em>(the direction problem)</em></li>
+  </ul>
+  <p>No model, however capable, can re-derive <em>choices</em> — non-goals, locked decisions, boundary contracts. They exist only in your head or in a chat that scrolled away. Gravity is a persistence layer for that judgment: each concern gets one document, at one rate of change, loaded at the right moment.</p>
+
+  <h2 id="workspace"><span class="n">03</span>The workspace</h2>
+  <p>One root, four tiers, one index. Projects live in <code>repos/</code> (storage); tier folders hold <strong>junctions</strong> (views) — moving a project between tiers is instant metadata, never a file copy.</p>
+<pre><b>ai-workspace/</b>
+├── CLAUDE.md            <span class="c"># the operating manual — auto-loads, the one router</span>
+├── PROJECTS.md          <span class="c"># live index: every project, tier, focus, gravity adoption</span>
+├── VERSION · CHANGELOG.md  <span class="c"># gravity itself is versioned (see §10)</span>
+├── docs/ · templates/ · .claude/   <span class="c"># read-docs · stencils · commands + scripts</span>
+├── <span class="b">repos/</span>               <span class="c"># CANONICAL storage — real project files, one folder per project</span>
+├── <span class="a">active/</span> · <span class="a">dormant/</span> · <span class="a">archive/</span>   <span class="c"># junction views by lifecycle tier</span>
+└── incubator/           <span class="c"># cheap experiments, no ceremony</span></pre>
+  <p>The root repo tracks <strong>only the skeleton</strong> (deny-all <code>.gitignore</code>, whitelist the meta files) — each project is its own independent git repo. A <em>project</em> is the unit of attention, not the unit of git: a project usually holds one repo, but a multi-service system can be a <strong>hub project</strong> — a docs-only repo with the service clones nested inside, git-denied (§08).</p>
+
+  <h2 id="docs"><span class="n">04</span>The doc model — four clocks</h2>
+  <p>Documents are separated by <strong>how fast they change</strong>, because mixing rates is what makes docs rot. Two auto-load from every project root; the rest are opt-in and <em>recognized only when present</em>.</p>
+  <table>
+    <thead><tr><th>Doc</th><th>Question</th><th>Changes</th></tr></thead>
+    <tbody>
+      <tr><td><code>MISSION.html</code></td><td><strong>why</strong> — north star, principles, non-goals</td><td>rarely</td></tr>
+      <tr><td><code>CLAUDE.md</code> <span class="pill live">auto-loads</span></td><td><strong>how</strong> — identity, stack, run/test, routing</td><td>on refactors</td></tr>
+      <tr><td><code>IMPLEMENTATION_PLAN.md</code></td><td><strong>what/next</strong> — phases or slice queue, tracks, locked decisions</td><td>per phase/slice</td></tr>
+      <tr><td><code>CONTEXT.md</code> <span class="pill live">auto-loads</span></td><td><strong>now</strong> — current state + the single next step</td><td>every session</td></tr>
+      <tr><td><code>.gravity/&lt;domain&gt;/SPEC.md</code></td><td>the <strong>agent contract</strong> for changing one domain</td><td>when rules change</td></tr>
+      <tr><td><code>.gravity/&lt;domain&gt;/PLAN.*.md</code></td><td>the <strong>intent of one change</strong> — goal, scenario, slice, verification</td><td>per slice</td></tr>
+      <tr><td><code>WALKTHROUGH.md</code></td><td><strong>proof</strong> — what shipped + the evidence it works</td><td>append-only</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><span class="lbl">One concern, one home.</span> Every fact has exactly one owner-doc; every other doc <em>links</em> to the owner instead of restating it. The same fact written twice eventually drifts into two different facts.</div>
+
+  <h2 id="gravity-dir"><span class="n">05</span><code>.gravity/</code> and the protocol card</h2>
+  <p>When a project outgrows its flat root, the heavy docs move into a <code>.gravity/</code> directory, grouped <strong>by subject domain, not doc-type</strong>. The directory <em>is</em> the domain registry — there is no registry file; existence, routing, why, and status live split across four rate-appropriate owners (the folders, the <code>CLAUDE.md</code> Doc Map, the MISSION rows, the PLAN spine), and <code>check.py consistency</code> catches any of the four going stale.</p>
+<pre><b>&lt;project&gt;/</b>
+  CLAUDE.md · CONTEXT.md · README.md      <span class="c"># stay at root — the router, now, the guide</span>
+  <b>.gravity/</b>
+    <span class="a">GRAVITY.md</span>                            <span class="c"># the protocol card (versioned copy — below)</span>
+    MISSION.html · ARCHITECTURE.html · IMPLEMENTATION_PLAN.md
+    <span class="b">&lt;domain&gt;/</span>    ARCHITECTURE.html · SPEC.md · PLAN.*.md
+    <span class="b">integration/</span> SPEC.md   <span class="c"># the contracts BETWEEN services/domains + the change order</span></pre>
+  <p><strong>The protocol card makes each repo self-describing.</strong> Projects are independent repos — an agent cloning one <em>without</em> the workspace would find SPECs and PLANs with no explanation. So every <code>.gravity/</code> ships <code>GRAVITY.md</code>: a verbatim, version-stamped copy of the project-side protocol (doc kinds, navigation discipline, SPEC anatomy). Never hand-edited; upgrading gravity means re-copying it, and <code>/triage</code> flags a stale card.</p>
+
+  <h2 id="specs"><span class="n">06</span>SPECs — walls, not wishes</h2>
+  <p>A domain's <code>SPEC.md</code> is the sheet an agent loads before changing that domain. It is two halves at once:</p>
+  <div class="cards">
+    <div class="card"><h4>Generative <span class="pill live">build from</span></h4><p>A <strong>Minimal Shape</strong> + a short Generate loop — the template a correct new unit is instantiated <em>from</em>.</p></div>
+    <div class="card"><h4>Limiting <span class="pill mock">fenced by</span></h4><p><strong>Rules</strong> where every rule carries an enforcement tag naming the wall that catches a violation — or admits there is none.</p></div>
+  </div>
+  <table>
+    <thead><tr><th>Tag</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>[lint]</code> / <code>[type]</code> / <code>[test:name]</code></td><td>a <strong>real wall</strong> — a named check fails if the rule breaks</td></tr>
+      <tr><td><code>[review]</code> / <code>[—]</code></td><td><strong>human judgment only</strong> — honest about having no wall</td></tr>
+    </tbody>
+  </table>
+  <div class="note red"><span class="lbl">The honesty rule.</span> Never tag a rule with a wall you haven't verified exists — under-claim to <code>[review]</code> when unsure. <code>check.py spec</code> re-verifies every Gate and tag against the repo's reality, so a renamed test can't silently turn a wall into a lie.</div>
+  <p>Behavior matures by <strong>graduation</strong>: a scenario enters a PLAN as <code>given/when/then</code> intent, and is promoted into the SPEC's Behavioral Contract only once a named test asserts it. Intent earns a wall — it is never reworded into one.</p>
+
+  <h2 id="direction"><span class="n">07</span>Managing direction</h2>
+  <p>Gravity refuses to store direction in its abstract form ("queries should be compact…") — an unowned wish rots. A direction must earn one of four homes, each with its own management mechanism:</p>
+<pre><span class="c">the direction pipeline</span>
+<b>MISSION principle</b>  →  <b>Track</b>              →  <b>domain PLAN slices</b>  →  <b>SPEC rules</b>
+<span class="c">forever; wins        the cross-domain       the scheduled work      the residue: applies to
+arguments; /triage   arc — an index of      (goal · scenario ·      every future change
+flags drift          ≤3 active intents      slice · verification)   automatically, with walls</span></pre>
+  <p>A <strong>Track</strong> (in <code>IMPLEMENTATION_PLAN.md</code>) is the direction axis the spine can't show: it holds no slices itself, points up to its MISSION principle and down to the domain slices carrying it — and <em>retires when its residue is walls</em>: the direction lives on as enforcement-tagged SPEC rules, needing no further management.</p>
+
+  <h2 id="brownfield"><span class="n">08</span>Brownfield — archaeology before authorship</h2>
+  <p>On a mature system you didn't write, greenfield's docs-then-code order inverts, and the <strong>integration domain comes first</strong> — the seams are exactly what you don't know. <code>/excavate</code> scans the code (never the DB), joins the evidence on three keys (table · path+method · base URL), and writes a <strong>Boundary Map where every row cites its source file</strong>; a seam that can't be traced stays an honest <code>OPEN:</code> line, never a guess.</p>
+  <p>Two escalations for hard cases:</p>
+  <ul>
+    <li><strong>The DB evidence pack</strong> — when the code carries no readable queries (dynamic SQL, stored procedures), a DBA exports <em>metadata-only</em> CSVs offline (columns+comments, FK graph, grants, activity; never row data). Partial packs are fine by design; the FK graph + name prefixes + shared grants cluster tables into candidate <em>vertical business domains</em>.</li>
+    <li><strong>The hub project</strong> — when the system spans many service repos, a docs-only repo holds the cross-service gravity, with the service clones nested under <code>services/</code> and git-denied — the workspace's own deny-all pattern, one level down.</li>
+  </ul>
+
+  <h2 id="lifecycle"><span class="n">09</span>The lifecycle &amp; commands</h2>
+  <table>
+    <thead><tr><th>Moment</th><th>Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>start / grow</td><td><code>/init-project</code> · <code>/promote</code></td><td>scaffold a new project · graduate one from the incubator</td></tr>
+      <tr><td>seed intent</td><td><code>/interview</code></td><td>elicit why/walls/shape/gate/next from <em>your</em> head into the docs — strawman-first, unknowns stay <code>OPEN:</code></td></tr>
+      <tr><td>structure</td><td><code>/adopt-gravity</code> · <code>/new-domain</code> · <code>/new-spec</code></td><td>move onto <code>.gravity/</code> · mint a domain (all four indexes wired) · author an honest SPEC from code evidence</td></tr>
+      <tr><td>legacy</td><td><code>/excavate</code></td><td>survey a brownfield system; cited Boundary Map + domain proposal</td></tr>
+      <tr><td>steer</td><td><code>/mission</code> · <code>/triage</code> · <code>/dashboard</code> · <code>/cosmos</code></td><td>re-orient on one project · drift report across all · the visual views</td></tr>
+      <tr><td>ship</td><td><code>/cut-release</code></td><td>one Change Order: changelog → version → commit → tag; never invents a version, never tags red code</td></tr>
+      <tr><td>stay current</td><td><code>/sync-gravity</code></td><td>bring a project up to the current gravity version — mechanical parts applied, judgment reported as a checklist</td></tr>
+      <tr><td>end</td><td><code>/retire</code></td><td>archive (reversible) or delete (permanent), with a risk card first</td></tr>
+    </tbody>
+  </table>
+  <p>Gravity tests its own commands: <code>.claude/scenarios/</code> holds golden fixtures with deterministic assertions, and <code>check.py selftest</code> proves the checkers themselves.</p>
+
+  <h2 id="versioning"><span class="n">10</span>Gravity is versioned</h2>
+  <p>The methodology itself follows SemVer — <strong>major = a rule projects depend on breaks</strong>. The version lives in the <code>VERSION</code> file + a git tag, never in prose. Each project records what it adopted in two stamps: the <code>&gt; gravity: vX.Y</code> line in its router and the protocol card's stamp — so stale adoptions are <em>visible</em> (adoption table in <code>PROJECTS.md</code>, chips on the dashboard, 📡 in <code>/triage</code>) and <em>repairable</em> (<code>/sync-gravity</code>).</p>
+
+  <h2 id="philosophy"><span class="n">11</span>The philosophy</h2>
+  <ul>
+    <li><strong>Weaker-agent walls.</strong> Wherever judgment can fail, build a mechanical wall instead: argv-driven scripts, verbatim copies, versions that are read, never invented. The system is designed so a less capable agent <em>can't</em> fabricate enforcement — and a more capable one doesn't have to be trusted.</li>
+    <li><strong>Honesty over completeness.</strong> An unknown is an <code>OPEN:</code> line, not a plausible guess. An unenforced rule is <code>[review]</code>, not a fake wall. A partial evidence pack is a valid state.</li>
+    <li><strong>Ceremony must pay.</strong> Two docs are the minimum and often the maximum. Everything else is recognized only when present, gated by ambition, and deleted when it stops earning its keep.</li>
+    <li><strong>Intent is the scarce resource.</strong> Models get stronger and code gets cheaper; your decisions, non-goals, and boundaries do not regenerate. Gravity exists to make <em>those</em> durable — and to apply them automatically to work you'll never personally watch.</li>
+  </ul>
+
+  <footer>gravity · ai-workspace — see <code>CLAUDE.md</code> (the rules), <code>docs/HANDBOOK.md</code> (the workflows), <code>docs/MISSION.html</code> (the why). Doc theme: <code>docs/DESIGN.docs.md</code>.</footer>
+</div>
+<div class="themebar" id="themebar" role="group" aria-label="Theme"><button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button><button data-theme="daylight"><span class="sw" style="background:linear-gradient(135deg,#60A5FA,#A78BFA)"></span>Daylight</button><button data-theme="sandstone"><span class="sw" style="background:linear-gradient(135deg,#F59E0B,#C2410C)"></span>Sandstone</button><button data-theme="forest"><span class="sw" style="background:linear-gradient(135deg,#34D399,#A3E635)"></span>Forest</button><button data-theme="slate"><span class="sw" style="background:linear-gradient(135deg,#CBD5E1,#64748B)"></span>Slate</button></div>
+<script>(function(){var bar=document.getElementById('themebar');if(!bar)return;var ok=['aurora','daylight','sandstone','forest','slate'];function set(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('dash-theme',t);}catch(e){}bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-theme')===t);});}bar.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-theme'));});});var saved='aurora';try{saved=localStorage.getItem('dash-theme')||'aurora';}catch(e){}if(ok.indexOf(saved)<0)saved='aurora';set(saved);})();</script>
+</body>
+</html>
