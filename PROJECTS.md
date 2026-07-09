@@ -22,6 +22,7 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 - astra                                        | Python (FastAPI + uvicorn) skill registry | 2026-07-05 | private Agent-Skill registry/server (immutable versions, publish/curate/yank, version-history view). Ships orbit's skills to the GitHub-less work machine. Remote live at `github.com/mostlytricks/astra`, tag `v0.1.0`; `[Unreleased]` holds a minor's worth of work → **cut v0.2.0** when ready. Next: adoption analytics (download counts) — needs a write-path counter on the read-only registry
 - orbit                                        | Python (stdlib) Claude Code skills   | 2026-07-06 | home-machine file-intelligence workbench: 7 skills (filing chain `file-scout`→`file-triage`→`file-find`→`area-architect`→`orbit-dashboard` + `locate` waypoint nav + `process-architect`), all walled by mechanical fixture gates. Designs skills that astra ships to work. `main` at `v0.4.1`. Next: review+merge **PR #2** (`file-find` + locate seam) → cut **v0.5.0**
 - pulsar                                       | Python (stdlib) Claude Code skills   | 2026-07-05 | work-machine HR/ops assistant (astra-shaped from birth; design instance carries no real data). Day-one slice done: hours-ledger ingest + 52h overtime-check calculator + fixture gate (green). Next: user picks slice 2 — `notice-digest` or `welfare-guide` (needs source-system description, an `/interview pulsar <feature>` shape)
+- forge-world _(alias `forge`)_                | JS (Vite 8 + three r185)             | 2026-07-09 | game-feel 3D visualizer for 60-70 layer engraved/relieved slate stacks: 10 layer types, per-layer 2D blueprint, auto-build/explode/scrub, JSON recipes. Prototype built + verified on branch `claude/3d-block-stacking-viz-rc0kxb` (remote `mostlytricks/forge-world`; remote session — junction/tier wiring pending on the local machine). Next: user review, then `/interview forge-world` to pin the real slate spec + pick slice 2 (pattern editor vs stack presets)
 - agent-terraform                              | Claude Code skills + FastMCP (Python) | 2026-07-06 | spec-driven pipeline turning internal backend APIs into agent serving layers (per-service MCP servers + Agent Skills). PRs #1–#3 merged; `.gravity/` v1.4 with 3 domains (spec · readiness · onboarding). No real service onboarded yet (internal services unreachable remotely). Next: Phase 1 pilot on the work machine — pick a small Python service, then `onboard <name>`
 
 ## incubator/
@@ -67,6 +68,7 @@ _Where each project sits on the gravity conventions (current system version: roo
 | orbit | `v1.4` | `.gravity` | — | — | ✓ |
 | pulsar | `v1.4` | flat | n/a | — | ✓ |
 | agent-terraform | `v1.4` | `.gravity` | — | — | ✓ |
+| forge-world | — | flat | n/a | — | ✓ |
 | antigravity-based-project-plan-methodology _(dormant)_ | — | flat | n/a | — | — |
 
 Next adoption moves: decide per **flat** project whether it earns `.gravity` or stays a clean two-doc project with a light stamp; add release light-layer only where a project is ready to cut versions.
