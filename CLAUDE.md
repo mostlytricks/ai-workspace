@@ -15,7 +15,8 @@ ai-workspace/
 ├── CLAUDE.md                       # This file — the operating manual. Auto-loads; the one router.
 ├── AGENTS.md                       # Codex-compatible shim; points to CLAUDE.md as canonical.
 ├── README.md                       # Human entry point.
-├── PROJECTS.md                     # Live index of all projects across tiers.
+├── PROJECTS.md                     # Live index of all projects across tiers. LOCAL-ONLY (git-ignored — carries private project info).
+├── PROJECTS.sample.md              # Sanitized template for PROJECTS.md — the tracked skeleton copy (`cp PROJECTS.sample.md PROJECTS.md` on a fresh workspace).
 ├── VERSION                         # Gravity system version (SemVer) — paired with a git tag vX.Y.Z (§2).
 ├── CHANGELOG.md                    # How gravity's own rules/templates/commands evolved (major = a rule projects depend on breaks).
 ├── .gitignore                      # Deny-all/whitelist: tracks only the portable skeleton (§2).
@@ -216,7 +217,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 
 ## 7. Cross-Project Tooling
 
-- **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change.
+- **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change. It is **local-only (git-ignored)** — it names private projects; the tracked skeleton ships only the sanitized **`PROJECTS.sample.md`** template (copy it to `PROJECTS.md` on a fresh workspace).
 - **`/init-project <name>`** scaffolds a brand-new project end-to-end (Workflow 1 in HANDBOOK): creates `repos/<name>/`, junctions into `active/`, copies both templates, runs `git init`, adds a `PROJECTS.md` row. Use instead of running §3-referenced commands by hand.
 - **`/promote <name>`** graduates an incubator project to active (Workflow 3 in HANDBOOK): `mv incubator/<name> repos/<name>`, junctions into `active/`, runs `git init` only if missing, copies templates only if missing (never overwrites), adds a `PROJECTS.md` row.
 - **`/retire <name>`** ends the lifecycle (the destructive twin of `/init-project`): prints a read-only **risk card** (remote? commits? uncommitted? referenced by another project?), then on your choice either **archives** (junction → `archive/`, real files kept, reversible) or **deletes** (every junction detached + real folder removed, permanent). Backed by `retire_project.py`, which detaches junctions with `rmdir`/`unlink` — never `rm -rf` through a junction — then reconciles `PROJECTS.md` and regenerates the dashboard.

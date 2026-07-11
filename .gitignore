@@ -12,9 +12,14 @@
 !README.md
 !AGENTS.md
 !CLAUDE.md
-!PROJECTS.md
 !CHANGELOG.md
 !VERSION
+
+# The live project index PROJECTS.md is LOCAL-ONLY — it carries private project
+# names, status, and blockers, so it is deliberately NOT whitelisted (the `*`
+# rule above denies it). Only the sanitized template travels with the skeleton;
+# on a fresh workspace: `cp PROJECTS.sample.md PROJECTS.md`.
+!PROJECTS.sample.md
 
 # --- read-docs: human/browser guides (docs/) ---
 # HANDBOOK.md (workflows), MISSION.html (the workspace's why), DESIGN.docs.md (HTML-doc theme)
