@@ -40,6 +40,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -744,6 +745,136 @@ def _workspace_fixture(base: Path) -> None:
         "## dormant/\n\n## archive/\n", encoding="utf-8")
 
 
+def _patchloop_selftest() -> bool:
+    """Drive .claude/scripts/patch_slice.py end-to-end over the patch-slice
+    fixture, both fork branches — proves the ritual's mechanical walls still
+    hold: F4 bare-gate exit codes, N=3 exhaustion (exit 75), and the F7
+    four-proof rollback restoring gitignored state byte-identical. Needs git."""
+    fixture = Path(__file__).parent / "patch-slice" / "fixture"
+    script = Path(__file__).resolve().parent.parent / "scripts" / "patch_slice.py"
+    if not fixture.is_dir() or not script.exists():
+        print("selftest: patch-slice fixture or patch_slice.py missing; SKIPPED.")
+        return True
+
+    py = sys.executable
+    gate = f'"{py}" gate.py'
+    probe = f'"{py}" probe_state.py'
+    plan_rel = ".gravity/demo/PLAN.fix.md"
+    spec_rel = ".gravity/demo/SPEC.md"
+    ok = True
+
+    def sh(repo: Path, *cmd: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(list(cmd), cwd=repo, capture_output=True,
+                              text=True, encoding="utf-8", errors="replace")
+
+    def g(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return sh(repo, "git", "-c", "user.name=selftest",
+                  "-c", "user.email=selftest@local", *args)
+
+    def ps(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return sh(repo, py, str(script), *args)
+
+    def make_repo(base: Path, name: str) -> Path:
+        # The fixture deliberately ships without .git/.gitignore; the replay adds
+        # them, making state/ git-invisible so only the snap protects it.
+        repo = base / name
+        shutil.copytree(fixture, repo)
+        (repo / ".gitignore").write_text("state/\n", encoding="utf-8")
+        g(repo, "init", "-q", "-b", "main")
+        g(repo, "add", "-A")
+        g(repo, "commit", "-qm", "fixture baseline")
+        return repo
+
+    def apply_regression_test(repo: Path) -> None:
+        tests = repo / "tests" / "test_app.py"
+        tests.write_text(tests.read_text(encoding="utf-8").replace(
+            "    def test_zero_pct(self):",
+            "    def test_clamp_over_100(self):\n"
+            "        self.assertEqual(apply_discount(100, 150), 0)\n\n"
+            "    def test_zero_pct(self):"), encoding="utf-8")
+
+    def expect(cond: bool, label: str,
+               cp: subprocess.CompletedProcess[str] | None = None) -> None:
+        nonlocal ok
+        if cond:
+            print(f"selftest: patch-loop {label}.")
+        else:
+            ok = False
+            print(f"selftest: patch-loop EXPECTED {label}, but it didn't hold.")
+            if cp is not None:
+                print((cp.stdout or "") + (cp.stderr or ""))
+
+    # Windows: git object files are read-only; don't let cleanup errors mask results.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        base = Path(tmp)
+
+        # --- GREEN path: preflight → anchor → snap → patch → verify → cleanup ---
+        repo = make_repo(base, "green")
+        anchor = g(repo, "rev-parse", "--short", "HEAD").stdout.strip()
+
+        cp = ps(repo, "preflight", "--gate", gate)
+        expect(cp.returncode == 0, "preflight passes on a clean green baseline", cp)
+
+        cp = ps(repo, "anchor", "--plan", plan_rel, "--slug", "demo-fix")
+        on_branch = g(repo, "branch", "--show-current").stdout.strip()
+        expect(cp.returncode == 0 and on_branch == "slice/demo-fix"
+               and anchor in (repo / plan_rel).read_text(encoding="utf-8"),
+               "anchor creates slice/demo-fix and writes the SHA into the PLAN", cp)
+
+        cp = ps(repo, "snap", "--spec", spec_rel, "--plan", plan_rel)
+        expect(cp.returncode == 0
+               and (repo / ".patch-snap" / anchor / "state" / "data.txt").exists(),
+               "snap copies the SPEC-declared stateful path", cp)
+
+        # The patch an agent would write: the fix + the named regression test.
+        app = repo / "app.py"
+        app.write_text(app.read_text(encoding="utf-8").replace(
+            "    return price * (1 - pct / 100)",
+            "    pct = max(0.0, min(100.0, pct))\n"
+            "    return price * (1 - pct / 100)"), encoding="utf-8")
+        apply_regression_test(repo)
+
+        cp = ps(repo, "verify", "--gate", gate, "--plan", plan_rel)
+        expect(cp.returncode == 0, "verify green on the fixed patch (attempt 1/3)", cp)
+
+        g(repo, "add", "-A")
+        g(repo, "commit", "-qm", "checkpoint: clamp fix + regression test")
+        cp = ps(repo, "cleanup")
+        expect(cp.returncode == 0 and not (repo / ".patch-snap").exists(),
+               "cleanup retires the snap after the green checkpoint", cp)
+
+        # --- RED path: bad patch + mangled state → 3 red verifies → exit 75 → rollback ---
+        repo = make_repo(base, "red")
+        anchor = g(repo, "rev-parse", "--short", "HEAD").stdout.strip()
+        ps(repo, "preflight", "--gate", gate)
+        ps(repo, "anchor", "--plan", plan_rel, "--slug", "demo-fix")
+        ps(repo, "snap", "--spec", spec_rel, "--plan", plan_rel)
+
+        # The bad patch: the regression test WITHOUT the fix (gate goes red)…
+        apply_regression_test(repo)
+        # …and it also mangles the gitignored ledger — reset --hard can't undo this.
+        (repo / "state" / "data.txt").write_text("garbage", encoding="utf-8")
+
+        rc1 = ps(repo, "verify", "--gate", gate, "--plan", plan_rel).returncode
+        rc2 = ps(repo, "verify", "--gate", gate, "--plan", plan_rel).returncode
+        cp3 = ps(repo, "verify", "--gate", gate, "--plan", plan_rel)
+        expect((rc1, rc2, cp3.returncode) == (1, 1, 75),
+               "N=3 enforced — third red verify exits 75", cp3)
+
+        cp = ps(repo, "rollback", "--to", anchor, "--gate", gate,
+                "--probe", probe, "--plan", plan_rel)
+        ledger = (repo / "state" / "data.txt").read_text(encoding="utf-8")
+        expect(cp.returncode == 0 and ledger == "seed=42\n"
+               and not (repo / ".patch-snap" / anchor).exists(),
+               "four-proof rollback restores the ledger byte-identical and retires the snap", cp)
+
+        story = (repo / plan_rel).read_text(encoding="utf-8")
+        expect("attempt 3/3" in story and "**Rollback:**" in story,
+               "execution log survives the hard reset (anchor→attempts→rollback intact)")
+
+    return ok
+
+
 def cmd_selftest(args) -> int:
     """Prove the checker itself: the bundled good fixture must pass, and a
     deliberately under-wired copy must fail with UNDERWIRED. Guards against the
@@ -866,6 +997,9 @@ def cmd_selftest(args) -> int:
             else:
                 ok = False
                 print(f"selftest: EXPECTED {code}, but the workspace checker stayed silent.")
+
+    # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
+    ok = _patchloop_selftest() and ok
 
     print("SELFTEST PASSED" if ok else "SELFTEST FAILED")
     return 0 if ok else 1

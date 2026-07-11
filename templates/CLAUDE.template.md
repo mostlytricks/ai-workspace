@@ -21,6 +21,7 @@ One-sentence description of what this project is and who it serves.
 - **`.gravity/<domain>/SPEC.md`** — compact, agent-loadable rule sheet for one domain; links up to its ARCHITECTURE facet; enforcement-tagged where possible (only if present). *The sheet you hand an agent for a change.* *(`.gravity/` projects; copy `SPEC.template.md`. The flat root `SPEC.<domain>.md` is the legacy pre-`.gravity` form.)*
 - **`.gravity/<domain>/ARCHITECTURE.html`** — browser-read human deep-dive on one domain (only if present). *Full rationale a human engineer reads.* *(optional; §6 audience split)*
 - **DESIGN.md** — running-app visual design system: type, token contract, motion, anti-patterns (only if present). *App style — distinct from any doc theme.* *(UI projects; copy `DESIGN.template.md`)*
+- **RUNBOOK.md** — operations: where it runs, deploy steps, health checks, rollback (only if present). *The 2am doc.* *(deploying projects; copy `RUNBOOK.template.md`; `.gravity/` projects keep it at `.gravity/RUNBOOK.md`)*
 - **`docs/walkthroughs/*.md`** — dated, append-only proof-of-work records for shipped slices (only if present). *(optional; CONTEXT.md "Completed" links here rather than restating)*
 
 ## Stack

@@ -451,6 +451,10 @@ def cmd_cleanup(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------- main
 
 def main() -> None:
+    # The Windows console defaults to cp949 here; the docstring/help carry non-ASCII.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
 

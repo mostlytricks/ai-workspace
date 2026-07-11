@@ -21,6 +21,16 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [2.3.0] - 2026-07-12
+
+### Added
+- **`/patch-slice` — the maintenance loop closes** (`.claude/commands/patch-slice.md`; the SDLC review found bugs had no entry ritual and patching no wall). The thin wrapper the patch-loop plan deferred: it sequences `patch_slice.py`'s six mechanical walls (preflight / anchor / snap / verify / rollback / cleanup — findings F1–F8, N=3 → exit 75) and leaves the agent only the two judgment steps, the patch and the re-plan prose. Ships with the **bug-intake rule**: a bug enters the slice PLAN's Scenario as a **currently-false** `given/when/then` (the repro), and its fix must leave the named regression test that graduates the scenario into the SPEC's Behavioral Contract — bugs become the fastest source of honest contract lines (wired into `PLAN.template.md`, CLAUDE.md §6, and the command). `docs/PLAN.patch-loop.md` flips to ✓; its OPEN resolves to "command + HANDBOOK, no PLAN-template Execution stencil — the script owns that block".
+- **`/patch-slice` golden scenario + selftest coverage** (`.claude/scenarios/patch-slice/`) — the fixture (`fixture-shop`) is a mini `.gravity/` project with a *green gate over a live untested bug* (how real bugs survive) plus a SPEC-declared stateful ledger; its `PLAN.fix.md` is the bug-intake worked example. `check.py selftest` gains a patch-loop half that **drives the script itself** through both fork branches: green (preflight→anchor→snap→fix→verify→cleanup) and red (3 red verifies → exit 75 → four-proof rollback with the corrupted gitignored ledger restored byte-identical and the execution log surviving the hard reset). Closes the "check.py covers the script" gap deferred at v1.5.
+- **`RUNBOOK.template.md` — operations gets a doc home** (the SDLC review's other gap: gravity's lifecycle ended at the tag, and deploy/health/rollback knowledge lived in the operator's head). Six delete-what-doesn't-apply sections: where it runs · deploy · config & secret *pointers* (names, never values) · healthy-looks-like · rollback · dependencies. Recognized-when-present and never mandated (the DESIGN.md rule applied to ops — only for projects that actually deploy); ownership test *"would you need this at 2am when it's down?"*; flat projects keep it at the root, `.gravity/` projects at `.gravity/RUNBOOK.md` routed from the Doc Map. Wired into CLAUDE.md §1/§6 (ownership-table row), `CLAUDE.template.md`, the HANDBOOK glossary, and `/interview`'s answer routing. Deliberately **not** in the protocol card (an optional doc must not stale 13 project cards) and **not** a `/triage` finding (no runbook-nagging ceremony).
+
+### Fixed
+- **`patch_slice.py` crashed printing `--help` on cp949 consoles** — the docstring's em-dashes died in `argparse`'s help printer before any subcommand ran. The script's own F4 lesson applied to itself: output plumbing must not lie *or die*; stdout/stderr now reconfigure to UTF-8 like `check.py`.
+
 ## [2.2.0] - 2026-07-12
 
 ### Added
@@ -124,7 +134,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.3.0
 [2.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.2.0
 [2.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.1.0
 [2.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.0.0

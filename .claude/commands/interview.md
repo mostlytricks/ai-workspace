@@ -58,7 +58,7 @@ Then continue with Step 6 (ambition gate is the domain gate here; read back; sto
 ## Step 6 — Write, read back, stop
 
 1. **Ambition gate first** (anti-ceremony, MISSION §06): a small tool gets a well-filled `CLAUDE.md` + `CONTEXT.md` and **no** MISSION/PLAN ceremony. Only a project with a real arc gets the four-doc pipeline — and only `.gravity/` if it already has (or clearly earns) it. This command must not become a machine for minting doc pipelines nobody needs.
-2. **Route every answer to its one owner-doc** (one concern, one home — link, don't restate). Update, don't overwrite: preserve existing good content the way `/new-spec` retrofits do.
+2. **Route every answer to its one owner-doc** (one concern, one home — link, don't restate). Update, don't overwrite: preserve existing good content the way `/new-spec` retrofits do. Deploy/ops answers (where it runs, how it ships, health, rollback) go to `RUNBOOK.md` when present — or become an `OPEN:` suggesting one, but only if the project actually deploys somewhere (the 2am test, workspace CLAUDE.md §6).
 3. **Provenance where it matters**: what the user *said* is written plainly; what you *inferred* and they confirmed needs no mark; anything unresolved is written **`OPEN: <question>`** in the PLAN (or CONTEXT if that's the blocker) — visibly, so `/triage` and the next agent see it.
 4. **Read back a half-page summary** — "here's what I heard: … — correct me" — and apply corrections before finishing.
 5. Refresh `CONTEXT.md` (Completed bullet: "interviewed — docs updated"; Next Step from theme 5). **Do not commit** — that's the user's call.

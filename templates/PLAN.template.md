@@ -25,7 +25,10 @@ Status: ○ planned <!-- ○ planned · ◑ building · ✓ shipped — mirror i
 <!-- The use scenario(s) that earn this slice its existence, as given/when/then — who is doing
      what differently when it works. These are SEEDS for the domain SPEC's Behavioral Contract:
      once a named test asserts one, /new-spec graduates it to a tagged `[test:name]` line.
-     Until then they are intent, not contract — no enforcement tags here. -->
+     Until then they are intent, not contract — no enforcement tags here.
+     BUG INTAKE: a bug enters here as a CURRENTLY-FALSE scenario — the repro, stated as the
+     behavior the system doesn't yet exhibit. Its fix must leave the named regression test
+     that graduates it; a bug you can't state this way isn't understood enough to patch. -->
 
 - given <FILL: state>, when <FILL: action> → <FILL: observable outcome>
 - given <FILL: state>, when <FILL: action> → <FILL: observable outcome>

@@ -77,6 +77,7 @@ It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`)
 | `/new-spec` | a fabricated wall — a SPEC whose Gate/tags claim enforcement that doesn't exist | `new-spec/` |
 | `/excavate` | a fabricated seam — a dead frontend call or orphaned mapper statement mapped as a live Boundary-Map row (or real seams missed) | `excavate/` |
 | `/ship` | a dishonest ship — the junction moves but CONTEXT.md keeps a task-shaped Next Step, or the PROJECTS.md row stays in active/ | `ship/` |
+| `/patch-slice` | an undisciplined patch — edits before the anchor, a piped gate lying green, thrash past N=3, a rollback that loses gitignored state or the execution log | `patch-slice/` |
 
 Beyond `expect_domain`/`require_files`/`spec_honesty`, `expect.json` supports two content assertions: **`require_content`** (`{file: [substrings]}` — evidence that must have been mapped somewhere) and **`forbid_in_section`** (`{file: {"## section": [substrings]}}` — e.g. the dead call may appear as a *finding* but never inside `## Boundary Map`). HTML comments are stripped before the forbid check.
 
@@ -97,3 +98,7 @@ The workspace-level twin of `consistency`: it judges the **facts** emitted by `.
 | `ADOPTION_STALE` / `ADOPTION_MISSING_ROW` | WARN | adoption-table cell ≠ disk · gravity project absent from the table (`scan_workspace.py --adoption-table` prints the correct table) |
 
 `selftest` proves this checker too: a healthy mini-workspace passes; three seeded drifts are each caught.
+
+## The patch-loop check (the selftest's third half)
+
+`/patch-slice`'s walls live in a script (`.claude/scripts/patch_slice.py`), not a checker — so its scenario is asserted differently: `selftest` **drives the script itself** over `patch-slice/fixture` through both fork branches. Green: preflight → anchor (SHA lands in the PLAN) → snap (SPEC-declared `state/data.txt`) → the fix + regression test → verify green → cleanup retires the snap. Red: a bad patch that also mangles the gitignored ledger → three red verifies (third exits **75**, the exhaustion wall) → four-proof rollback → the ledger is byte-identical again and the PLAN still tells the whole anchor→attempts→rollback story across the hard reset. Run it after editing `patch_slice.py`, the fixture, or `patch-slice.md`.
