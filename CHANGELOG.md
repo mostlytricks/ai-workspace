@@ -21,6 +21,15 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [2.2.0] - 2026-07-12
+
+### Added
+- **Frontmatter walls on the workspace commands** — gravity's "mechanical wall beats prose promise" doctrine applied to the commands themselves, for weaker runtime agents: `allowed-tools` scopes the read-only surface commands (`/mission`, `/triage`, `/dashboard`, `/cosmos`, `/open-dashboard`) to Read/Glob/Grep plus their exact helper scripts, and `disable-model-invocation: true` guards the destructive trio (`/retire`, `/cut-release`, `/ship`) from being auto-triggered by a model — user-invoked only. (`/open-mission` and `/open-architecture` are deliberately left unscoped: their only action is launching a browser, and a wall that blocks the launcher breaks the command.) `/mission` also gains its missing `argument-hint`.
+
+### Changed
+- **`/triage` step 7 tightened for mid-tier models**: the two dense checker sub-bullets (registry drift · SPEC honesty) are now short imperatives — run the command, fold FAILs into the flag — with finding meanings deferred to `scenarios/README.md` (one concern, one home; the README already owns the finding tables).
+- **Templates aligned to v2:** `CLAUDE.template.md`'s doc list and Document Authoring section now teach the `.gravity/<domain>/SPEC.md` form first (flat `SPEC.<domain>.md` noted as the legacy pre-`.gravity` shape, per §6); `CONTEXT.template.md` states the per-tier Next Step shape (active = task · stable = reactivation trigger · dormant = resume blocker) so new projects carry the v2.0 tier contract from birth.
+
 ## [2.1.0] - 2026-07-12
 
 ### Added
@@ -115,7 +124,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.2.0
 [2.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.1.0
 [2.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.0.0
 [1.8.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.8.0

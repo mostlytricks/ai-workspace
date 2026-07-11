@@ -1,5 +1,7 @@
 ---
 description: Re-orient on one project — read its four docs, summarize what it's for and where it stands, and generate the sharp questions worth asking the agent next.
+argument-hint: <project-name>
+allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/resolve_project.py:*)
 ---
 
 You are running the `/mission <project>` workspace command from `ai-workspace/`. Its job is to **re-orient the user on a single project** when they've lost the thread: what is this for, where does it stand, and — most importantly — *what should I be asking the agent to improve it?*

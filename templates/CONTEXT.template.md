@@ -4,7 +4,9 @@
      (`git log -p CONTEXT.md` recovers every past version), so pruning here loses nothing.
      Keep it small: Completed = last 1-2 sessions, Current State overwritten to present
      reality, Next Step = one item. Trim when Completed > ~6 bullets or file > ~80 lines.
-     See workspace CLAUDE.md §6 "Keeping CONTEXT.md small". -->
+     See workspace CLAUDE.md §6 "Keeping CONTEXT.md small".
+     Next Step SHAPE follows the tier (workspace CLAUDE.md §1): active = the single task ·
+     stable = the reactivation trigger ("Reactivate when X") · dormant = the resume blocker. -->
 
 Last touched: YYYY-MM-DD
 

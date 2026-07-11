@@ -1,5 +1,6 @@
 ---
 description: One-screen dashboard across active/, stable/, dormant/, archive/ — counts, last-touched, next step, and drift flags. Also regenerates the visual HTML dashboard.
+allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/scan_workspace.py:*), Bash(python .claude/scenarios/check.py:*), Bash(python .claude/dashboard/generate_dashboard.py)
 ---
 
 You are running the `/dashboard` workspace command from `ai-workspace/`. Print a single-screen status view across all four tiers so the user can see workspace state at a glance. Read-only.

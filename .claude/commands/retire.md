@@ -1,6 +1,7 @@
 ---
 description: Retire a project — assess risk, then archive (reversible) or delete (permanent). Detaches junctions safely, reconciles PROJECTS.md, regenerates the dashboard.
 argument-hint: <project-name>
+disable-model-invocation: true
 ---
 
 You are running `/retire` from the `ai-workspace/` root. The user wants to retire `$ARGUMENTS` — the end of the lifecycle (`CLAUDE.md` §1: *"Done or dead → archive/"*). This is the destructive counterpart to `/init-project` and `/ship`, so the **assessment and confirmation are the point** — never skip to deletion.

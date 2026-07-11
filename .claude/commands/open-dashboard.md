@@ -1,5 +1,6 @@
 ---
 description: Open the visual workspace dashboard in your browser — regenerates the HTML from PROJECTS.md so it's current, then launches it. The one-tap "just show me" companion to /dashboard (which prints the full terminal report).
+allowed-tools: Read, Bash(python .claude/dashboard/generate_dashboard.py), Bash(python -c:*), Bash(cmd.exe:*)
 ---
 
 You are running `/open-dashboard` from `ai-workspace/`. The user wants the visual dashboard on screen with **zero fuss** — refresh it, pop it in the browser, done. No terminal report.

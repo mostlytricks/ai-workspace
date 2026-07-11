@@ -1,6 +1,7 @@
 ---
 description: Render a project's .gravity/ as a star system — MISSION at the core, domains orbiting at activity speed, SPEC rings, PLAN satellites. 2D instrument or 3D observatory, themeable.
 argument-hint: <project-or-alias> [3d|both] [theme]
+allowed-tools: Read, Glob, Grep, Bash(python .claude/dashboard/generate_cosmos.py:*)
 ---
 
 You are running `/cosmos` from `ai-workspace/`. It renders one `.gravity/` project as a **star system** — the conceptual complement to `/dashboard`'s table: MISSION is the star, each domain a planet, and everything about the drawing is *derived from the live docs*, never hand-kept.

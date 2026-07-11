@@ -18,8 +18,8 @@ One-sentence description of what this project is and who it serves.
 - **IMPLEMENTATION_PLAN.md** — phases & locked decisions. *What's next* (may lag; CONTEXT wins on "now"). *(four-doc pipeline only)*
 - **MISSION.html** — why it exists, principles, non-goals. *Why* (browser-read). *(four-doc pipeline only)*
 - **ARCHITECTURE.html** — component boundaries, seams, data contracts (only if present; else "how it's built" stays in *Entry Points* below). *(optional fifth doc)*
-- **ARCHITECTURE.\<facet\>.html** — browser-read human deep-dive on one domain, when the system overview splits by facet (only if present). *Full rationale a human engineer reads.* *(optional; §6 audience split)*
-- **SPEC.\<domain\>.md** — compact, agent-loadable rule sheet for one domain; links up to its `ARCHITECTURE.<facet>.html`; lint-enforced where possible (only if present). *The sheet you hand an agent for a change.* *(optional; copy `SPEC.template.md`)*
+- **`.gravity/<domain>/SPEC.md`** — compact, agent-loadable rule sheet for one domain; links up to its ARCHITECTURE facet; enforcement-tagged where possible (only if present). *The sheet you hand an agent for a change.* *(`.gravity/` projects; copy `SPEC.template.md`. The flat root `SPEC.<domain>.md` is the legacy pre-`.gravity` form.)*
+- **`.gravity/<domain>/ARCHITECTURE.html`** — browser-read human deep-dive on one domain (only if present). *Full rationale a human engineer reads.* *(optional; §6 audience split)*
 - **DESIGN.md** — running-app visual design system: type, token contract, motion, anti-patterns (only if present). *App style — distinct from any doc theme.* *(UI projects; copy `DESIGN.template.md`)*
 - **`docs/walkthroughs/*.md`** — dated, append-only proof-of-work records for shipped slices (only if present). *(optional; CONTEXT.md "Completed" links here rather than restating)*
 
@@ -58,13 +58,14 @@ Coverage expectations or "no tests yet" — be honest.
 - Anything non-obvious about file layout, naming, or where to put new code.
 
 <!-- OPTIONAL — Document Authoring. Keep this section ONLY if the project uses the audience split
-     (SPEC.<domain>.md + ARCHITECTURE.<facet>.html — workspace CLAUDE.md §6). It's the router: it tells an
+     (a domain SPEC.md + ARCHITECTURE.html — workspace CLAUDE.md §6). It's the router: it tells an
      agent which compact SPEC to read before which kind of change, and which human deep-dive sits behind it.
-     Delete the whole section for projects without SPEC files. -->
+     For projects on .gravity/ prefer the full router block from GRAVITY.template.md instead (Doc Map +
+     read-first table). Delete the whole section for projects without SPEC files. -->
 ## Document Authoring
 
-- Rules for `<domain>` live in `SPEC.<domain>.md`; the full human-readable model is `ARCHITECTURE.<facet>.html`. Read the SPEC before changing `<the thing this domain governs — parser, schema, ranking, auth boundary…>`.
-- `<second domain>` rules live in `SPEC.<other-domain>.md` (human ref: `ARCHITECTURE.<other-facet>.html`).
+- Rules for `<domain>` live in `.gravity/<domain>/SPEC.md`; the full human-readable model is `.gravity/<domain>/ARCHITECTURE.html`. Read the SPEC before changing `<the thing this domain governs — parser, schema, ranking, auth boundary…>`.
+- `<second domain>` rules live in `.gravity/<other-domain>/SPEC.md`.
 - These rules are enforced by `<lint command, e.g. npm run lint:docs>` (see **Test**) — run it after authoring or convention changes. Drop this line if there's no linter yet.
 
 ## Constraints & Gotchas

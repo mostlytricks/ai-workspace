@@ -1,6 +1,7 @@
 ---
 description: Cut a versioned release — context-aware (workspace root → bump gravity itself; a project name → bump that project). Runs the changelog + version-bump + commit + tag Change Order in the right order, stops before push. Built so the version is never invented and broken code is never tagged.
 argument-hint: "[project-name]   (omit to release gravity itself)"
+disable-model-invocation: true
 ---
 
 You are running `/cut-release` from `ai-workspace/`. It performs **one release Change Order** against the correct target, in the correct order, and **stops before pushing** (the push is the user's call). The whole reason this command exists is to remove the foot-guns of a manual bump — wrong file bumped, hardcoded date, forgotten tag, releasing red code. So it is mostly a **verification procedure**: never invent a version, never tag a failing gate, never push.

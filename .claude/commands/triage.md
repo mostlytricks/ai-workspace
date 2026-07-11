@@ -1,5 +1,6 @@
 ---
 description: Survey active/ + stable/ + dormant/ projects; flag stale, stencil, and bloated CONTEXT.md files plus index drift; produce a one-page status report.
+allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/scan_workspace.py:*), Bash(python .claude/scenarios/check.py:*)
 ---
 
 You are running the `/triage` workspace command from `ai-workspace/`. Your job is to produce a one-page status report on every project under `active/`, `stable/`, and `dormant/` so the user can decide what to work on, what to prune, what to ship or demote, and what to archive.
@@ -31,16 +32,16 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - **Missing mission doc:** an ambitious-looking active project (multi-phase plan, long-lived, several entry points) that has `CLAUDE.md` + `CONTEXT.md` but **no** `MISSION.html` — suggest adopting the pipeline. Don't flag small/young projects; the two-doc setup is correct for them.
    - **Stale plan:** `IMPLEMENTATION_PLAN.md` "last updated" date far behind CONTEXT.md `Last touched` — the roadmap probably lies.
    - **Doc collision:** the same fact is *stated* in two docs that don't own it (per the §6 ownership rule) — most often the architectural seam or the one-line description appearing in **both** `MISSION.html` and `CLAUDE.md`, or a non-goal duplicated as a constraint. Flag it so the non-owner can be turned into a reference (MISSION owns *why*/the principle; CLAUDE.md owns *how*/the mechanics). Verbatim-or-near duplication is the signal; a brief pointer like "preserve the seam (MISSION §04)" is correct and not a collision.
-   - **`.gravity/` registry drift** (only for `.gravity/` projects): the directory *is* the domain registry, kept in sync across four owners (CLAUDE.md §6). **Run the checker rather than eyeballing the indexes:**
+   - **`.gravity/` registry drift** (only for `.gravity/` projects) — run the checker, never eyeball the four indexes:
      ```bash
      python .claude/scenarios/check.py consistency --project repos/<name>
      ```
-     It mechanically reads all four registry owners and reports `UNDERWIRED` (a `.gravity/<domain>/` folder missing from the Doc Map, the router table, the MISSION "system in N domains" row, or the `IMPLEMENTATION_PLAN.md` status spine — an orphaned domain the next agent won't find) and `ORPHAN_ROUTE` (a `.gravity/<domain>/` reference whose folder is gone). It also WARNs `PROTOCOL_MISSING` / `PROTOCOL_STALE` — the embedded protocol card (`.gravity/GRAVITY.md`, what makes the repo self-describing when opened without the workspace) is absent, unstamped, or stamped older than the workspace `VERSION`; surface these as the 📡 flag below (the fix is always a re-copy of `templates/GRAVITY-PROTOCOL.template.md` with the stamp filled from `VERSION` — the card is never hand-edited). Fold every `FAIL` into the 🧭 flag below; surface `WARN`s (orphan routes, a domain folder with no `PLAN*.md`) only when notable. The same core (`check_gravity_consistency`) backs the `/new-domain` golden-scenario, so triage and the scenario agree by construction. If `check.py` is somehow unavailable, fall back to checking the four indexes by hand; also still flag a domain with a `SPEC.md` but **no router-table row** in `CLAUDE.md` (the checker treats that as a WARN, not a FAIL).
-   - **SPEC honesty rot** (only for `.gravity/` projects that have `SPEC.md` files): a SPEC's enforcement tags are only worth what they can prove — `/new-spec` makes them honest at authoring, but a renamed test or deleted npm script silently turns a wall into a lie. **Run the checker:**
+     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `templates/GRAVITY-PROTOCOL.template.md`, stamp from `VERSION` — the card is never hand-edited); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
+   - **SPEC honesty rot** (only for projects with `SPEC.md` files) — a renamed test or deleted npm script silently turns a wall into a lie. Run:
      ```bash
      python .claude/scenarios/check.py spec --project repos/<name>
      ```
-     It verifies each `.gravity/<domain>/SPEC.md` against the repo's reality and reports as FAILs: `SPEC_UNFILLED` (template leftovers like `<FILL` / `[test:name]`), `GATE_DEAD` (the Gate names an npm script or path that no longer exists), and `TAG_DEAD` (a `[test:<name>]` pointing at no script and no test file) — fold those into the 🔬 flag below. Surface the WARNs (`GATE_MISSING`, `TAG_UNBACKED`, `RULES_UNTAGGED`) only as a one-line per-project note — they mark SPECs that predate the tagged form, not active lies. The per-domain **tag census** it prints (`review 11 · lint 4 …`) is worth quoting when a domain is heavily `[review]` — it shows how much of that contract is real walls vs judgment.
+     Fold FAILs (`SPEC_UNFILLED` · `GATE_DEAD` · `TAG_DEAD`) into the 🔬 flag; note WARNs one line per project (they mark pre-tagged-form SPECs, not active lies). Quote the per-domain **tag census** when a domain is heavily `[review]`. Finding meanings: `.claude/scenarios/README.md`.
 
 8. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
 

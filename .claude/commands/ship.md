@@ -1,6 +1,7 @@
 ---
 description: Move a shipped project from active/ to stable/ — verify release evidence, set the reactivation trigger, move the junction, reconcile PROJECTS.md. The "it works, stop nagging me" ritual.
 argument-hint: <project-name>
+disable-model-invocation: true
 ---
 
 You are running `/ship` from the `ai-workspace/` root. The user wants to move `$ARGUMENTS` to `stable/` — the tier for projects that **shipped well**: in real use, release cut, nothing in flight (`CLAUDE.md` §1). Stable is staleness-exempt; its CONTEXT.md carries a **reactivation trigger** instead of a task.
