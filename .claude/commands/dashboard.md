@@ -6,25 +6,25 @@ You are running the `/dashboard` workspace command from `ai-workspace/`. Print a
 
 ## Steps
 
-1. **List each tier.** Glob `active/*/`, `stable/*/`, `dormant/*/`, `archive/*/`. All tier entries are directory junctions into `repos/<name>/`; reads through junctions work transparently.
+1. **Get the facts mechanically — never re-derive them by hand:**
 
-2. **For each project, gather** (skip what's missing):
-   - From `CONTEXT.md`: `Last touched` date, the Next Step line (for stable, the reactivation trigger; for dormant, the resume blocker).
-   - From `CLAUDE.md`: stack (one short phrase — language/framework). If absent, fall back to inferring from `package.json`, `pyproject.toml`, `Cargo.toml`, etc.; if still unknown, write `—`.
-   - **For `active/` only, if the project is on the four-doc pipeline:** the one-line mission from `MISSION.html`'s `.lede`, and the current phase from `IMPLEMENTATION_PLAN.md` (the phase tagged `next`, else the highest `done`). These sit at the project root for a flat project, or under `.gravity/` for one on the `.gravity/` doc system (CLAUDE.md §6) — check `.gravity/MISSION.html` / `.gravity/IMPLEMENTATION_PLAN.md` too. Skip silently for projects without these docs — they just don't get a mission line.
-   - If both `CONTEXT.md` and `CLAUDE.md` are missing, mark the project `uninitialized`.
+   ```bash
+   python .claude/scripts/scan_workspace.py --pretty
+   ```
 
-3. **Staleness** (active only — stable/dormant/archive age is intentional): days since `Last touched` vs today.
-   - `0–13 d` → fresh, no marker.
-   - `14–29 d` → ⚠ stale.
-   - `≥30 d` → 🚨 very stale (decide: `/ship` it if it shipped, demote to dormant if blocked, or work it).
+   The JSON has everything the sections below need: per-project `tiers`, `context` (`last_touched`, `days_ago`, `staleness` — already classified at the 14/30 boundaries — `next_step`, `stencil`, `lines`/`completed_bullets`), `index` (row + focus), `adoption` stamps, plus `orphans` / `multi_tier` / `index_only` / `not_indexed` and `tier_counts`. **Do not** glob tiers, parse dates, or count days yourself — the scanner already did, deterministically.
 
-4. **Drift checks** (one combined line at the bottom):
-   - Projects in `repos/` with no junction in any tier (orphans).
-   - Projects junctioned into more than one tier.
-   - Rows in `PROJECTS.md` that don't match disk (missing or wrong tier).
-   - Uninitialized projects (no `CONTEXT.md`).
-   - `stable/` projects whose CONTEXT.md Next Step doesn't read as a reactivation trigger.
+2. **Gather the one thing the scanner can't** (judgment, `active/` + four-doc-pipeline projects only): the one-line mission from `MISSION.html`'s `.lede`, and the current phase from `IMPLEMENTATION_PLAN.md` (the phase tagged `next`, else the highest `done`) — at the project root, or under `.gravity/` (CLAUDE.md §6). Skip silently for projects without these docs.
+
+3. **Staleness markers** come straight from the scan's `staleness` field (active only — stable/dormant/archive quiet is intentional): `fresh` → no marker · `stale` → ⚠ · `very-stale` → 🚨 (decide: `/ship` it if it shipped, demote to dormant if blocked, or work it).
+
+4. **Drift flags** — run the mechanical checker and fold its findings into the `Flags:` line:
+
+   ```bash
+   python .claude/scenarios/check.py workspace
+   ```
+
+   FAILs (multi-tier, index↔disk mismatches) and WARNs (orphans, stencils, missing triggers/blockers, adoption-table rot) map onto the flag counts. Don't re-check what it already proved; don't suppress a FAIL.
 
 5. **Print this exact shape** — keep it tight, fit one screen, truncate names to ~20 chars with `…`:
 
@@ -73,6 +73,5 @@ Rules for the output:
 
 ## Notes
 
-- Today's date comes from the environment — use it for staleness math.
-- If `CONTEXT.md` has the literal stencil placeholder `YYYY-MM-DD` in `Last touched`, treat it as uninitialized rather than parsing the date.
-- Prefer terse stack labels: `Node/TS CLI`, `Fastify+Vite`, `Python/FastAPI` — not full dependency lists.
+- Dates, staleness classes, and stencil detection all come from `scan_workspace.py` — never compute them yourself (that hand-math is the bug this pipeline removed).
+- Prefer terse stack labels: `Node/TS CLI`, `Fastify+Vite`, `Python/FastAPI` — not full dependency lists (shorten the scan's `index.stack` if it's long).

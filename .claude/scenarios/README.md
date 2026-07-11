@@ -76,7 +76,24 @@ It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`)
 | `/new-domain` | an orphaned domain — folder created but an index left unwired | `new-domain/` |
 | `/new-spec` | a fabricated wall — a SPEC whose Gate/tags claim enforcement that doesn't exist | `new-spec/` |
 | `/excavate` | a fabricated seam — a dead frontend call or orphaned mapper statement mapped as a live Boundary-Map row (or real seams missed) | `excavate/` |
+| `/ship` | a dishonest ship — the junction moves but CONTEXT.md keeps a task-shaped Next Step, or the PROJECTS.md row stays in active/ | `ship/` |
 
 Beyond `expect_domain`/`require_files`/`spec_honesty`, `expect.json` supports two content assertions: **`require_content`** (`{file: [substrings]}` — evidence that must have been mapped somewhere) and **`forbid_in_section`** (`{file: {"## section": [substrings]}}` — e.g. the dead call may appear as a *finding* but never inside `## Boundary Map`). HTML comments are stripped before the forbid check.
 
-Add the next one (`/init-project`, `/adopt-gravity`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe. `selftest` automatically validates every `*/fixture` (consistency + spec honesty); a fixture with **no** `.gravity/` is skipped as virgin input — it's the raw material for a command that *creates* the `.gravity/` (`/excavate`).
+Add the next one (`/init-project`, `/adopt-gravity`) by copying the `new-domain/` shape: a clean fixture, an `expect.json`, a `SCENARIO.md` replay recipe. `selftest` automatically validates every `*/fixture` (consistency + spec honesty); a fixture with **no** `.gravity/` is skipped as virgin input — it's the raw material for a command that *creates* the `.gravity/` (`/excavate`), or a **workspace tree** rather than a project (`ship/` — asserted by `check.py workspace`, not `cmd_scenario`).
+
+## The workspace check (`check.py workspace`)
+
+The workspace-level twin of `consistency`: it judges the **facts** emitted by `.claude/scripts/scan_workspace.py` (tiers on disk · PROJECTS.md rows · CONTEXT.md health · adoption stamps) and never re-scans disk itself — one scanner, many callers (`/dashboard` and `/triage` format the same JSON). Staleness is deliberately a *fact* (days_ago), never a *finding* — judging age is a human decision, and date-dependent checks would rot fixtures.
+
+| Finding | Severity | Meaning |
+|---|---|---|
+| `MULTI_TIER` | FAIL | one name junctioned into two tiers at once |
+| `INDEX_MISSING_ON_DISK` | FAIL | a PROJECTS.md row with no folder/junction anywhere |
+| `INDEX_WRONG_TIER` | FAIL | row's section disagrees with the actual junction tier |
+| `UNINITIALIZED` / `STENCIL` / `BLOAT` | WARN | CONTEXT.md missing · template leftovers · needs a prune (~80 lines / ~6 bullets) |
+| `MISSING_TRIGGER` / `MISSING_BLOCKER` | WARN | stable Next Step isn't a reactivation trigger · dormant names no resume blocker |
+| `REPO_ORPHAN` / `NOT_INDEXED` | WARN | repos/ folder with no junction · tiered project with no index row |
+| `ADOPTION_STALE` / `ADOPTION_MISSING_ROW` | WARN | adoption-table cell ≠ disk · gravity project absent from the table (`scan_workspace.py --adoption-table` prints the correct table) |
+
+`selftest` proves this checker too: a healthy mini-workspace passes; three seeded drifts are each caught.

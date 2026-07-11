@@ -21,6 +21,13 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [2.1.0] - 2026-07-12
+
+### Added
+- **`scan_workspace.py` + `check.py workspace` — the workspace scan goes mechanical.** `/dashboard` and `/triage` made the runtime LLM hand-roll disk scanning, date arithmetic across ~19 projects, stencil/bloat detection, and PROJECTS.md↔disk reconciliation on every run — exactly the work a mid-tier model gets quietly wrong, and token-expensive for any model. Now `.claude/scripts/scan_workspace.py` (stdlib; reuses the dashboard's parsers so facts stay single-sourced) emits the JSON **facts** — per-project tiers, days-ago + staleness class at the canonical 14/30 boundaries, CONTEXT health (stencil markers, prune thresholds), index rows, adoption stamps, orphans/multi-tier/index-only — and `check.py workspace` turns them into **findings** (FAIL `MULTI_TIER`/`INDEX_MISSING_ON_DISK`/`INDEX_WRONG_TIER`; WARN stencil/bloat/trigger/blocker/orphan/adoption-rot). Both commands now format-and-judge instead of re-deriving disk state (the same "one checker, two callers" split check.py established). Design rule: **staleness is a fact, never a finding** — judging age is a human decision, and date-dependent checks would rot fixtures. First live run immediately caught four real adoption-table lies the hand-kept snapshot had accumulated.
+- **`scan_workspace.py --adoption-table`** prints the PROJECTS.md **Gravity adoption** table computed live from disk — the hand-kept snapshot (which silently lost constellation, and mis-credited three cells) is now a paste-over away from truth.
+- **`/ship` golden scenario** (`.claude/scenarios/ship/`) — guards against the *dishonest ship*: junction moved but CONTEXT.md keeps a task-shaped Next Step or the index row stays in active/. The fixture is a mini workspace **tree** (not a `.gravity/` project), so its assertion engine is `check.py workspace` rather than `cmd_scenario`; `selftest` gains a workspace branch (healthy fixture passes; `MULTI_TIER` / `INDEX_MISSING_ON_DISK` / `MISSING_TRIGGER` each caught when seeded).
+
 ## [2.0.0] - 2026-07-11
 
 ### Changed — **BREAKING: the tier model is now active · stable · dormant · archive**
@@ -108,7 +115,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.1.0
 [2.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.0.0
 [1.8.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.8.0
 [1.7.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.7.0

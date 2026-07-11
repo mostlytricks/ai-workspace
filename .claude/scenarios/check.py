@@ -434,6 +434,126 @@ def check_spec_honesty(project_dir: str | Path) -> list[Finding]:
 # CLI subcommands
 # --------------------------------------------------------------------------- #
 
+# --------------------------------------------------------------------------- #
+# workspace checker — tier/index structural drift over the whole tree
+# --------------------------------------------------------------------------- #
+
+def _scan_workspace(root: Path | None):
+    """Import the fact scanner (.claude/scripts/scan_workspace.py) and run it.
+    The checker judges facts; it never re-scans disk itself."""
+    scripts = Path(__file__).resolve().parent.parent / "scripts"
+    sys.path.insert(0, str(scripts))
+    import scan_workspace  # type: ignore  # noqa: E402
+    return scan_workspace.scan(root)
+
+
+def check_workspace(root: str | Path | None = None) -> list[Finding]:
+    """Structural drift across the tier folders + PROJECTS.md.
+
+    Severity bar (scenarios/README.md): FAIL = provable contradiction between
+    two sources of truth; WARN = hygiene/heuristic. Staleness is deliberately
+    NOT judged here — it's a fact in the scan (days_ago), and a decision
+    prompt for the human, not drift. Date-dependent findings would also rot
+    scenario fixtures.
+    """
+    root = Path(root) if root else None
+    facts = _scan_workspace(root)
+    findings: list[Finding] = []
+
+    def add(sev, code, name, message):
+        findings.append(Finding(sev, code, name, "", message))
+
+    for name in facts["multi_tier"]:
+        tiers = facts["projects"][name]["tiers"]
+        add(FAIL, "MULTI_TIER", name,
+            f"junctioned into {len(tiers)} tiers at once ({', '.join(tiers)}) — one tier per project")
+    for name in facts["index_only"]:
+        listed = (facts["projects"][name]["index"] or {}).get("listed_tier", "?")
+        add(FAIL, "INDEX_MISSING_ON_DISK", name,
+            f"PROJECTS.md lists it under {listed}/ but no folder or junction exists on disk")
+
+    for name, p in facts["projects"].items():
+        tiers, idx, ctx = p["tiers"], p["index"], p["context"]
+        tier = tiers[0] if len(tiers) == 1 else None
+        if tier and idx and idx["listed_tier"] != tier:
+            add(FAIL, "INDEX_WRONG_TIER", name,
+                f"PROJECTS.md says {idx['listed_tier']}/ but the junction is in {tier}/")
+        if not tiers:
+            continue                     # orphans handled below; index-only above
+        if tier == "archive":
+            continue                     # frozen — no CONTEXT-quality checks
+        if not ctx.get("exists"):
+            add(WARN, "UNINITIALIZED", name, "no CONTEXT.md — no recorded state")
+            continue
+        if ctx.get("stencil"):
+            add(WARN, "STENCIL", name, "CONTEXT.md still carries template placeholder text")
+        if ctx.get("completed_bullets", 0) > 6 or ctx.get("lines", 0) > 80:
+            add(WARN, "BLOAT", name,
+                f"CONTEXT.md needs a prune ({ctx['lines']} lines / "
+                f"{ctx['completed_bullets']} Completed bullets; thresholds ~80/~6)")
+        nxt = ctx.get("next_step", "").lower()
+        if tier == "stable" and "reactivate" not in nxt:
+            add(WARN, "MISSING_TRIGGER", name,
+                "stable project whose CONTEXT.md Next Step doesn't read as a "
+                "reactivation trigger ('Reactivate when …')")
+        if tier == "dormant" and "resume" not in nxt and "blocker" not in nxt:
+            add(WARN, "MISSING_BLOCKER", name,
+                "dormant project whose CONTEXT.md Next Step names no resume blocker")
+
+    for name in facts["orphans"]:
+        add(WARN, "REPO_ORPHAN", name, "repos/ folder with no junction in any tier")
+    for name in facts["not_indexed"]:
+        add(WARN, "NOT_INDEXED", name, "on disk in a tier but has no PROJECTS.md row")
+
+    findings += _check_adoption_table(root, facts)
+    return findings
+
+
+def _check_adoption_table(root: Path | None, facts: dict) -> list[Finding]:
+    """PROJECTS.md's hand-kept 'Gravity adoption' table vs disk reality.
+    All WARN — the table is a snapshot view (the dashboard computes live);
+    a wrong cell is rot, not breakage. Absent table/section → silent."""
+    ws = Path(root) if root else Path(__file__).resolve().parents[2]
+    section = _section(_read(ws / "PROJECTS.md"), "Gravity adoption")
+    if not section.strip():
+        return []
+    out: list[Finding] = []
+    seen: set[str] = set()
+    for line in section.splitlines():
+        if not line.startswith("| ") or line.startswith("|---") or line.startswith("| Project"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 6:
+            continue
+        name = cells[0].split()[0]
+        seen.add(name)
+        p = facts["projects"].get(name)
+        if p is None or not p["in_repos"]:
+            out.append(Finding(WARN, "ADOPTION_STALE", name, "",
+                               "adoption-table row for a project not in repos/"))
+            continue
+        a = p["adoption"]
+        want = {
+            "stamp": f"`v{a['stamp']}`" if a["stamp"] else "—",
+            "docs":  "`.gravity`" if a["docsys"] == "gravity" else "flat",
+            "card":  ((f"`v{a['card']}`" if a["card"] else "—")
+                      if a["docsys"] == "gravity" else "n/a"),
+            "rel":   "✓" if a["release"] else "—",
+            "codex": "✓" if a["shim"] else "—",
+        }
+        got = dict(zip(("stamp", "docs", "card", "rel", "codex"), cells[1:6]))
+        for col, expected in want.items():
+            if got.get(col) != expected:
+                out.append(Finding(WARN, "ADOPTION_STALE", name, "",
+                                   f"table says {col}={got.get(col)!r} but disk says {expected!r}"))
+    for name, p in facts["projects"].items():
+        if (p["in_repos"] and p["adoption"]["docsys"] is not None
+                and name not in seen and p["tiers"] and p["tiers"][0] != "archive"):
+            out.append(Finding(WARN, "ADOPTION_MISSING_ROW", name, "",
+                               "gravity project with no row in the adoption table"))
+    return out
+
+
 def _print(findings: list[Finding]) -> tuple[int, int]:
     fails = sum(1 for f in findings if f.severity == FAIL)
     warns = sum(1 for f in findings if f.severity == WARN)
@@ -586,6 +706,44 @@ def _spec_fixture(root: Path) -> None:
         "- `[review]` names stay domain-language\n", encoding="utf-8")
 
 
+def cmd_workspace(args) -> int:
+    findings = check_workspace()
+    facts = _scan_workspace(None)
+    counts = " · ".join(f"{t}={n}" for t, n in facts["tier_counts"].items())
+    print(f"workspace: {counts}")
+    if not findings:
+        print("OK — tiers, PROJECTS.md, and adoption table all agree.")
+        return 0
+    fails, warns = _print(findings)
+    print(f"{fails} fail(s), {warns} warning(s).")
+    return 1 if fails else 0
+
+
+def _workspace_fixture(base: Path) -> None:
+    """A minimal healthy workspace: one active + one stable project, indexed.
+    Plain dirs stand in for junctions — the scanner treats tier entries as views."""
+    for name, tier, ctx_next in (
+        ("alpha", "active", "- Wire the parser to the new endpoint (src/parse.py)."),
+        ("beta", "stable", "- **STABLE.** Reactivate when the upstream API ships v2."),
+    ):
+        real = base / "repos" / name
+        real.mkdir(parents=True)
+        (base / tier / name).mkdir(parents=True)
+        (real / "CLAUDE.md").write_text(f"# {name}\n\nA test project.\n", encoding="utf-8")
+        (real / "CONTEXT.md").write_text(
+            f"# CONTEXT — {name}\n\nLast touched: 2026-01-01\n\n"
+            f"## Completed\n- Did a thing.\n\n## Current State\n- Fine.\n\n"
+            f"## Next Step\n{ctx_next}\n", encoding="utf-8")
+    (base / "dormant").mkdir()
+    (base / "archive").mkdir()
+    (base / "PROJECTS.md").write_text(
+        "# Projects Index\n\n## active/\n\n"
+        "- alpha | Python | 2026-01-01 | wire the parser\n\n"
+        "## stable/\n\n"
+        "- beta | Node | shipped 2026-01-01 | steady; reactivate when upstream ships v2\n\n"
+        "## dormant/\n\n## archive/\n", encoding="utf-8")
+
+
 def cmd_selftest(args) -> int:
     """Prove the checker itself: the bundled good fixture must pass, and a
     deliberately under-wired copy must fail with UNDERWIRED. Guards against the
@@ -672,6 +830,43 @@ def cmd_selftest(args) -> int:
                 ok = False
                 print(f"selftest: EXPECTED {code} for '{new}', but the checker stayed silent.")
 
+    # --- workspace half: a healthy mini-workspace passes; each drift is caught. ---
+    with tempfile.TemporaryDirectory() as tmp:
+        good = Path(tmp) / "ws-good"
+        _workspace_fixture(good)
+        good_fails = [f for f in check_workspace(good) if f.severity == FAIL]
+        good_trigger = [f for f in check_workspace(good) if f.code == "MISSING_TRIGGER"]
+        if good_fails or good_trigger:
+            ok = False
+            print("selftest: EXPECTED healthy workspace fixture to pass, but:")
+            _print(good_fails + good_trigger)
+        else:
+            print("selftest: healthy workspace fixture passes (no FAILs, trigger honored).")
+
+        drifts = {
+            "MULTI_TIER": lambda ws: (ws / "dormant" / "alpha").mkdir(),
+            "INDEX_MISSING_ON_DISK": lambda ws: (ws / "PROJECTS.md").write_text(
+                (ws / "PROJECTS.md").read_text(encoding="utf-8").replace(
+                    "## stable/",
+                    "- gamma | Rust | 2026-01-01 | a ghost project\n\n## stable/"),
+                encoding="utf-8"),
+            "MISSING_TRIGGER": lambda ws: (ws / "repos" / "beta" / "CONTEXT.md").write_text(
+                (ws / "repos" / "beta" / "CONTEXT.md").read_text(encoding="utf-8").replace(
+                    "Reactivate when the upstream API ships v2.",
+                    "Refactor the cache layer next."),
+                encoding="utf-8"),
+        }
+        for code, mutate in drifts.items():
+            bad = Path(tmp) / f"ws-bad-{code.lower()}"
+            shutil.copytree(good, bad)
+            mutate(bad)
+            caught = [f for f in check_workspace(bad) if f.code == code]
+            if caught:
+                print(f"selftest: workspace drift correctly caught -> {code}.")
+            else:
+                ok = False
+                print(f"selftest: EXPECTED {code}, but the workspace checker stayed silent.")
+
     print("SELFTEST PASSED" if ok else "SELFTEST FAILED")
     return 0 if ok else 1
 
@@ -701,6 +896,9 @@ def main(argv=None) -> int:
     s.add_argument("--scenario", required=True, help="path to the scenario dir (has expect.json)")
     s.add_argument("--actual", required=True, help="path to the post-run project to check")
     s.set_defaults(func=cmd_scenario)
+
+    w = sub.add_parser("workspace", help="check tier/index drift across the whole workspace")
+    w.set_defaults(func=cmd_workspace)
 
     t = sub.add_parser("selftest", help="prove the checker on the bundled fixture")
     t.set_defaults(func=cmd_selftest)

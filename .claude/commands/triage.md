@@ -6,39 +6,24 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 
 ## Steps
 
-1. **List projects.** Glob `active/*/`, `stable/*/`, and `dormant/*/`. These entries are directory junctions pointing into `repos/<name>/`; file reads through them work transparently. Also read `PROJECTS.md` to know what the index claims exists, and `ls repos/` to detect projects that exist in storage but aren't junctioned into any tier.
+1. **Get the facts + structural findings mechanically** — the scanner computes, the checker judges; you format and add the judgment layers (step 7):
 
-2. **For each project, read** (in this order, skip what's missing):
-   - `CONTEXT.md` → grab `Last touched`, Current State, Next Step. Also note its **line count** and the **number of bullets under `## Completed`** (you'll need these for the bloat + stencil checks).
-   - `CLAUDE.md` → grab the one-line description and stack (only if needed for the report).
-   - `MISSION.html`, `IMPLEMENTATION_PLAN.md`, and `ARCHITECTURE.html` → only if present (the optional four-doc pipeline + fifth doc, CLAUDE.md §6). **For projects on the `.gravity/` doc system** (a `.gravity/` directory present) these live under `.gravity/` — read the root `CLAUDE.md` **Doc Map** to find them and to list the domain folders. Note the current phase from the plan and the Non-Goals list from the mission — you'll need them for the drift check. If `MISSION.html` is present, also skim it against `CLAUDE.md` for the **doc-collision** check (step 7).
-   - If neither `CONTEXT.md` nor `CLAUDE.md` exists, mark the project as **uninitialized**.
+   ```bash
+   python .claude/scripts/scan_workspace.py --pretty
+   python .claude/scenarios/check.py workspace
+   ```
 
-3. **Compute staleness** for `active/` projects only — stable and dormant age is intentional; never flag their quiet:
-   - Compare `Last touched` to today's date (provided by the environment).
-   - **Stale** = >14 days untouched. **Very stale** = >30 days (decide: `/ship` if it shipped, `dormant/` if it's blocked, or work it).
-   - For `stable/` projects the only checks are: `CONTEXT.md` exists, and its Next Step reads as a **reactivation trigger** ("Reactivate when …") rather than a task list.
+   The scan JSON carries per-project `tiers`, `context` (`last_touched` · `days_ago` · `staleness` at the canonical 14/30 boundaries · `next_step` · `stencil` · `lines`/`completed_bullets`), `index` row, `adoption` stamps, and the cross-cuts (`orphans` · `multi_tier` · `index_only` · `not_indexed`). The checker turns those facts into findings: FAILs `MULTI_TIER` / `INDEX_MISSING_ON_DISK` / `INDEX_WRONG_TIER`; WARNs `UNINITIALIZED` / `STENCIL` / `BLOAT` / `MISSING_TRIGGER` / `MISSING_BLOCKER` / `REPO_ORPHAN` / `NOT_INDEXED` / `ADOPTION_STALE` / `ADOPTION_MISSING_ROW`. **Do not** re-derive any of this by hand (no date math, no tier globbing, no stencil grepping) — and don't suppress a finding you don't understand; surface it.
 
-4. **Detect unfilled stencils.** A CONTEXT.md is a **stencil** (copied from the template but never filled in) if it still contains any of these placeholder markers:
-   - `Last touched: YYYY-MM-DD`
-   - `# CONTEXT — <project name>`
-   - literal template bullet text such as "What structural changes were made in the most recent session(s)" or "The single most important thing for the next agent session".
-   A stencil is worse than stale — the project is listed as active but has *no* recorded state. Treat it as a top-priority flag.
+2. **Read only what judgment needs** (skip what's missing): each project's `MISSION.html`, `IMPLEMENTATION_PLAN.md`, `ARCHITECTURE.html` — at the root, or under `.gravity/` via the root `CLAUDE.md` **Doc Map** (CLAUDE.md §6). Note the current phase and the Non-Goals list; skim MISSION against `CLAUDE.md` for the **doc-collision** check (step 7). Full `CONTEXT.md` reads are only needed where the report wants more than the scan's `next_step` line.
 
-5. **Detect bloat** (per CLAUDE.md §6 — CONTEXT.md is a rolling snapshot, not a log). Flag a CONTEXT.md for pruning if **either**:
-   - more than **~6 bullets** under `## Completed`, or
-   - the file is longer than **~80 lines**.
-   These don't need clearing — git history preserves every past version — they need *trimming*: Completed cut to the last 1–2 sessions, Current State overwritten to present reality. Recommend the prune; don't perform it unless asked.
+3. **Map scan facts → report rows:** `staleness` drives the Active section markers (fresh ✅ · stale ⚠️ · very-stale 🚨 — the 🚨 decision is `/ship` if shipped, `dormant/` if blocked, or work it). `MISSING_TRIGGER` drives the Stable ❓ row; `MISSING_BLOCKER` the Dormant ❓ row; `STENCIL` 📋; `BLOAT` 📈 (recommend the prune per CLAUDE.md §6 — don't perform it unless asked); `UNINITIALIZED` fills that section.
 
-6. **Reconcile with PROJECTS.md and `repos/`:**
-   - Flag projects that exist on disk but are missing from the index.
-   - Flag rows in the index that no longer exist on disk.
-   - Flag rows whose tier in the index disagrees with the actual junction location.
-   - Flag rows whose `last-touched` date disagrees with the project's CONTEXT.md `Last touched`.
-   - Flag entries in `repos/` that have no junction in any tier — these are orphans (storage with no view), unless `PROJECTS.md` lists them under "Not surfaced in a tier (intentional)".
-   - Flag projects junctioned into more than one tier at once — only one tier per project.
-   - **Gravity-adoption table drift:** spot-check the `PROJECTS.md` **Gravity adoption** rows against reality — a `stamp` cell that disagrees with the project's `> gravity: vX.Y` line, or a `card` cell that disagrees with `.gravity/GRAVITY.md` (missing card = `—`; flat projects stay `n/a`). The dashboard computes these live from disk, so a wrong table row is pure snapshot rot — flag it for reconciliation (`/sync-gravity` fixes the row when it syncs a project).
-   - **Missing Codex shim:** flag any project with a `CLAUDE.md` but **no `AGENTS.md`** — it won't be discoverable by agents that look for `AGENTS.md` (Codex). The fix is `cp templates/AGENTS.template.md <project>/AGENTS.md`. New projects get it automatically via `/init-project`; this catches ones created before the shim existed.
+4. **Index drift section = the checker's FAILs + index WARNs**, one line each, verbatim enough to act on. `ADOPTION_STALE`/`ADOPTION_MISSING_ROW` fixes are one command: `python .claude/scripts/scan_workspace.py --adoption-table` prints the correct table to paste into PROJECTS.md.
+
+5. **Missing Codex shim:** flag any project whose scan `adoption.shim` is false but `adoption.docsys` isn't null — it won't be discoverable by agents that look for `AGENTS.md`. Fix: `cp templates/AGENTS.template.md <project>/AGENTS.md`.
+
+6. *(merged into steps 1–5 — the scanner/checker own everything mechanical.)*
 
 7. **Doc-pipeline drift** (only for projects that adopted the optional four-doc pipeline — have `MISSION.html` and/or `IMPLEMENTATION_PLAN.md`):
    - **Non-goal drift:** does anything in CONTEXT.md Completed / Current State push toward something MISSION lists under Current Non-Goals? Flag it — this is the highest-value catch.
