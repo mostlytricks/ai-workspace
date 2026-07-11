@@ -10,9 +10,10 @@ Why this shape:
     @font-face'd by relative path — the page renders fully with no network/CDN.
   - No Python deps (stdlib only): no venv, no pip (respects workspace CLAUDE.md).
 
-Design: the visual system is specified in DESIGN.dashboard.md (premium glassmorphism,
-deep-navy palette, luminous glow gradients). This is the dashboard's OWN identity and is
-deliberately distinct from the muted-teal flat theme used for reading docs (DESIGN.docs.md).
+Design: the visual system is specified in DESIGN.dashboard.md (gravity · mission control:
+premium glassmorphism over a twinkling starfield, an orbital map of the tiers, luminous
+glow gradients). This is the dashboard's OWN identity and is deliberately distinct from
+the muted-teal flat theme used for reading docs (DESIGN.docs.md).
 
 Run from anywhere:
     python .claude/dashboard/generate_dashboard.py
@@ -44,7 +45,7 @@ VENDOR_JS = SCRIPT_DIR / "vendor" / "chart.umd.min.js"
 # a solid (chart slices / accents) + the full gradient (card + header bars).
 TIERS = [
     ("active",    "#00E5E8", "linear-gradient(135deg,#00A3A6 0%,#00E5E8 100%)"),  # teal glow
-    ("incubator", "#4FACFE", "linear-gradient(135deg,#00F2FE 0%,#4FACFE 100%)"),  # blue glow
+    ("stable",    "#4FACFE", "linear-gradient(135deg,#00F2FE 0%,#4FACFE 100%)"),  # blue glow
     ("dormant",   "#F093FB", "linear-gradient(135deg,#F093FB 0%,#F5576C 100%)"),  # purple glow
     ("archive",   "#94A3B8", "linear-gradient(135deg,#64748B 0%,#94A3B8 100%)"),  # slate
 ]
@@ -121,6 +122,11 @@ def esc(s: str) -> str:
     return html.escape(s, quote=True)
 
 
+def slugify(name: str) -> str:
+    """Stable anchor id linking an orbit-map planet to its project card."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
 # --- gravity adoption (computed live from disk, not from PROJECTS.md) -------
 # Each project's adoption "layers" are read straight from repos/<name>/ so the
 # dashboard never drifts from reality: the `> gravity: vX.Y` stamp in CLAUDE.md,
@@ -190,28 +196,34 @@ def build_payload(tiers: dict[str, list[dict]], today: date) -> dict:
     """Everything the page's JS needs, as a JSON-serializable dict."""
     counts = {name: len(tiers[name]) for name, _, _ in TIERS}
 
-    # Doughnut: one slice per tier (skip empty tiers so the chart stays clean).
-    doughnut = {
-        "labels": [name for name, _, _ in TIERS if counts[name] > 0],
-        "data": [counts[name] for name, _, _ in TIERS if counts[name] > 0],
-        "colors": [solid for name, solid, _ in TIERS if counts[name] > 0],
-    }
+    # Orbit map: every project is a planet on its tier's ring (active = inner
+    # orbit · stable = the stable orbit · dormant … archive = graveyard rim).
+    # Planet color is semantic, same scale as the bars: active = staleness heat;
+    # stable/dormant/archive = tier hue (their age is intentional — never heat).
+    # slug links a planet to its card anchor.
+    orbit = []
+    for tname, solid, _ in TIERS:
+        for p in tiers[tname]:
+            n = days_ago(p["date"], today)
+            color = stale_color(n) if tname == "active" else solid
+            orbit.append({
+                "name": p["name"], "tier": tname, "days": n, "color": color,
+                "stack": p["stack"], "focus": p["focus"][:200],
+                "slug": slugify(p["name"]),
+            })
 
-    # Horizontal bar: staleness for the tiers where age is *actionable* — active and
-    # incubator. Dormant/archive are intentionally old, so they're excluded (no false
-    # alarms). Worst (stalest) on top. Color: tier hue when healthy, warning hue when at
-    # risk — active uses the 14/30 heat scale; incubator only cares about the 30d line
-    # (→ promote or delete), so it stays tier-blue until then.
+    # Ring legend under the orbit map (replaces the old doughnut).
+    tiers_meta = [{"name": name, "color": solid, "count": counts[name]}
+                  for name, solid, _ in TIERS]
+
+    # Horizontal bar: staleness for the one tier where age is *actionable* — active.
+    # Stable/dormant/archive are intentionally quiet, so they're excluded (no false
+    # alarms). Worst (stalest) on top; color = the 14/30 heat scale.
     act = []
     for p in tiers["active"]:
         n = days_ago(p["date"], today)
         act.append({"label": p["name"], "days": n if n is not None else 0,
                     "color": stale_color(n)})
-    for p in tiers["incubator"]:
-        n = days_ago(p["date"], today)
-        d = n if n is not None else 0
-        act.append({"label": "inc · " + p["name"], "days": d,
-                    "color": VSTALE if d >= 30 else "#4FACFE"})
     act.sort(key=lambda x: x["days"], reverse=True)
     activity = {
         "labels": [a["label"] for a in act],
@@ -223,7 +235,8 @@ def build_payload(tiers: dict[str, list[dict]], today: date) -> dict:
         "generated": today.isoformat(),
         "total": sum(counts.values()),
         "counts": counts,
-        "doughnut": doughnut,
+        "orbit": orbit,
+        "tiersMeta": tiers_meta,
         "activity": activity,
     }
 
@@ -245,7 +258,7 @@ def render_cards(tiers: dict[str, list[dict]], today: date) -> str:
             ago = f"{n}d ago" if n is not None else "—"
             stack = esc(p["stack"]) if p["stack"] and p["stack"] != "—" else "—"
             cards.append(
-                f'<div class="card {cls}">'
+                f'<div class="card {cls}" id="card-{slugify(p["name"])}">'
                 f'<div class="cardhead">{marker}<span class="pname">{esc(p["name"])}</span>'
                 f'<span class="ago">{ago}</span></div>'
                 f'<div class="stack">{stack}</div>'
@@ -278,7 +291,7 @@ TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Workspace · Control Center</title>
+<title>gravity · mission control</title>
 <script src="vendor/chart.umd.min.js"></script>
 <style>
   /* --- vendored fonts (offline; relative to this file) --- */
@@ -311,6 +324,7 @@ TEMPLATE = """<!DOCTYPE html>
     --shadow:0 8px 32px rgba(0,0,0,0.2); --shadow-hover:0 12px 40px rgba(0,242,254,0.15);
     --ring-a:#00E5E8; --ring-b:#F093FB;
     --chart-axis:#9CA3AF; --chart-grid:rgba(148,163,184,0.12);
+    --stars:.9;
     --body-bg:
       radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
       radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
@@ -327,6 +341,7 @@ TEMPLATE = """<!DOCTYPE html>
     --shadow:0 8px 24px rgba(15,23,42,0.08); --shadow-hover:0 12px 32px rgba(37,99,235,0.16);
     --ring-a:#2563EB; --ring-b:#7C3AED;
     --chart-axis:#64748B; --chart-grid:rgba(100,116,139,0.18);
+    --stars:.3;
     --body-bg:
       radial-gradient(900px 520px at 10% -8%, rgba(37,99,235,.07), transparent 60%),
       radial-gradient(820px 480px at 96% -2%, rgba(124,58,237,.06), transparent 55%),
@@ -343,6 +358,7 @@ TEMPLATE = """<!DOCTYPE html>
     --shadow:0 8px 24px rgba(90,60,30,0.10); --shadow-hover:0 12px 32px rgba(194,65,12,0.16);
     --ring-a:#D97706; --ring-b:#C2410C;
     --chart-axis:#8C7A66; --chart-grid:rgba(140,122,102,0.20);
+    --stars:.25;
     --body-bg:
       radial-gradient(900px 520px at 10% -8%, rgba(217,119,6,.10), transparent 60%),
       radial-gradient(820px 480px at 96% -2%, rgba(194,65,12,.07), transparent 55%),
@@ -359,6 +375,7 @@ TEMPLATE = """<!DOCTYPE html>
     --shadow:0 8px 32px rgba(0,0,0,0.25); --shadow-hover:0 12px 40px rgba(52,211,153,0.16);
     --ring-a:#34D399; --ring-b:#A3E635;
     --chart-axis:#8BA89A; --chart-grid:rgba(139,168,154,0.14);
+    --stars:.55;
     --body-bg:
       radial-gradient(900px 520px at 10% -8%, rgba(52,211,153,.09), transparent 60%),
       radial-gradient(820px 480px at 96% -2%, rgba(163,230,53,.06), transparent 55%),
@@ -375,6 +392,7 @@ TEMPLATE = """<!DOCTYPE html>
     --shadow:0 8px 32px rgba(0,0,0,0.3); --shadow-hover:0 12px 40px rgba(148,163,184,0.16);
     --ring-a:#94A3B8; --ring-b:#CBD5E1;
     --chart-axis:#9499A3; --chart-grid:rgba(148,163,184,0.12);
+    --stars:.5;
     --body-bg:
       radial-gradient(900px 520px at 10% -8%, rgba(148,163,184,.06), transparent 60%),
       radial-gradient(820px 480px at 96% -2%, rgba(203,213,225,.05), transparent 55%),
@@ -422,9 +440,9 @@ TEMPLATE = """<!DOCTYPE html>
   }
 
   .charts { display:grid; gap:18px; margin-bottom:28px;
-    grid-template-columns:minmax(240px,320px) 1fr; align-items:stretch;
+    grid-template-columns:minmax(300px,460px) 1fr; align-items:stretch;
     animation:fadeIn .6s ease both; }
-  @media (max-width:760px) { .charts { grid-template-columns:1fr; } }
+  @media (max-width:820px) { .charts { grid-template-columns:1fr; } }
   .panel { padding:18px 20px; position:relative; }
   /* hover: a dim two-tone (teal→purple) light travels around the panel's border.
      A rotating conic-gradient masked to a 1.5px ring — interior stays transparent
@@ -443,8 +461,40 @@ TEMPLATE = """<!DOCTYPE html>
   .panel:hover::after { opacity:.6; animation:bd-spin 3.4s linear infinite; }
   .panel h3 { margin:0 0 12px; font-size:11px; text-transform:uppercase;
     letter-spacing:1.4px; color:var(--muted); font-family:var(--mono); }
-  .chartbox { position:relative; height:240px; }
+  .chartbox { position:relative; height:322px; }
   #fallback { display:none; color:#FF4D6D; font-size:13px; padding:8px 0; font-family:var(--mono); }
+
+  /* --- orbital map (SVG, built by JS from the payload) --- */
+  .orbitbox { position:relative; height:322px; }
+  .orbitbox svg { width:100%; height:100%; display:block; }
+  .oring { fill:none; stroke:var(--chart-grid); stroke-width:1; }
+  .oring.archive { stroke-dasharray:1 4; opacity:.7; }  /* graveyard orbit */
+  .olabel { font:8.5px var(--mono); fill:var(--muted); letter-spacing:1.8px; text-transform:uppercase; opacity:.8; }
+  .planet { cursor:pointer; stroke:transparent; stroke-width:6; paint-order:stroke; transition:filter .15s; }
+  .planet:hover { filter:brightness(1.35) drop-shadow(0 0 6px currentColor); }
+  .planet.vstale { animation:redpulse 1.8s ease-in-out infinite; }
+  .starcore { animation:sunbreathe 5s ease-in-out infinite; transform-origin:center; transform-box:fill-box; }
+  .starlabel { font:9px var(--mono); fill:var(--muted); text-anchor:middle; letter-spacing:2.5px; }
+  @keyframes redpulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+  @keyframes sunbreathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+
+  /* planet tooltip — fixed, follows the hovered planet */
+  #tip { position:fixed; z-index:10; max-width:300px; padding:10px 12px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--border-focus);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    box-shadow:var(--shadow-hover); font-size:12px; pointer-events:none;
+    opacity:0; transition:opacity .15s; }
+  #tip.show { opacity:1; }
+  #tip b { display:block; margin-bottom:2px; }
+  #tip .t-meta { font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-bottom:5px; }
+  #tip .t-focus { color:var(--focus-text); font-size:11.5px; line-height:1.45; }
+
+  /* twinkling starfield behind everything; intensity themed via --stars */
+  #stars { position:fixed; inset:0; z-index:-1; pointer-events:none;
+    opacity:var(--stars,.8); transition:opacity .4s ease; }
+
+  /* landing highlight after a planet click scrolls to a card */
+  .card.flash { border-color:var(--border-focus); box-shadow:var(--shadow-hover); }
 
   .tiers { display:grid; gap:22px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
   .tier { animation:fadeIn .6s ease both; }
@@ -501,7 +551,7 @@ TEMPLATE = """<!DOCTYPE html>
 
   .cap { margin-top:11px; font-size:11px; color:var(--muted); font-family:var(--mono); line-height:1.7; }
   .cap .dot { font-size:9px; vertical-align:1px; }
-  .cap .teal { color:#00E5E8; } .cap .blue { color:#4FACFE; }
+  .cap .teal { color:#00E5E8; }
 
   footer { margin-top:34px; color:var(--muted); font-size:12px; font-family:var(--mono); }
 
@@ -511,8 +561,10 @@ TEMPLATE = """<!DOCTYPE html>
 </style>
 </head>
 <body>
+  <canvas id="stars"></canvas>
+  <div id="tip"></div>
   <header>
-    <h1>◆ AI Workspace · Control Center</h1>
+    <h1>☀ gravity · mission control</h1>
     <span class="gen">__TOTAL__ projects · generated <b>__GENERATED__</b></span>
     <div class="themebar" id="themebar">
       <button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button>
@@ -528,13 +580,15 @@ TEMPLATE = """<!DOCTYPE html>
 
   <div class="charts">
     <div class="panel glass">
-      <h3>Projects by tier</h3>
-      <div class="chartbox"><canvas id="tierChart"></canvas></div>
+      <h3>Orbital map · tiers as rings</h3>
+      <div class="orbitbox" id="orbitbox"></div>
+      <div class="cap" id="olegend"></div>
+      <div class="cap">hover a planet → details · click → its card · <b style="color:#FF4D6D">pulsing red</b> = past the 30d line, drifting outward</div>
     </div>
     <div class="panel glass">
-      <h3>Staleness · active + incubator</h3>
+      <h3>Staleness · active</h3>
       <div class="chartbox"><canvas id="activityChart"></canvas></div>
-      <div class="cap"><span class="dot teal">●</span> active &nbsp; <span class="dot blue">●</span> incubator &nbsp;·&nbsp; dashed <b style="color:#FBBF24">14d</b> stale · <b style="color:#FF4D6D">30d → move</b> (active→dormant · incubator→promote/delete)</div>
+      <div class="cap"><span class="dot teal">●</span> active only — stable/dormant/archive quiet is intentional &nbsp;·&nbsp; dashed <b style="color:#FBBF24">14d</b> stale · <b style="color:#FF4D6D">30d → decide</b> (/ship if shipped · dormant/ if blocked)</div>
     </div>
   </div>
 
@@ -592,16 +646,6 @@ TEMPLATE = """<!DOCTYPE html>
     Chart.defaults.color = cssVar('--chart-axis') || '#9CA3AF';
     Chart.defaults.font.family = "'Inter', ui-sans-serif, system-ui, sans-serif";
     var GRID = cssVar('--chart-grid') || 'rgba(148,163,184,0.12)';
-    var sliceBorder = cssVar('--bg') || '#0A0E1A';
-
-    charts.push(new Chart(document.getElementById('tierChart'), {
-      type: 'doughnut',
-      data: { labels: DATA.doughnut.labels,
-        datasets: [{ data: DATA.doughnut.data, backgroundColor: DATA.doughnut.colors,
-          borderColor: sliceBorder, borderWidth: 3, hoverOffset: 6 }] },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '64%',
-        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 14 } } } }
-    }));
 
     charts.push(new Chart(document.getElementById('activityChart'), {
       type: 'bar',
@@ -618,6 +662,152 @@ TEMPLATE = """<!DOCTYPE html>
     }));
   }
 
+  // --- orbital map: the workspace as a star system ------------------------
+  // gravity is the sun; each tier is an orbital ring (active innermost,
+  // archive the graveyard rim); each project a planet. Inner rings drift
+  // faster (Kepler-ish). Colors are the same semantics as the bar chart.
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var VW = 460, VH = 330, CX = VW / 2, CY = VH / 2;
+  var ORBITS = [                                  // deg/frame ~60fps
+    { key: 'active',    r: 64,  speed: 0.032 },
+    { key: 'stable',    r: 96,  speed: 0.020 },   // the literal stable orbit
+    { key: 'dormant',   r: 123, speed: 0.012 },
+    { key: 'archive',   r: 146, speed: 0.007 }
+  ];
+  var tip = document.getElementById('tip');
+  var ringGroups = [];
+  var paused = false;
+
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch];
+    });
+  }
+
+  function showTip(p, target) {
+    var days = (p.days === null || p.days === undefined) ? '—' : p.days + 'd ago';
+    tip.innerHTML = '<b>' + escHtml(p.name) + '</b>' +
+      '<div class="t-meta">' + p.tier + ' · ' + escHtml(p.stack) + ' · ' + days + '</div>' +
+      '<div class="t-focus">' + escHtml(p.focus) + '</div>';
+    var r = target.getBoundingClientRect();
+    tip.classList.add('show');
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
+    var y = r.top - th - 10;
+    if (y < 8) y = r.bottom + 10;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    paused = true;
+  }
+  function hideTip() { tip.classList.remove('show'); paused = false; }
+
+  function buildOrbit() {
+    var box = document.getElementById('orbitbox');
+    var svg = svgEl('svg', { viewBox: '0 0 ' + VW + ' ' + VH, role: 'img',
+      'aria-label': 'Orbital map of workspace projects by tier' });
+
+    // the sun: gravity itself
+    var defs = svgEl('defs', {});
+    var grad = svgEl('radialGradient', { id: 'sun' });
+    grad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#FFE9A8', 'stop-opacity': '0.9' }));
+    grad.appendChild(svgEl('stop', { offset: '45%', 'stop-color': '#FFC46B', 'stop-opacity': '0.35' }));
+    grad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#FFC46B', 'stop-opacity': '0' }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+    svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: 30, fill: 'url(#sun)' }));
+    var core = svgEl('circle', { cx: CX, cy: CY, r: 8, fill: '#FFE9A8', 'class': 'starcore' });
+    svg.appendChild(core);
+    var slbl = svgEl('text', { x: CX, y: CY + 26, 'class': 'starlabel' });
+    slbl.textContent = 'GRAVITY';
+    svg.appendChild(slbl);
+
+    ORBITS.forEach(function (o, ti) {
+      svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: o.r, 'class': 'oring ' + o.key }));
+      var lbl = svgEl('text', { x: CX, y: CY - o.r - 4, 'text-anchor': 'middle', 'class': 'olabel' });
+      lbl.textContent = o.key;
+      svg.appendChild(lbl);
+
+      var g = svgEl('g', {});
+      var planets = DATA.orbit.filter(function (p) { return p.tier === o.key; });
+      var n = planets.length;
+      planets.forEach(function (p, i) {
+        var a = -Math.PI / 2 + ti * 0.5 + i * 2 * Math.PI / Math.max(n, 1);
+        var px = CX + o.r * Math.cos(a), py = CY + o.r * Math.sin(a);
+        var vst = (p.days !== null && p.days >= 30 && p.tier === 'active');
+        var c = svgEl('circle', { cx: px, cy: py, r: o.key === 'active' ? 6.5 : 5,
+          fill: p.color, color: p.color, 'class': 'planet' + (vst ? ' vstale' : '') });
+        c.addEventListener('mouseenter', function () { showTip(p, c); });
+        c.addEventListener('mouseleave', hideTip);
+        c.addEventListener('click', function () {
+          var card = document.getElementById('card-' + p.slug);
+          if (!card) return;
+          card.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' });
+          card.classList.add('flash');
+          setTimeout(function () { card.classList.remove('flash'); }, 1600);
+        });
+        g.appendChild(c);
+      });
+      svg.appendChild(g);
+      ringGroups.push({ g: g, speed: o.speed, angle: 0 });
+    });
+    box.appendChild(svg);
+  }
+
+  function fillLegend() {
+    document.getElementById('olegend').innerHTML = DATA.tiersMeta.map(function (t) {
+      return '<span class="dot" style="color:' + t.color + '">●</span> ' + t.name + ' ' + t.count;
+    }).join(' &nbsp;·&nbsp; ');
+  }
+
+  // --- starfield: twinkling canvas behind the glass ------------------------
+  var starCanvas = document.getElementById('stars');
+  var starCtx = starCanvas.getContext('2d');
+  var starField = [];
+  var starColor = '#9CA3AF';
+  function refreshStarColor() { starColor = cssVar('--chart-axis') || '#9CA3AF'; }
+  function initStars() {
+    starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight;
+    starField = [];
+    var n = Math.round(starCanvas.width * starCanvas.height / 11000);
+    for (var i = 0; i < n; i++) {
+      starField.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height,
+        r: Math.random() * 1.2 + 0.3, ph: Math.random() * Math.PI * 2, sp: Math.random() * 0.9 + 0.25 });
+    }
+  }
+  function drawStars(t) {
+    starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+    starCtx.fillStyle = starColor;
+    starField.forEach(function (s) {
+      starCtx.globalAlpha = REDUCED ? 0.55 : 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(s.ph + t * 0.0012 * s.sp));
+      starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, 7); starCtx.fill();
+    });
+    starCtx.globalAlpha = 1;
+  }
+
+  function tick(t) {
+    drawStars(t);
+    if (!paused) {
+      ringGroups.forEach(function (rg) {
+        rg.angle = (rg.angle + rg.speed) % 360;
+        rg.g.setAttribute('transform', 'rotate(' + rg.angle + ' ' + CX + ' ' + CY + ')');
+      });
+    }
+    requestAnimationFrame(tick);
+  }
+
+  buildOrbit();
+  fillLegend();
+  refreshStarColor();
+  initStars();
+  window.addEventListener('resize', function () { initStars(); drawStars(0); });
+  if (REDUCED) { drawStars(0); } else { requestAnimationFrame(tick); }
+
   // --- theme switching (persisted in localStorage) ---
   var THEMES = ['aurora', 'daylight', 'sandstone', 'forest', 'slate'];
   var bar = document.getElementById('themebar');
@@ -629,6 +819,8 @@ TEMPLATE = """<!DOCTYPE html>
       b.classList.toggle('active', b.getAttribute('data-theme') === t);
     });
     buildCharts();
+    refreshStarColor();
+    if (REDUCED) drawStars(0);
   }
   bar.addEventListener('click', function (e) {
     var b = e.target.closest('button');

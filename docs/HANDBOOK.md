@@ -10,7 +10,7 @@ Human-facing guide for working in `ai-workspace/`. The agent's operating rules l
 |---|---|
 | Create a brand-new project | `/init-project <name>` ([Workflow 1](#workflow-1--create-a-brand-new-project) is the manual fallback) |
 | Bring in a project that already lives elsewhere on disk | [Workflow 2](#workflow-2--bring-in-an-existing-project-from-elsewhere) |
-| Graduate an experiment from `incubator/` to `active/` | `/promote <name>` ([Workflow 3](#workflow-3--promote-from-incubator) is the manual fallback) |
+| Ship a finished project to `stable/` | `/ship <name>` ([Workflow 3](#workflow-3--ship-a-project-active--stable) is the manual fallback) |
 | Move a project between tiers | `mv <tier>/<name> <other-tier>/` (instant — see [storage model](#storage-model)) |
 | See status across all projects | `/triage` |
 | Re-orient on one project — what's it for, what should I ask? | `/mission <name>` |
@@ -30,7 +30,7 @@ Run from the `ai-workspace/` root in Claude Code.
 | Command | What it does |
 |---|---|
 | `/init-project <name>` | Scaffold a brand-new project end-to-end: creates `repos/<name>/`, junctions it into `active/`, copies both templates, runs `git init`, adds a row to `PROJECTS.md`. |
-| `/promote <name>` | Graduate `incubator/<name>` into a real project: moves it into `repos/<name>/`, junctions into `active/`, runs `git init` if missing, copies missing templates (preserves existing), adds a row to `PROJECTS.md`. |
+| `/ship <name>` | Move `active/<name>` to `stable/` when it shipped: checks release evidence (tag/CHANGELOG), rewrites the CONTEXT.md Next Step into a reactivation trigger, moves the junction, updates `PROJECTS.md`. |
 | `/triage` | Survey `active/` + `dormant/`, read each `CONTEXT.md`, flag stale projects (>14 days), unfilled stencils, bloated files needing a prune, index drift, and doc-pipeline drift (incl. doc collisions — a fact restated across MISSION + CLAUDE.md). For `.gravity/` projects it runs `.claude/scenarios/check.py` to mechanically catch orphaned domains (a folder not wired into all four registry indexes). Produces a one-page status report. Read-only by default. |
 | `/mission <name>` | Re-orient on one project: read its four docs (plus `ARCHITECTURE.html` and the `.gravity/` Doc Map if present) and print what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Run it when you've lost the thread. |
 | `/interview <name> [<feature>]` | `/mission` in reverse: interview *you* to fill a project's docs. Gap-scans what exists, asks the five themes (telos, walls, shape, gate, now) strawman-first, writes each answer to its owner-doc, leaves unresolved items as visible `OPEN:` lines. For new projects ("fill in CLAUDE.md") and stuck ones (open questions blocking a phase). With `<feature>`: the growing-project intake ritual — runs the is-it-a-domain gate, captures the use scenario as `given/when/then`, writes a wired domain or a `PLAN.<slug>.md` slice + queue row. Doesn't commit. |
@@ -79,17 +79,17 @@ ai-workspace/
 │
 ├── active/
 │   └── my-api    ─→ junction → repos/my-api
+├── stable/
+│   └── shipped-s ─→ junction → repos/shipped-s
 ├── dormant/
 │   └── old-x     ─→ junction → repos/old-x
-├── archive/
-│   └── done-y    ─→ junction → repos/done-y
-└── incubator/
-    └── prototype-z         ← real folder (no junction; ephemeral)
+└── archive/
+    └── done-y    ─→ junction → repos/done-y
 ```
 
 Tier folders are **views**, not storage. A project's tier = which junction folder it appears in. Moving between tiers (`mv active/x dormant/`) renames a ~1KB pointer — instant, never touches `node_modules` or `.venv`.
 
-`incubator/` is the exception: real folders, not junctions. Graduation to `active/` means `mv`-ing into `repos/` first (see [Workflow 3](#workflow-3--promote-from-incubator)).
+The lifecycle reads: **active** = being worked · **stable** = works (shipped, in use, staleness-exempt) · **dormant** = paused on a blocker · **archive** = over. (The old real-folder `incubator/` tier was retired in v2.0 — `/init-project` made scaffolding cheap enough that experiments start in `active/` and dead ones get `/retire`d.)
 
 ---
 
@@ -214,46 +214,33 @@ python .claude/scripts/link_project.py "active/$name" "$src"   # junction (Win) 
 
 ---
 
-## Workflow 3 — Promote from `incubator/`
+## Workflow 3 — Ship a project (active → stable)
 
-**Easy way:** `/promote <name>` from the workspace root. Done.
+For a project that **shipped well**: it's in real use, a release is cut, and there's no in-flight next step. Stable is the "it works, stop nagging me" tier — staleness rules don't apply there, because silence is success.
 
-**Manual way:** when an experiment proves itself worth keeping.
+**Easy way:** `/ship <name>` from the workspace root. It verifies release evidence (git tag or CHANGELOG version), rewrites the CONTEXT.md Next Step into a reactivation trigger, moves the junction, and updates `PROJECTS.md`. Done.
 
-1. Move the incubator folder into `repos/<name>/`.
-2. Junction it into `active/<name>`.
-3. `git init` if it isn't already a git repo.
-4. Copy missing templates (incubator projects typically lack them).
-5. Fill in `CLAUDE.md` (stable identity) and `CONTEXT.md` (current state + Next Step).
-6. Add a row to `PROJECTS.md`.
+**Manual way:**
 
-**PowerShell:**
-```powershell
-$name = "<name>"
-Move-Item "incubator\$name" "repos\$name"
-New-Item -ItemType Junction -Path "active\$name" -Target "repos\$name" | Out-Null
-Set-Location "active\$name"
-if (-not (Test-Path ".git"))       { git init }
-if (-not (Test-Path "CLAUDE.md"))  { Copy-Item ..\..\templates\CLAUDE.template.md  CLAUDE.md }
-if (-not (Test-Path "CONTEXT.md")) { Copy-Item ..\..\templates\CONTEXT.template.md CONTEXT.md }
-```
+1. Check the entry gate honestly: is a release cut (tag/CHANGELOG) or is the thing demonstrably in use? Is there really nothing in flight? (Something *blocking* progress → that's `dormant/`, not `stable/`.)
+2. Rewrite `CONTEXT.md`'s Next Step into the **reactivation trigger** — one line: *"Reactivate when X"*.
+3. `mv active/<name> stable/` (instant; it's a junction).
+4. Move the project's row to the `## stable/` section of `PROJECTS.md` and rewrite its focus column into the steady state + trigger.
 
 **Bash:**
 ```bash
 name="<name>"
-mv "incubator/$name" "repos/$name"
-python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
-cd "active/$name"
-[ -d ".git" ]       || git init
-[ -f "CLAUDE.md" ]  || cp ../../templates/CLAUDE.template.md  CLAUDE.md
-[ -f "CONTEXT.md" ] || cp ../../templates/CONTEXT.template.md CONTEXT.md
+mv "active/$name" "stable/$name"
+# then edit stable/$name/CONTEXT.md (Next Step → reactivation trigger) and PROJECTS.md
 ```
+
+**Reactivate (stable → active):** when the trigger fires, `mv stable/<name> active/`, refresh `CONTEXT.md` with the new arc's Next Step, and move the `PROJECTS.md` row back. No command needed — reactivation always comes with fresh intent that only you can write.
 
 ---
 
 ## Adopt the full doc pipeline
 
-When a project has grown a real arc and you keep re-deriving "what was this for again?", give it the two extra docs (see [the four-doc pipeline](#the-four-doc-pipeline-optional)). Worth it when the project is multi-phase, long-lived, and `active/`; skip for one-shots, incubator experiments, and anything dormant or archived.
+When a project has grown a real arc and you keep re-deriving "what was this for again?", give it the two extra docs (see [the four-doc pipeline](#the-four-doc-pipeline-optional)). Worth it when the project is multi-phase, long-lived, and `active/`; skip for one-shots and anything stable, dormant, or archived.
 
 1. Copy the two templates into the project (don't overwrite if they somehow exist):
 
@@ -370,7 +357,8 @@ A minor-only delta usually means an empty checklist — re-copy, bump, done. It 
 
 - **Junction** — Windows directory pointer (`mklink /J`, or PowerShell `New-Item -ItemType Junction`). Same-volume only. No admin or Developer Mode required. We use junctions, not symbolic links, throughout the tier folders. **Always create one via `.claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. Never use the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting eats the `$name` variable and creates a bogus `active$name` link. The helper drives `mklink` through Python argv, so no shell can corrupt the paths.
 - **Symbolic link (symlink)** — `mklink /D` on Windows; `ln -s` on POSIX. On Windows requires admin or Developer Mode. Crosses volumes; has full POSIX semantics under WSL. Use only when junctions aren't enough.
-- **Tier** — one of `active/`, `dormant/`, `archive/`. A project's tier = which tier folder its junction lives in.
+- **Tier** — one of `active/`, `stable/`, `dormant/`, `archive/`. A project's tier = which tier folder its junction lives in. The lifecycle reads *being worked · works · paused · over*.
+- **Reactivation trigger** — the one-line Next Step a `stable/` project's CONTEXT.md must carry: *"Reactivate when X."* The mirror of dormant's resume blocker — but nothing is blocked; the project simply works and is waiting for a reason to change.
 - **View vs storage** — `repos/` is **storage** (real files). Tier folders are **views** (junctions). Moving a project between views doesn't touch storage.
 - **Repo vs project** — used interchangeably here. Each project under `repos/` is its own independent git repository with its own remote.
 - **Root** — the `ai-workspace/` directory itself. Never `git init` here; it's a local-only management layer.

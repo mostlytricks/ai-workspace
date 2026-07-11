@@ -2,7 +2,7 @@
 # This .gitignore is defense-in-depth: deny everything, then whitelist only the
 # workspace meta files and the .claude/ tooling below. The whitelist IS the
 # portable skeleton — exactly what gets replicated when you set the workspace up
-# in another local runtime; the tiers (repos/active/dormant/archive/incubator)
+# in another local runtime; the tiers (repos/active/stable/dormant/archive)
 # are machine-local and stay denied by the `*` rule above.
 
 *

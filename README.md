@@ -19,7 +19,7 @@ live in their own independent git repos and are never committed here.
 | local-llmstxt-server | Node/TS (Fastify + Vite/React) | Deciding on a docs-split refactor |
 | meta-project-manager | Markdown orchestration convention | Onboarding its first managed project |
 
-> Full live index, including incubator/dormant/archive, in [`PROJECTS.md`](./PROJECTS.md).
+> Full live index, including stable/dormant/archive, in [`PROJECTS.md`](./PROJECTS.md).
 
 ---
 
@@ -33,17 +33,17 @@ a project between tiers is an instant metadata-only `mv` — it never copies
 ```text
 ai-workspace/
 ├── repos/         # CANONICAL storage — real project files live here
-├── incubator/     # ephemeral experiments (real folders)
-├── active/    →   # junctions → repos/  · touched < 30 days
+├── active/    →   # junctions → repos/  · being worked; touched < 30 days
+├── stable/    →   # junctions → repos/  · shipped & in use; reactivation trigger named
 ├── dormant/   →   # junctions → repos/  · paused; resume blocker named
 └── archive/   →   # junctions → repos/  · done, read-only
 ```
 
-**Routing rule of thumb:**
-- Unsure if it has a future → `incubator/`
-- Real project → `repos/<name>/`, junctioned into `active/`
+**Routing rule of thumb** (*being worked · works · paused · over*):
+- New project or idea → `/init-project <name>` (scaffolding is one command; dead ideas get `/retire`d)
+- Shipped, nothing in flight → `/ship <name>` (staleness-exempt; name the reactivation trigger)
 - Pausing → `mv active/<name> dormant/` (and name the resume blocker)
-- Done/dead → `mv */<name> archive/`
+- Done/dead → `/retire <name>` → archive or delete
 
 ### Two files per project
 - **`CLAUDE.md`** — stable identity: what it is, stack, run/test commands, gotchas.
@@ -61,8 +61,8 @@ ai-workspace/
 | Command | What it does |
 |---|---|
 | `/init-project <name>` | Scaffold a new project: `repos/<name>/`, junction into `active/`, copy templates, `git init`, add a `PROJECTS.md` row |
-| `/promote <name>` | Graduate an incubator project to `active/` |
-| `/triage` | Survey `active/` + `dormant/`, flag stale / bloated / drifted `CONTEXT.md` files |
+| `/ship <name>` | Move a shipped project to `stable/` — verify release evidence, set the reactivation trigger |
+| `/triage` | Survey `active/` + `stable/` + `dormant/`, flag stale / bloated / drifted `CONTEXT.md` files |
 | `/dashboard` | One-screen status across all tiers |
 
 ---

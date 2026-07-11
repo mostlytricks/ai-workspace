@@ -30,7 +30,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent          # .claude/scripts
 WORKSPACE_ROOT = SCRIPT_DIR.parent.parent             # ai-workspace/
-TIER_VIEWS = ("active", "dormant", "archive", "incubator")
+TIER_VIEWS = ("active", "stable", "dormant", "archive")
 
 
 def fail(msg, code=1):
@@ -78,42 +78,29 @@ def find_views(name: str):
 
 
 def find_real(name: str):
-    """The real folder for <name>: repos/<name>, or an incubator/ real folder."""
+    """The real folder for <name>: repos/<name>."""
     repo = WORKSPACE_ROOT / "repos" / name
     if repo.exists() and not is_reparse(repo):
         return repo
-    inc = WORKSPACE_ROOT / "incubator" / name
-    if inc.exists() and not is_reparse(inc):
-        return inc
     return None
 
 
 def do_archive(name, views, real):
     if real is None:
         fail(f"no real folder found for '{name}' — nothing to archive.")
-    # Ensure the canonical store is repos/<name>; an incubator real folder must
-    # graduate before it can be a junctioned archive view.
-    repo = WORKSPACE_ROOT / "repos" / name
-    if real != repo:
-        if repo.exists():
-            fail(f"both {real} and {repo} exist — resolve the collision first.")
-        real.rename(repo)
-        print(f"  moved {real.relative_to(WORKSPACE_ROOT)} -> repos/{name}")
-    # Detach any non-archive views (active/dormant/incubator link).
+    # Detach any non-archive views (active/stable/dormant link).
     for tier, p in views.items():
         if tier == "archive":
             continue
         if is_reparse(p):
             remove_link(p)
             print(f"  detached {tier}/{name}")
-        elif tier == "incubator" and p == real:
-            pass  # already renamed above
     # Create the archive junction if absent.
     archive_link = WORKSPACE_ROOT / "archive" / name
     if not (archive_link.exists() or archive_link.is_symlink()):
         sys.path.insert(0, str(SCRIPT_DIR))
         from link_project import make_link  # noqa: E402
-        make_link(archive_link, repo)
+        make_link(archive_link, real)
         print(f"  archive/{name} -> repos/{name}")
     print(f"OK archived: {name} (real files preserved in repos/{name})")
 
@@ -124,15 +111,11 @@ def do_delete(name, views, real):
         if is_reparse(p):
             remove_link(p)
             print(f"  detached {tier}/{name}")
-    # 2. Delete the real folder(s) — repos/ and/or an incubator real folder.
-    deleted_any = False
-    for base in ("repos", "incubator"):
-        folder = WORKSPACE_ROOT / base / name
-        if folder.exists() and not is_reparse(folder):
-            remove_real(folder)
-            print(f"  deleted real folder {base}/{name}")
-            deleted_any = True
-    if not deleted_any and real is None and not views:
+    # 2. Delete the real folder.
+    if real is not None:
+        remove_real(real)
+        print(f"  deleted real folder repos/{name}")
+    elif not views:
         fail(f"'{name}' not found in any tier or repos/ — nothing to delete.")
     print(f"OK deleted: {name} (PERMANENT — no files remain)")
 

@@ -23,7 +23,7 @@ from link_project import make_link                     # noqa: E402  (sibling he
 
 SCRIPT_DIR = Path(__file__).resolve().parent          # .claude/scripts
 WORKSPACE_ROOT = SCRIPT_DIR.parent.parent             # ai-workspace/
-TIERS = ("repos", "active", "dormant", "archive", "incubator")
+TIERS = ("repos", "active", "stable", "dormant", "archive")
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 PROJECTS_MD = WORKSPACE_ROOT / "PROJECTS.md"
 TEMPLATES_DIR = WORKSPACE_ROOT / "templates"          # stencils live here (CLAUDE.md §1)

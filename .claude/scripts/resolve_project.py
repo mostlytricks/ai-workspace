@@ -34,7 +34,7 @@ import sys
 from pathlib import Path
 
 # Tiers scanned for projects, in precedence order (first hit wins for the path).
-TIERS = ("repos", "incubator", "active", "dormant", "archive")
+TIERS = ("repos", "active", "stable", "dormant", "archive")
 
 # Names that live under a tier folder but aren't real projects.
 IGNORE = {"_example_"}

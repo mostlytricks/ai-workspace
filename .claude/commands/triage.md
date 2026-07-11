@@ -1,12 +1,12 @@
 ---
-description: Survey active/ + dormant/ projects; flag stale, stencil, and bloated CONTEXT.md files plus index drift; produce a one-page status report.
+description: Survey active/ + stable/ + dormant/ projects; flag stale, stencil, and bloated CONTEXT.md files plus index drift; produce a one-page status report.
 ---
 
-You are running the `/triage` workspace command from `ai-workspace/`. Your job is to produce a one-page status report on every project under `active/` and `dormant/` so the user can decide what to work on, what to prune, what to demote, and what to archive.
+You are running the `/triage` workspace command from `ai-workspace/`. Your job is to produce a one-page status report on every project under `active/`, `stable/`, and `dormant/` so the user can decide what to work on, what to prune, what to ship or demote, and what to archive.
 
 ## Steps
 
-1. **List projects.** Glob `active/*/` and `dormant/*/`. These entries are directory junctions pointing into `repos/<name>/`; file reads through them work transparently. Also read `PROJECTS.md` to know what the index claims exists, and `ls repos/` to detect projects that exist in storage but aren't junctioned into any tier.
+1. **List projects.** Glob `active/*/`, `stable/*/`, and `dormant/*/`. These entries are directory junctions pointing into `repos/<name>/`; file reads through them work transparently. Also read `PROJECTS.md` to know what the index claims exists, and `ls repos/` to detect projects that exist in storage but aren't junctioned into any tier.
 
 2. **For each project, read** (in this order, skip what's missing):
    - `CONTEXT.md` → grab `Last touched`, Current State, Next Step. Also note its **line count** and the **number of bullets under `## Completed`** (you'll need these for the bloat + stencil checks).
@@ -14,9 +14,10 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - `MISSION.html`, `IMPLEMENTATION_PLAN.md`, and `ARCHITECTURE.html` → only if present (the optional four-doc pipeline + fifth doc, CLAUDE.md §6). **For projects on the `.gravity/` doc system** (a `.gravity/` directory present) these live under `.gravity/` — read the root `CLAUDE.md` **Doc Map** to find them and to list the domain folders. Note the current phase from the plan and the Non-Goals list from the mission — you'll need them for the drift check. If `MISSION.html` is present, also skim it against `CLAUDE.md` for the **doc-collision** check (step 7).
    - If neither `CONTEXT.md` nor `CLAUDE.md` exists, mark the project as **uninitialized**.
 
-3. **Compute staleness** for `active/` projects:
+3. **Compute staleness** for `active/` projects only — stable and dormant age is intentional; never flag their quiet:
    - Compare `Last touched` to today's date (provided by the environment).
-   - **Stale** = >14 days untouched. **Very stale** = >30 days (should probably move to `dormant/`).
+   - **Stale** = >14 days untouched. **Very stale** = >30 days (decide: `/ship` if it shipped, `dormant/` if it's blocked, or work it).
+   - For `stable/` projects the only checks are: `CONTEXT.md` exists, and its Next Step reads as a **reactivation trigger** ("Reactivate when …") rather than a task list.
 
 4. **Detect unfilled stencils.** A CONTEXT.md is a **stencil** (copied from the template but never filled in) if it still contains any of these placeholder markers:
    - `Last touched: YYYY-MM-DD`
@@ -37,7 +38,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - Flag entries in `repos/` that have no junction in any tier — these are orphans (storage with no view), unless `PROJECTS.md` lists them under "Not surfaced in a tier (intentional)".
    - Flag projects junctioned into more than one tier at once — only one tier per project.
    - **Gravity-adoption table drift:** spot-check the `PROJECTS.md` **Gravity adoption** rows against reality — a `stamp` cell that disagrees with the project's `> gravity: vX.Y` line, or a `card` cell that disagrees with `.gravity/GRAVITY.md` (missing card = `—`; flat projects stay `n/a`). The dashboard computes these live from disk, so a wrong table row is pure snapshot rot — flag it for reconciliation (`/sync-gravity` fixes the row when it syncs a project).
-   - **Missing Codex shim:** flag any project with a `CLAUDE.md` but **no `AGENTS.md`** — it won't be discoverable by agents that look for `AGENTS.md` (Codex). The fix is `cp templates/AGENTS.template.md <project>/AGENTS.md`. New projects get it automatically via `/init-project` / `/promote`; this catches ones created before the shim existed.
+   - **Missing Codex shim:** flag any project with a `CLAUDE.md` but **no `AGENTS.md`** — it won't be discoverable by agents that look for `AGENTS.md` (Codex). The fix is `cp templates/AGENTS.template.md <project>/AGENTS.md`. New projects get it automatically via `/init-project`; this catches ones created before the shim existed.
 
 7. **Doc-pipeline drift** (only for projects that adopted the optional four-doc pipeline — have `MISSION.html` and/or `IMPLEMENTATION_PLAN.md`):
    - **Non-goal drift:** does anything in CONTEXT.md Completed / Current State push toward something MISSION lists under Current Non-Goals? Flag it — this is the highest-value catch.
@@ -64,9 +65,13 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 ## Active (N projects)
 - ✅ <name>     | last: <date> (<N days ago>) | next: <one-line Next Step>
 - ⚠️ <name>     | last: <date> (STALE, <N days>) | next: <Next Step>
-- 🚨 <name>     | last: <date> (VERY STALE, <N days>) — consider demoting to dormant/
+- 🚨 <name>     | last: <date> (VERY STALE, <N days>) — /ship if shipped, dormant/ if blocked
 - 📋 <name>     | STENCIL — CONTEXT.md never filled in; no recorded state
 - 📈 <name>     | last: <date> | BLOATED (<lines> lines / <bullets> Completed bullets) — prune per §6
+
+## Stable (N projects)
+- 🛰️ <name>     | shipped | reactivate when: <trigger>
+- ❓ <name>     | shipped | NO REACTIVATION TRIGGER — Next Step still reads as a task list
 
 ## Dormant (N projects)
 - 💤 <name>     | paused: <date> | resume blocker: <blocker>
@@ -92,7 +97,7 @@ Only for projects on the four-doc pipeline. Omit if none.
 - 🔬 <name> | SPEC HONESTY — <domain>/SPEC.md <finding> (dead Gate/tag or template leftover); untagged/gate-less SPECs noted in one line
 
 ## Recommended actions
-A short numbered list of the 3-5 most important triage moves the user should make this week. Be specific — name projects and the action (fill stencil / prune / demote / archive / fix index row).
+A short numbered list of the 3-5 most important triage moves the user should make this week. Be specific — name projects and the action (fill stencil / prune / ship / demote / archive / fix index row).
 ```
 
 A single project can carry more than one flag (e.g. stale *and* bloated). List it once under the most severe status and mention the secondary flag inline.

@@ -46,16 +46,17 @@ ai-workspace/
 ├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
 │
 ├── repos/                          # CANONICAL storage. Real project files live here.
-├── incubator/                      # Ephemeral real folders. No junctions.
-├── active/                         # Junctions → repos/. Touched <30 days.
+├── active/                         # Junctions → repos/. Being worked; touched <30 days.
+├── stable/                         # Junctions → repos/. Shipped & in use; no active arc. Staleness-exempt; CONTEXT.md names the reactivation trigger.
 ├── dormant/                        # Junctions → repos/. Paused; CONTEXT.md must name a resume blocker.
 └── archive/                        # Junctions → repos/. Done. Read-only.
 ```
 
-**Routing:**
-- New idea, unclear future → `incubator/<name>/` (real folder).
-- New real project OR promoted from incubator → `repos/<name>/`, junction into `active/<name>`.
-- Pause an active project → `mv active/<name> dormant/`. Update CONTEXT.md's Next Step with the resume blocker.
+**Routing** (the lifecycle reads: *being worked · works · paused · over*):
+- New project or idea → `/init-project <name>` — `repos/<name>/`, junction into `active/<name>`. If the idea dies within days, `/retire <name>` and delete; scaffolding is one command, so there is no cheaper "incubator" stage (that tier was retired in v2.0).
+- Shipped and in use, nothing in flight → `/ship <name>` — junction moves to `stable/`; CONTEXT.md's Next Step becomes the **reactivation trigger** ("back to active when X"). Staleness rules don't apply in `stable/` — silence is success, not neglect.
+- Reactivate → `mv stable/<name> active/`. Refresh CONTEXT.md with the new arc.
+- Pause an active project → `mv active/<name> dormant/`. Update CONTEXT.md's Next Step with the resume blocker (something *blocks* it — that's what distinguishes dormant from stable).
 - Resume → `mv dormant/<name> active/`. Refresh CONTEXT.md.
 - Done or dead → `/retire <name>` — assess, then **archive** (keep, read-only) or **delete** (permanent). No further edits once archived.
 
@@ -67,7 +68,7 @@ Never create files at the workspace root other than the meta files listed above.
 
 ## 2. Git Boundaries
 
-- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the `*.template.*` stencils, `.claude/` commands+scripts, the root docs, `VERSION`, `CHANGELOG.md`) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `dormant/`, `archive/`, or `incubator/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
+- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the `*.template.*` stencils, `.claude/` commands+scripts, the root docs, `VERSION`, `CHANGELOG.md`) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `stable/`, `dormant/`, or `archive/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
 - **Each project is its own independent repo** under `repos/<project>/`, with its own remote. Project version control never mixes with the skeleton repo above.
 - **Gravity itself is versioned** (SemVer): the system version lives in the root `VERSION` file + a git tag `vX.Y.Z`, with changes recorded in the root `CHANGELOG.md` (see it for the major/minor/patch rule — *major = a rule projects depend on breaks*). A project records the gravity version it adopted via the `> gravity: vX.Y` line in its root `CLAUDE.md` router (seeded from `GRAVITY.template.md`), so stale adoptions are detectable.
 - Junctions are transparent to `git` — commands run from inside a tier junction operate on the real `.git` in `repos/<project>/`.
@@ -81,13 +82,13 @@ A project's real files live in **one of two places**:
 - **An external path** (e.g. `D:\code\old-thing\`) — when something hardcodes the existing path (IDE workspace files, CI, different drive). Junction directly from the tier folder; skip `repos/`.
 
 **Invariants:**
-- Tier folders (`active/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. `incubator/` is the exception: real folders.
+- Tier folders (`active/`, `stable/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. No exceptions (the real-folder `incubator/` tier was retired in v2.0).
 - Use junctions, not symbolic links. Junctions need no admin or Developer Mode on Windows. Use `mklink /D` only when crossing drives or needing full POSIX semantics under WSL.
-- **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` and `/promote` both use it.
+- **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` uses it.
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
 - Never use File Explorer drag-drop to move folders containing `node_modules` or `.venv` — it sometimes performs file-by-file copies and thrashes the disk. Use `mv` (bash) or `Move-Item` (PowerShell).
 
-**For step-by-step procedures** (new project, bring in existing, promote from incubator, including PowerShell + Bash code), see **`docs/HANDBOOK.md`**. For the common new-project case, use `/init-project <name>`.
+**For step-by-step procedures** (new project, bring in existing, ship to stable, including PowerShell + Bash code), see **`docs/HANDBOOK.md`**. For the common new-project case, use `/init-project <name>`.
 
 ---
 
@@ -114,7 +115,7 @@ When a project contains multiple services that talk to each other, treat them as
 
 ## 6. Per-Project Files — `CLAUDE.md` & `CONTEXT.md`
 
-Each project in `repos/` (i.e. anything surfaced via `active/` or `dormant/`) has two files at its root:
+Each project in `repos/` (i.e. anything surfaced via `active/`, `stable/`, or `dormant/`) has two files at its root:
 
 - **`<project>/CLAUDE.md` — stable identity.** What the project is, stack, run/test commands, conventions, gotchas. Rarely changes. Auto-loads when an agent opens at that subdir (works through the junction). Copy from `CLAUDE.template.md`.
 - **`<project>/AGENTS.md` — Codex-compatible shim.** Optional tiny pointer to `CLAUDE.md`; copy from `AGENTS.template.md` when a project should be discoverable by agents that look for `AGENTS.md`. Never duplicate rules here.
@@ -122,11 +123,11 @@ Each project in `repos/` (i.e. anything surfaced via `active/` or `dormant/`) ha
 
 Templates are stencils, not config — nothing loads them automatically.
 
-**Skip both** for `incubator/` one-shots (overhead exceeds value) and `archive/` (no further edits; leave existing CONTEXT.md as the final state record).
+**Skip both** for `archive/` (no further edits; leave existing CONTEXT.md as the final state record).
 
-**Session ritual** for `active/` and `dormant/` projects:
+**Session ritual** for `active/`, `stable/`, and `dormant/` projects:
 - **At start** (entering a project subdir): read `<project>/CONTEXT.md` first. If missing and the project qualifies, copy the template.
-- **At end** (before stopping): update Completed / Current State / Next Step, bump `Last touched`. For dormant projects, Next Step must name the resume blocker.
+- **At end** (before stopping): update Completed / Current State / Next Step, bump `Last touched`. For dormant projects, Next Step must name the resume blocker; for stable projects, the reactivation trigger.
 - A stale `CONTEXT.md` is worse than none. If you didn't update it, say so in the file rather than leaving outdated claims.
 
 A qualifying session that ends without updating `CONTEXT.md` is incomplete.
@@ -155,7 +156,7 @@ The two mandatory files cover identity and now. A project with a real arc — mu
 | `IMPLEMENTATION_PLAN.md` | **What/next** — phases, locked decisions, the gate | per phase | Markdown (agent edits it; copy `IMPLEMENTATION_PLAN.template.md`) |
 | `CONTEXT.md` | **Now** — state + single next step | per session | Markdown (auto-loads) |
 
-This is **opt-in**, not mandated — most projects (and all `incubator/`/`dormant/` ones) stay on the two-doc rule; the overhead only pays off when you keep losing the mission across sessions or projects. `MISSION.html` is HTML because it's a stable thing you *read*; `IMPLEMENTATION_PLAN.md` is Markdown because it changes every phase and the agent edits it. Boundary to keep: PLAN holds the multi-phase arc, CONTEXT holds only *now* — don't duplicate. `/mission <project>` re-orients off these four; `/triage` flags drift between them. See HANDBOOK "Adopt the full doc pipeline" for the how.
+This is **opt-in**, not mandated — most projects (and all `dormant/` ones) stay on the two-doc rule; the overhead only pays off when you keep losing the mission across sessions or projects. `MISSION.html` is HTML because it's a stable thing you *read*; `IMPLEMENTATION_PLAN.md` is Markdown because it changes every phase and the agent edits it. Boundary to keep: PLAN holds the multi-phase arc, CONTEXT holds only *now* — don't duplicate. `/mission <project>` re-orients off these four; `/triage` flags drift between them. See HANDBOOK "Adopt the full doc pipeline" for the how.
 
 **Doc ownership — one concern, one home (reference, don't restate).**
 
@@ -217,9 +218,9 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 
 ## 7. Cross-Project Tooling
 
-- **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, focus or resume blocker. Update on any tier transition or significant status change. It is **local-only (git-ignored)** — it names private projects; the tracked skeleton ships only the sanitized **`PROJECTS.sample.md`** template (copy it to `PROJECTS.md` on a fresh workspace).
+- **`PROJECTS.md`** is the index. One line per project: name, stack, last-touched, and the tier-appropriate one-liner (focus · reactivation trigger · resume blocker). Update on any tier transition or significant status change. It is **local-only (git-ignored)** — it names private projects; the tracked skeleton ships only the sanitized **`PROJECTS.sample.md`** template (copy it to `PROJECTS.md` on a fresh workspace).
 - **`/init-project <name>`** scaffolds a brand-new project end-to-end (Workflow 1 in HANDBOOK): creates `repos/<name>/`, junctions into `active/`, copies both templates, runs `git init`, adds a `PROJECTS.md` row. Use instead of running §3-referenced commands by hand.
-- **`/promote <name>`** graduates an incubator project to active (Workflow 3 in HANDBOOK): `mv incubator/<name> repos/<name>`, junctions into `active/`, runs `git init` only if missing, copies templates only if missing (never overwrites), adds a `PROJECTS.md` row.
+- **`/ship <name>`** moves a shipped project to `stable/` (Workflow 3 in HANDBOOK) — the "it works, stop nagging me" ritual: verifies the project is in `active/`, checks for **release evidence** (a git tag or CHANGELOG version — shows what it found and confirms if none), rewrites CONTEXT.md's Next Step into the **reactivation trigger**, `mv active/<name> stable/`, moves the `PROJECTS.md` row. Doesn't commit. Reactivation is the manual `mv stable/<name> active/` (§1).
 - **`/retire <name>`** ends the lifecycle (the destructive twin of `/init-project`): prints a read-only **risk card** (remote? commits? uncommitted? referenced by another project?), then on your choice either **archives** (junction → `archive/`, real files kept, reversible) or **deletes** (every junction detached + real folder removed, permanent). Backed by `retire_project.py`, which detaches junctions with `rmdir`/`unlink` — never `rm -rf` through a junction — then reconciles `PROJECTS.md` and regenerates the dashboard.
 - **`/adopt-gravity <project>`** retrofits the `.gravity/` doc system (§6) into an existing project: creates `.gravity/`, relocates the heavy docs out of the project root (everything but `CLAUDE.md`/`CONTEXT.md`/`README.md`) with `git mv`, organizes them by domain folder, seeds the root `CLAUDE.md` router block from `GRAVITY.template.md`, and embeds the protocol card (`.gravity/GRAVITY.md` from `GRAVITY-PROTOCOL.template.md`, stamped from `VERSION` — §6). For projects that outgrew the flat root.
 - **`/sync-gravity <project>`** brings one project up to the current gravity version — the upgrade ritual the version stamps exist for: re-copies the protocol card fresh from the template, bumps the `> gravity: vX.Y` router stamp to `VERSION`, verifies with `check.py consistency`, and reconciles the `PROJECTS.md` adoption row — while the changelog deltas between the two versions that need judgment are **reported as a quoted checklist, never auto-migrated**. Built so a weaker agent can't invent a version or silently restructure a project. Doesn't commit.
@@ -227,7 +228,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 - **`/new-domain <project> <domain>`** mints one domain inside an existing `.gravity/`: creates `.gravity/<domain>/` with a starter `PLAN.md`, then **wires all four indexes** so it's never orphaned (Doc Map + read-first table in `CLAUDE.md`, the why/principle row in `MISSION.html`, the status row in `IMPLEMENTATION_PLAN.md`). Runs the *is-it-a-domain?* gate first.
 - **`/cut-release [project]`** cuts a versioned release with one **Change Order**, context-aware: **no arg → bumps gravity itself** (`VERSION` + tag on the `ai-workspace` skeleton repo, §2); **`<project>` → bumps that project** (its manifest + tag on its repo). It resolves the current version from the version source *and* the latest git tag (stops on drift), proposes the major/minor/patch bump **from the changelog's `[Unreleased]` evidence and confirms it**, runs the project's real gate (refusing to tag red code), then renames `[Unreleased]` → `[X.Y.Z] - <date>` (date from the system), bumps the version source, commits, and tags — **stopping before push** (the push stays the user's checkpoint). Built so a weaker agent can't invent a version, hardcode a date, or tag a failing gate.
 - **`/new-spec <project> <domain>`** authors (or retrofits) one domain's `SPEC.md` from `SPEC.template.md` — the generative **Minimal Shape** + enforcement-tagged **Rules**. Its substance is a **verification procedure that keeps every tag honest**: find the real gate in `package.json` (never invent one), read the code for the true shape, and tag each rule **only from evidence** (`[lint]` only if the linter checks it, `[test:x]` only if the test exists) — **under-claim to `[review]` when unsure**. Then wires the Doc-Map + router-table rows and runs the gate to prove it. Built so a *weaker* agent can't fabricate enforcement; `knowledge-viewer`'s `doc/SPEC.md` (lint pole) and `search/SPEC.md` (review pole) are the worked examples.
-- **`/triage`** scans `active/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries, **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc, **doc collisions** — the same fact restated across MISSION and CLAUDE.md, per the §6 ownership rule — and, for `.gravity/` projects, **index drift** between the domain folders and the four registry owners: a folder with no Doc-Map / MISSION-row / PLAN-status entry, or a row pointing at a folder that's gone — checked **mechanically** by shelling out to `.claude/scenarios/check.py consistency` rather than eyeballing the indexes — and **SPEC honesty rot** via `check.py spec`: a Gate naming a dead npm script/path, a `[test:<name>]` pointing at nothing, or template leftovers), and orphans — producing a one-page report. Read-only by default. Use weekly.
+- **`/triage`** scans `active/` + `stable/` + `dormant/` (following junctions into `repos/`), reads each `CONTEXT.md`, and flags stale entries (active only — stable/dormant age is intentional), missing reactivation triggers (stable), **unfilled stencils**, **bloated files needing a prune** (per §6 thresholds), index drift, and **doc-pipeline drift** (MISSION non-goals vs recent work, plan-phase vs CONTEXT contradictions, ambitious projects missing a mission doc, **doc collisions** — the same fact restated across MISSION and CLAUDE.md, per the §6 ownership rule — and, for `.gravity/` projects, **index drift** between the domain folders and the four registry owners: a folder with no Doc-Map / MISSION-row / PLAN-status entry, or a row pointing at a folder that's gone — checked **mechanically** by shelling out to `.claude/scenarios/check.py consistency` rather than eyeballing the indexes — and **SPEC honesty rot** via `check.py spec`: a Gate naming a dead npm script/path, a `[test:<name>]` pointing at nothing, or template leftovers), and orphans — producing a one-page report. Read-only by default. Use weekly.
 - **`.claude/scenarios/`** is gravity's **golden-scenario harness** — it tests gravity's own commands. A scenario is `(command, golden-input fixture, deterministic structural assertions)`: the agent step (running the command) stays manual; the assertion is `check.py`. Its core, `check_gravity_consistency()`, is shared with `/triage` (one checker, two callers — scenarios on fixtures, triage on live repos). `check.py selftest` proves the checkers and validates every scenario fixture; the `/new-domain`, `/new-spec`, and `/excavate` scenarios are the worked examples. This is the *acceptance* half of gravity testing ("did our improvement work as intended?"); the *conformance* half ("does a feature follow its domain SPEC?") begins with **`check.py spec`** — the **spec-honesty checker**, which verifies every `.gravity/<domain>/SPEC.md`'s Gate + enforcement tags against the repo's reality (npm scripts, paths, test files) so a tag can't silently keep claiming a wall that no longer exists, and prints a per-domain tag census (walls vs `[review]` judgment).
 - **`/cosmos <project> [3d|both] [theme]`** renders one `.gravity/` project as a **star system** — the conceptual complement to `/dashboard`'s table. MISSION is the star; each domain a planet (size = doc mass, orbit distance = spine status, **orbit speed = activity**: PLAN count · mass · recency); a **ring** marks a SPEC (an unringed planet is an unfenced domain at a glance), a moon marks ARCHITECTURE.html, gold satellites are `PLAN.*.md` slices in transit. Every fact is scanned live from the four registry owners (folder list, spine, MISSION rows) — no hand-kept data, so a wrong-looking sky means wrong indexes (`/triage`). Backed by `.claude/dashboard/generate_cosmos.py` (alias-resolving; self-contained no-dependency HTML — SVG/CSS in 2D, hand-rolled canvas perspective in 3D; themeable via `--theme`, output gitignored under `.claude/dashboard/cosmos/`).
 - **`/mission <project>`** re-orients on a single project: reads its four docs — plus `ARCHITECTURE.html` if present, and the `.gravity/` Doc Map + per-domain status spine for faceted projects (§6) — and prints what it's for, where it stands, and the sharp questions worth asking the agent next. Read-only. Use when you've lost the thread on *why* a project exists or *what to ask* to push it forward.

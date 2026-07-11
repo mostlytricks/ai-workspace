@@ -18,14 +18,14 @@ python .claude/scripts/new_project.py "$ARGUMENTS"
 If `python` isn't found, retry with `py .claude/scripts/new_project.py "$ARGUMENTS"`.
 
 The script handles everything in one shot:
-- **Validates** the name (kebab-case; not already in repos/active/dormant/archive/incubator; templates present) and stops with a clear `ERROR:` if anything is off.
+- **Validates** the name (kebab-case; not already in repos/active/stable/dormant/archive; templates present) and stops with a clear `ERROR:` if anything is off.
 - Creates `repos/<name>/`, junctions `active/<name>` → `repos/<name>`, copies the starter templates (`CLAUDE.md`, `CONTEXT.md`, and the `AGENTS.md` Codex shim), runs `git init`, and appends the `## active/` row in `PROJECTS.md`.
 - Prints a summary + next steps.
 
 ## Report back
 
 - On success: relay the script's summary block as-is.
-- On failure: the script exits non-zero and prints an `ERROR:` line — surface that to the user verbatim and stop. If it says the name already exists, point them at Workflow 2 (bring-in existing) or Workflow 3 / `/promote` (graduate from incubator).
+- On failure: the script exits non-zero and prints an `ERROR:` line — surface that to the user verbatim and stop. If it says the name already exists, point them at Workflow 2 (bring-in existing).
 
 ## What NOT to do
 

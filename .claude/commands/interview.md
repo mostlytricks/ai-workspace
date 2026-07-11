@@ -14,7 +14,7 @@ Three modes, one core:
 
 ## Step 0 — Gap scan (read before asking a single question)
 
-1. **Locate the project** under `active/`, `dormant/`, `incubator/`, or `repos/`. If not found, list close matches and stop.
+1. **Locate the project** under `active/`, `stable/`, `dormant/`, or `repos/`. If not found, list close matches and stop.
 2. **Read everything that exists**: `CLAUDE.md`, `CONTEXT.md`, `MISSION.html` / `IMPLEMENTATION_PLAN.md` (root or `.gravity/`), any brief/README, the `PROJECTS.md` row, and skim the code layout if there is one.
 3. **Build the gap list** against the owner-doc table (workspace CLAUDE.md §6): for each concern — *why/non-goals* (MISSION), *identity/constraints* (CLAUDE.md), *locked decisions/phases/gate* (PLAN), *next step* (CONTEXT) — mark it **answered** (cite where), **OPEN** (named as open in a doc), or **missing**.
 4. If the gap list is empty, say so and stop — there is nothing to interview for; suggest `/mission` instead.

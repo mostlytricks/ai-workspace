@@ -4,11 +4,11 @@ description: Re-orient on one project — read its four docs, summarize what it'
 
 You are running the `/mission <project>` workspace command from `ai-workspace/`. Its job is to **re-orient the user on a single project** when they've lost the thread: what is this for, where does it stand, and — most importantly — *what should I be asking the agent to improve it?*
 
-The argument is a project name (matches a folder under `active/`, `dormant/`, `incubator/`, or `repos/`). If no argument is given, list the `active/` projects and ask which one.
+The argument is a project name (matches a folder under `active/`, `stable/`, `dormant/`, or `repos/`). If no argument is given, list the `active/` projects and ask which one.
 
 ## Steps
 
-1. **Locate the project.** Find `<name>` under `active/`, `dormant/`, `incubator/`, or `repos/` (junctions read through transparently). If it's not found, say so and list the closest matches.
+1. **Locate the project.** Find `<name>` under `active/`, `stable/`, `dormant/`, or `repos/` (junctions read through transparently). If it's not found, say so and list the closest matches.
 
 2. **Locate the docs.** `CLAUDE.md` + `CONTEXT.md` always live at the project root. For a project on the **`.gravity/` doc system** (CLAUDE.md §6 — `.gravity/` directory present), the rest live under `.gravity/`: `.gravity/MISSION.html`, `.gravity/IMPLEMENTATION_PLAN.md`, `.gravity/ARCHITECTURE.html`, and per-domain docs in `.gravity/<domain>/`. For a flat project they're at the root. Read the root `CLAUDE.md` **Doc Map** first if present — it tells you exactly where each doc is.
 

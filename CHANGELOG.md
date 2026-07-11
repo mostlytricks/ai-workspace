@@ -21,6 +21,21 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [2.0.0] - 2026-07-11
+
+### Changed — **BREAKING: the tier model is now active · stable · dormant · archive**
+- **New `stable/` tier — the honest home for shipped projects.** A project that shipped well previously either rotted red in `active/` (the 30d staleness rule nagging about *success*) or was demoted to `dormant/` behind a fabricated resume blocker (`multi-system-maintenance-agent-system`'s "blocker" literally read *"build is complete; nothing to do"*). `stable/` is a junction tier like the others; **entry gate** = a release is cut (tag/CHANGELOG) or the thing is demonstrably in use, and nothing is in flight; **CONTEXT.md contract** = Next Step becomes a one-line **reactivation trigger** ("Reactivate when X") — the mirror of dormant's resume blocker, but nothing is blocked; **staleness-exempt everywhere** (dashboard heat, `/triage`) — silence is success. Transitions: `/ship <name>` in, manual `mv stable/<name> active/` + fresh CONTEXT.md out. The lifecycle now reads *being worked · works · paused · over*.
+- **`incubator/` retired.** Its niche — "no docs, no ceremony, might delete tomorrow" — evaporated when `/init-project` collapsed scaffolding to one command; usage agreed (one resident in ~2 months, 48 days stale). New ideas go straight to `active/`; dead ones get `/retire`d. Every tier now holds junctions only — the real-folder exception is gone from §3, and `retire_project.py` dropped its incubator special-casing (real-folder fallback, archive graduation, the `("repos","incubator")` delete loop).
+
+### Added
+- **`/ship <name>`** (replaces `/promote`, which graduated incubator projects and died with the tier): the active→stable ritual. Prints a read-only **evidence card** (git tag / CHANGELOG version, working-tree state, current Next Step verbatim), confirms with the user when the gate is thin (never invents release evidence), rewrites CONTEXT.md's Next Step into the reactivation trigger, moves the junction, reconciles `PROJECTS.md`, regenerates the dashboard. Never commits.
+- **Dashboard: the stable orbit.** The orbital map's second ring is now literally the *stable orbit* (solid, tier-blue `#4FACFE` — inherited from incubator); stable planets never pulse red, and the staleness bar is **active-only** (stable/dormant/archive quiet is intentional). `/dashboard` prints a `STABLE` section (shipped · reactivation trigger) and flags a stable project whose Next Step still reads as a task list; `/triage` scans `stable/` with exactly two checks (CONTEXT.md exists · trigger named).
+
+### Migration (this workspace, done with the change)
+- `dormant/multi-system-maintenance-agent-system` → `stable/` (its "blocker" was the missing tier), `active/astra` → `stable/` (v0.1.0 shipped, serving orbit's skills); both CONTEXT.md files rewritten to reactivation triggers.
+- `incubator/ai-workspace-config` deleted (user call: recreate from scratch when portability starts); `incubator/` folder removed.
+- On another machine: `mkdir stable`, re-point any local junctions, and copy the new `## stable/` section shape from `PROJECTS.sample.md`.
+
 ## [1.8.0] - 2026-07-07
 
 ### Added
@@ -93,7 +108,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.0.0
 [1.8.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.8.0
 [1.7.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.7.0
 [1.6.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v1.6.0

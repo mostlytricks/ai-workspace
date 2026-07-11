@@ -218,7 +218,7 @@
     <li><strong>One venv per project.</strong> No shared or root-level <code>.venv</code>; silent version collisions are the enemy.</li>
     <li><strong>The lifecycle is agent-operated and deterministic.</strong> Prefer slash commands and argv-driven helper scripts over hand-run shell strings — quoting pitfalls (e.g. junction creation) are designed out, not worked around.</li>
     <li><strong>One index of record.</strong> <code>PROJECTS.md</code> is the single source of truth for which tier each project lives in; it's updated on every transition.</li>
-    <li><strong>Right-sized ceremony.</strong> Two docs for most projects; the optional four-doc pipeline only for ambitious ones; <code>incubator/</code> one-shots carry none.</li>
+    <li><strong>Right-sized ceremony.</strong> Two docs for most projects; the optional four-doc pipeline only for ambitious ones; stable projects carry a single reactivation trigger instead of a task list.</li>
   </ul>
 
   <h2 id="architecture"><span class="n">04</span>Architecture Principle</h2>
@@ -229,11 +229,11 @@ repos/&lt;project&gt;/
       <span class="b">|</span>  directory junction  (<b>mklink /J</b> on Windows  ·  symlink on Linux/WSL)
       <span class="b">|</span>     via <b>.claude/scripts/link_project.py</b> — argv-driven, no shell quoting
       <span class="b">|</span>
-active/  dormant/  archive/   <span class="c"># views — a project's tier = its activity state</span>
+active/  stable/  dormant/  archive/   <span class="c"># views — a project's tier = its lifecycle state</span>
       <span class="b">|</span>
       <span class="b">v</span>
 slash commands · /triage · /dashboard · /mission   <span class="c"># all read this one model</span></pre>
-  <p>(<code>incubator/</code> is the deliberate exception — real folders, not junctions, because experiments are ephemeral and may never graduate.)</p>
+  <p>(Every tier holds junctions — no exceptions. <code>stable/</code> is the tier for projects that <em>shipped well</em>: staleness rules don't apply there, because a working system's silence is success, not neglect.)</p>
 
   <h2 id="docs"><span class="n">05</span>The Doc System</h2>
   <p>The workspace runs on documents with distinct, non-overlapping jobs — at the root, and inside each project.</p>
@@ -248,13 +248,13 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
       <tr><td><code>MISSION.html</code> · <code>IMPLEMENTATION_PLAN.md</code></td><td>per project</td><td>Optional "four-doc pipeline" for ambitious projects — durable why + phase roadmap (CLAUDE.md §6).</td></tr>
     </tbody>
   </table>
-  <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/promote</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.claude/scripts/</code>.</p>
+  <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/ship</code>, <code>/retire</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.claude/scripts/</code>.</p>
 
   <h2 id="non-goals"><span class="n">06</span>Non-Goals</h2>
   <ul>
     <li>Do not <code>git init</code> at the root or turn the workspace into an umbrella / monorepo. Projects stay independently versioned.</li>
     <li>Do not create a shared or root-level <code>.venv</code>.</li>
-    <li>Do not put real project files inside <code>active/</code>, <code>dormant/</code>, or <code>archive/</code> — those hold junctions only (<code>incubator/</code> is the one real-folder exception).</li>
+    <li>Do not put real project files inside <code>active/</code>, <code>stable/</code>, <code>dormant/</code>, or <code>archive/</code> — tier folders hold junctions only.</li>
     <li>The workspace does not manage credentials or secrets; that stays with each project and the local toolchain.</li>
     <li><code>CONTEXT.md</code> is not a changelog — never duplicate git history into it.</li>
     <li>Do not grow ceremony where it doesn't pay: small and one-shot projects stay on the light setup.</li>

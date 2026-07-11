@@ -11,9 +11,9 @@
 
 # Projects Index
 
-Source of truth for what exists in this workspace and which tier each project lives in. Update this whenever a project moves between `active/`, `dormant/`, or `archive/`, or when its focus/blocker changes meaningfully. Real project files live in `repos/<name>/`; tier folders hold directory junctions pointing into `repos/`.
+Source of truth for what exists in this workspace and which tier each project lives in. Update this whenever a project moves between `active/`, `stable/`, `dormant/`, or `archive/`, or when its focus/blocker changes meaningfully. Real project files live in `repos/<name>/`; tier folders hold directory junctions pointing into `repos/`.
 
-**Format per row:** `name | stack | last-touched (YYYY-MM-DD) | current focus or resume blocker`
+**Format per row:** `name | stack | last-touched (YYYY-MM-DD) | tier-appropriate one-liner (focus · reactivation trigger · resume blocker)`
 
 ---
 
@@ -24,11 +24,11 @@ _Touched within ~30 days. Each has CLAUDE.md + CONTEXT.md. The "focus" column sh
 - example-web-app        | Node/TS (framework + DB)     | 2026-01-15 | one-line current focus = the project's CONTEXT.md → Next Step
 - example-cli-tool       | Python (stdlib)              | 2026-01-12 | next: the single concrete next step for this project
 
-## incubator/
+## stable/
 
-_Experimental. Real folders OR junctions into `repos/` if intended to graduate. No CLAUDE.md/CONTEXT.md overhead. Promote with `/promote <name>` when validated._
+_Shipped and in real use; no active arc. Staleness rules don't apply — silence is success. Each row's one-liner is the steady state + the **reactivation trigger** (same as the project's CONTEXT.md → Next Step). Enter with `/ship <name>`; leave with `mv stable/<name> active/`._
 
-- example-experiment     | prototype (language)         | 2026-01-08 | validating the core idea; /promote once it proves out
+- example-shipped-tool   | Python (stdlib)              | shipped 2026-01-10 | v1.0 in daily use; reactivate when the export format changes upstream
 
 ## dormant/
 
@@ -59,7 +59,7 @@ Next adoption moves: decide per **flat** project whether it earns `.gravity` or 
 
 <!--
 Maintenance notes:
-- The /triage slash command (run from workspace root) can auto-summarize active/ and dormant/ by reading each subdir's CONTEXT.md. Use it weekly and reconcile any drift here.
-- If a row hasn't been touched in 30+ days under active/, either update its CONTEXT.md or demote to dormant/.
-- If a dormant row's resume blocker has resolved, promote back to active/ and refresh CONTEXT.md.
+- The /triage slash command (run from workspace root) can auto-summarize active/, stable/ and dormant/ by reading each subdir's CONTEXT.md. Use it weekly and reconcile any drift here.
+- If a row hasn't been touched in 30+ days under active/, either update its CONTEXT.md, /ship it (if it shipped), or demote to dormant/ (if it's blocked).
+- If a dormant row's resume blocker has resolved — or a stable row's reactivation trigger fired — move it back to active/ and refresh CONTEXT.md.
 -->

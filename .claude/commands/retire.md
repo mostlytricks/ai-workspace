@@ -3,7 +3,7 @@ description: Retire a project — assess risk, then archive (reversible) or dele
 argument-hint: <project-name>
 ---
 
-You are running `/retire` from the `ai-workspace/` root. The user wants to retire `$ARGUMENTS` — the end of the lifecycle (`CLAUDE.md` §1: *"Done or dead → archive/"*). This is the destructive counterpart to `/init-project` and `/promote`, so the **assessment and confirmation are the point** — never skip to deletion.
+You are running `/retire` from the `ai-workspace/` root. The user wants to retire `$ARGUMENTS` — the end of the lifecycle (`CLAUDE.md` §1: *"Done or dead → archive/"*). This is the destructive counterpart to `/init-project` and `/ship`, so the **assessment and confirmation are the point** — never skip to deletion.
 
 Two dispositions:
 - **archive** — keep the real files, move the project's view into `archive/` (read-only, reversible).
@@ -12,18 +12,18 @@ Two dispositions:
 ## Validation
 
 1. **Empty name** — if `$ARGUMENTS` is empty/whitespace, ask which project and stop.
-2. **Exists** — `<name>` must exist in some tier (`active/`, `dormant/`, `archive/`, `incubator/`) or in `repos/`. If nothing is found anywhere, say so and stop.
+2. **Exists** — `<name>` must exist in some tier (`active/`, `stable/`, `dormant/`, `archive/`) or in `repos/`. If nothing is found anywhere, say so and stop.
 3. **Already archived?** — if its only view is already `archive/` and the user asked to archive, say it's already archived and stop.
 
 ## Step 1 — Assess (read-only). Print a risk card before doing anything.
 
 Gather, from the workspace root (Bash; PowerShell equivalents fine):
 
-- **Views & real path** — which tiers hold `<name>` (junctions), and the real folder (`repos/<name>` or an `incubator/` real folder) + its size (`du -sh`).
+- **Views & real path** — which tiers hold `<name>` (junctions), and the real folder `repos/<name>` + its size (`du -sh`).
 - **Remote?** — `git -C <real> remote -v`. A remote means a cloud backup exists → deletion is recoverable.
 - **Commits?** — `git -C <real> log --oneline -1`. "no commits yet" means git history can't recover it.
-- **Uncommitted/untracked** — `git -C <real> status --short`. These are lost on delete and on archive-of-an-incubator-move; call out anything dirty.
-- **Referenced by another project?** — grep the *other* active/dormant projects and `PROJECTS.md` (incl. its "Not surfaced" notes) for `<name>`. A hit (e.g. a demo/target service, a §5 contract, a hardcoded path) means deleting may break that project — surface it.
+- **Uncommitted/untracked** — `git -C <real> status --short`. These are lost on delete; call out anything dirty.
+- **Referenced by another project?** — grep the *other* active/stable/dormant projects and `PROJECTS.md` (incl. its "Not surfaced" notes) for `<name>`. A hit (e.g. a demo/target service, a §5 contract, a hardcoded path) means deleting may break that project — surface it.
 
 Print a compact card, e.g.:
 ```
@@ -78,12 +78,12 @@ Retired: <name>  (<archive | delete>)
   Views:       <detached active/…; archive/<name> created  |  all junctions removed>
   Real files:  <preserved in repos/<name>  |  deleted (permanent, no remote)>
   PROJECTS.md: <row moved to archive/  |  row removed>
-  Dashboard:   regenerated (active=N · incubator=N · dormant=N · archive=N)
+  Dashboard:   regenerated (active=N · stable=N · dormant=N · archive=N)
 ```
 
 ## What NOT to do
 
-- **Never** `rm -rf` a tier folder (`active/`, `dormant/`, `archive/`) or Explorer-delete it — that can recurse through the junction and destroy the real files. Detach the junction with the helper / `rmdir` first.
+- **Never** `rm -rf` a tier folder (`active/`, `stable/`, `dormant/`, `archive/`) or Explorer-delete it — that can recurse through the junction and destroy the real files. Detach the junction with the helper / `rmdir` first.
 - **Do not** delete without completing Step 1's assessment and getting an explicit choice — especially the no-remote "permanent" confirmation.
 - **Do not** `git push`, touch a remote, or alter another project to "fix" a dangling reference — just report the reference so the user decides.
 - **Do not** archive by editing files — archiving is a junction move (the helper), not a copy.

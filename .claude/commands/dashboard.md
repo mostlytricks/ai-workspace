@@ -1,30 +1,30 @@
 ---
-description: One-screen dashboard across active/, incubator/, dormant/, archive/ — counts, last-touched, next step, and drift flags. Also regenerates the visual HTML dashboard.
+description: One-screen dashboard across active/, stable/, dormant/, archive/ — counts, last-touched, next step, and drift flags. Also regenerates the visual HTML dashboard.
 ---
 
 You are running the `/dashboard` workspace command from `ai-workspace/`. Print a single-screen status view across all four tiers so the user can see workspace state at a glance. Read-only.
 
 ## Steps
 
-1. **List each tier.** Glob `active/*/`, `incubator/*/`, `dormant/*/`, `archive/*/`. `active`, `dormant`, `archive` entries are directory junctions into `repos/<name>/`; `incubator/` entries are real folders. Reads through junctions work transparently.
+1. **List each tier.** Glob `active/*/`, `stable/*/`, `dormant/*/`, `archive/*/`. All tier entries are directory junctions into `repos/<name>/`; reads through junctions work transparently.
 
 2. **For each project, gather** (skip what's missing):
-   - From `CONTEXT.md`: `Last touched` date, the Next Step line (or, for dormant, the resume blocker).
+   - From `CONTEXT.md`: `Last touched` date, the Next Step line (for stable, the reactivation trigger; for dormant, the resume blocker).
    - From `CLAUDE.md`: stack (one short phrase — language/framework). If absent, fall back to inferring from `package.json`, `pyproject.toml`, `Cargo.toml`, etc.; if still unknown, write `—`.
    - **For `active/` only, if the project is on the four-doc pipeline:** the one-line mission from `MISSION.html`'s `.lede`, and the current phase from `IMPLEMENTATION_PLAN.md` (the phase tagged `next`, else the highest `done`). These sit at the project root for a flat project, or under `.gravity/` for one on the `.gravity/` doc system (CLAUDE.md §6) — check `.gravity/MISSION.html` / `.gravity/IMPLEMENTATION_PLAN.md` too. Skip silently for projects without these docs — they just don't get a mission line.
    - If both `CONTEXT.md` and `CLAUDE.md` are missing, mark the project `uninitialized`.
 
-3. **Staleness** (active only): days since `Last touched` vs today.
+3. **Staleness** (active only — stable/dormant/archive age is intentional): days since `Last touched` vs today.
    - `0–13 d` → fresh, no marker.
    - `14–29 d` → ⚠ stale.
-   - `≥30 d` → 🚨 very stale (suggest demoting to dormant).
+   - `≥30 d` → 🚨 very stale (decide: `/ship` it if it shipped, demote to dormant if blocked, or work it).
 
 4. **Drift checks** (one combined line at the bottom):
    - Projects in `repos/` with no junction in any tier (orphans).
    - Projects junctioned into more than one tier.
    - Rows in `PROJECTS.md` that don't match disk (missing or wrong tier).
    - Uninitialized projects (no `CONTEXT.md`).
-   - `incubator/` items older than 30 days (consider `/promote` or delete).
+   - `stable/` projects whose CONTEXT.md Next Step doesn't read as a reactivation trigger.
 
 5. **Print this exact shape** — keep it tight, fit one screen, truncate names to ~20 chars with `…`:
 
@@ -37,8 +37,9 @@ ACTIVE (<N>)
   ⚠ <name>           <stack>            <Nd ago>   next: <…>
   🚨 <name>          <stack>            <Nd ago>   next: <…>
 
-INCUBATOR (<N>)
-  <name>             <Nd ago>           <one-line note if any>
+STABLE (<N>)
+  <name>             <stack>            shipped    reactivate when: <trigger, truncated>
+  ❓ <name>          <stack>            shipped    NO REACTIVATION TRIGGER NAMED
 
 DORMANT (<N>)
   <name>             paused <Nd ago>    blocker: <…>
@@ -74,5 +75,4 @@ Rules for the output:
 
 - Today's date comes from the environment — use it for staleness math.
 - If `CONTEXT.md` has the literal stencil placeholder `YYYY-MM-DD` in `Last touched`, treat it as uninitialized rather than parsing the date.
-- For `incubator/`, "Nd ago" = days since the folder's mtime; CONTEXT.md is not expected there.
 - Prefer terse stack labels: `Node/TS CLI`, `Fastify+Vite`, `Python/FastAPI` — not full dependency lists.
