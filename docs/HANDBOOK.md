@@ -19,6 +19,7 @@ Human-facing guide for working in `ai-workspace/`. The agent's operating rules l
 | Add a new domain to a `.gravity/` project | `/new-domain <name> <domain>` |
 | Land on an existing legacy system (f/e + b/e's + DB) | `/excavate <name>` ([Adopt gravity on an existing (brownfield) system](#adopt-gravity-on-an-existing-brownfield-system)) |
 | Bring a project up to the current gravity version | `/sync-gravity <name>` ([Upgrade a project to a newer gravity](#upgrade-a-project-to-a-newer-gravity)) |
+| Triage a batch of user bug reports into the docs | `/intake <name>` ([Manage a user bug/issue batch](#manage-a-user-bugissue-batch-intake--patch)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -38,6 +39,7 @@ Run from the `ai-workspace/` root in Claude Code.
 | `/sync-gravity <name>` | Bring one project up to the current gravity version: re-copies the protocol card (`.gravity/GRAVITY.md`) fresh from the template, bumps the `> gravity: vX.Y` router stamp, verifies with `check.py`, reconciles the adoption table — and reports the changelog deltas needing judgment as a checklist, **never** auto-migrating them. Doesn't commit. See "Upgrade a project to a newer gravity". |
 | `/new-domain <name> <domain>` | Mint one domain inside a project's `.gravity/`: run the *is-it-a-domain?* gate, create `.gravity/<domain>/PLAN.md`, and wire all four indexes (Doc Map, router table, MISSION row, status spine) so it's never orphaned. |
 | `/new-spec <name> <domain>` | Author (or retrofit) one domain's `SPEC.md` from `SPEC.template.md` — the generative Minimal Shape + enforcement-tagged Rules. Finds the real gate, tags each rule only from evidence, wires the Doc-Map + router rows, runs the gate to prove it. |
+| `/intake <name>` | Triage a batch of user bug/issue reports: seed a dated intake sheet (`docs/intake/<date>.md` from `INTAKE.template.md`, reports quoted verbatim), verify each item carries the six required facts (eliciting strawman-first or marking `OPEN: awaiting …` — never inventing), run the triage trio per item (real? → whose domain? → bug/feature/doc-drift?), dedupe to root causes, and route each accepted cause into a bug-intake slice PLAN + a queue row. No repro → no slice. Execution hands off to `/patch-slice`; doesn't commit. |
 | `/patch-slice <name> [slug]` | Land one slice under the **patch-loop ritual**: slice PLAN first (bugs enter as a *currently-false* scenario), then `patch_slice.py`'s walls — preflight (clean tree, green baseline, CONTEXT drift), anchor + state snap, bare-gated verify (N=3, exit 75 forces a four-proof rollback), checkpoint, re-plan. The agent writes only the patch and the prose; merge/push stays yours. |
 | `/cut-release [name]` | Cut a versioned release with one Change Order. **No arg → bumps gravity itself** (`VERSION` + tag on the workspace skeleton repo); **`<name>` → bumps that project** (its manifest + tag). Resolves the version (stops on tag-vs-file drift), proposes + confirms the major/minor/patch bump from the changelog's `[Unreleased]`, runs the gate (won't tag red code), rewrites the changelog, bumps, commits, tags — **stops before push**. |
 | `/retire <name>` | End a project's lifecycle: print a read-only risk card (remote? commits? uncommitted? referenced elsewhere?), then on your choice **archive** (junction → `archive/`, reversible) or **delete** (detach every junction, remove the real folder, permanent). Reconciles `PROJECTS.md` + regenerates the dashboard. |
@@ -236,6 +238,20 @@ mv "active/$name" "stable/$name"
 ```
 
 **Reactivate (stable → active):** when the trigger fires, `mv stable/<name> active/`, refresh `CONTEXT.md` with the new arc's Next Step, and move the `PROJECTS.md` row back. No command needed — reactivation always comes with fresh intent that only you can write.
+
+---
+
+## Manage a user bug/issue batch (intake → patch)
+
+Bugs are **not a domain** — never mint `.gravity/bugs/` or a standing BUGS.md (that's doc-type grouping, and a registry that only rots). A batch of user reports flows through five stations, each already owned by an existing gravity piece:
+
+1. **Inbox** — `/intake <name>`: raw reports land verbatim in a dated sheet, `docs/intake/<YYYY-MM-DD>.md` (from `INTAKE.template.md`). Intake sheets are the *before*-record twin of walkthroughs (the *after*-record): time-indexed, append-only once closed, never foldered by domain. Private user data → git-ignored path.
+2. **Required facts** — each item needs six: reporter·date, observed (verbatim), expected, repro, env, evidence. `/intake` elicits missing ones strawman-first or marks `OPEN: awaiting <what>` — **no repro, no slice.**
+3. **Triage trio** — per item: *real?* (reproduce it), *whose domain?* (route by the project's router table; cross-domain → `integration`), *what kind?* (bug → slice PLAN · feature → `/interview <name> <feature>` · doc-drift → fix the doc, no slice).
+4. **Dedupe & queue** — N reports collapse to fewer root causes; **one slice PLAN per cause** (bug-intake rule: the repro enters as a currently-false `given/when/then`; the fix must leave the named regression test that graduates it into the SPEC's Behavioral Contract). Slices enter the `IMPLEMENTATION_PLAN.md` queue — severity orders lanes, still exactly one slice in `now`.
+5. **Execute** — `/patch-slice <name> <slug>`, one slice at a time, `now` first. The batch closes when every intake row's `→` line points somewhere: a PLAN, a rejection with a reason, or an `OPEN` naming what's awaited.
+
+The compounding effect is the point: every fixed bug leaves a regression wall, so bug season *hardens* the SPEC instead of just draining time. Meta-signal: a domain that eats most bugs batch after batch is under-fenced — its tag census is mostly `[review]`; schedule a `/new-spec` pass, not more patches.
 
 ---
 

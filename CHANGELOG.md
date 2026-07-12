@@ -19,6 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Added
+- **`/intake` — the maintenance loop gets its front half** (`.claude/commands/intake.md` + `INTAKE.template.md`; the SDLC gap: bugs had an *entry ritual per slice* — v2.3's bug-intake rule — but a **batch** of 5–10 user reports had no home before triage, so raw symptoms landed in chat or rotted in heads). One dated sheet per batch (`docs/intake/<date>.md` — the *before*-record twin of walkthroughs: time-indexed, verbatim quotes, frozen once every row routes out; never a `.gravity/bugs/` folder or standing registry). The command enforces the **six required facts** per item (reporter·date · observed · expected · repro · env · evidence), eliciting gaps strawman-first or marking `OPEN: awaiting …` — **no repro, no slice**; runs the triage trio (real? → domain via router table → bug/feature/doc-drift); dedupes reports to **root causes** (one bug-intake slice PLAN per cause, item IDs cited both ways); and queues slices in `IMPLEMENTATION_PLAN.md` with severity ordering the lanes (one slice in `now`, always). Features hand off to `/interview <project> <feature>`; doc-drift fixes the doc with no slice; execution stays `/patch-slice`'s. Wired into CLAUDE.md §1/§6-adjacent/§7 and the HANDBOOK (quick-start row, command row, "Manage a user bug/issue batch" workflow).
+
 ### Fixed
 - **`.claude/settings.local.json` untracked** — the blanket `!.claude/**` whitelist had been shipping per-machine permission grants with the skeleton; now excluded (Claude Code convention: `*.local` = personal state) and removed from the index. History still contains old copies (harmless — permission allowlists, no secrets).
 
