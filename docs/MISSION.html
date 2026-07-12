@@ -191,8 +191,9 @@
 
   <h2 id="mission"><span class="n">01</span>Mission</h2>
   <p><strong>ai-workspace is a local-only management layer that lets one person run many agent-assisted software projects side by side without anything getting lost between sessions.</strong> Scattered terminals forget; chat context evaporates; parallel projects blur together. This workspace is the antidote: a calm root with a fixed storage model, a per-project memory, and a deterministic lifecycle an agent can operate.</p>
-  <pre><b>north star</b>: one calm root an agent can drive, where no project's context is ever lost
-<b>first wedge</b>: a Windows junction-based tier model + per-project handoff docs + lifecycle slash commands
+  <pre><b>north star</b>: one calm root an agent can drive, where no project's knowledge is ever lost
+<b>first wedge</b>: junction tier model + handoff docs + lifecycle slash commands  <span class="c">(shipped — v1.x)</span>
+<b>now</b>: mechanical walls for every rule that matters — checkers, gates, tagged SPECs, the patch-loop
 <b>later shape</b>: a portable (Windows / Linux / WSL) workspace standard any coding agent can run</pre>
 
   <div class="note">
@@ -206,7 +207,8 @@
     <tbody>
       <tr><td>"Where do the real files live, and what's active?"</td><td><strong>Separate storage from views</strong> — canonical files in <code>repos/</code>, activity expressed as junction <em>views</em> in tiers.</td></tr>
       <tr><td>"What was I doing here last week?"</td><td><strong>Every project carries its own memory</strong> — <code>CLAUDE.md</code> (identity) + <code>CONTEXT.md</code> (rolling now), read at session start.</td></tr>
-      <tr><td>"Did I run those setup steps right?"</td><td><strong>Automate the lifecycle</strong> — slash commands + helper scripts, so create / promote / move / triage are deterministic, not hand-typed shell.</td></tr>
+      <tr><td>"Did I run those setup steps right?"</td><td><strong>Automate the lifecycle</strong> — slash commands + helper scripts, so create / ship / move / triage are deterministic, not hand-typed shell.</td></tr>
+      <tr><td>"Did the agent actually do it right, or just say it did?"</td><td><strong>Mechanical walls over prose promises</strong> — checkers (<code>check.py</code>), gates that refuse red code, enforcement-tagged SPECs, the patch-loop's anchored rollback. A rule an agent can violate silently isn't a rule; it's a wish.</td></tr>
     </tbody>
   </table>
 
@@ -219,6 +221,7 @@
     <li><strong>The lifecycle is agent-operated and deterministic.</strong> Prefer slash commands and argv-driven helper scripts over hand-run shell strings — quoting pitfalls (e.g. junction creation) are designed out, not worked around.</li>
     <li><strong>One index of record.</strong> <code>PROJECTS.md</code> is the single source of truth for which tier each project lives in; it's updated on every transition.</li>
     <li><strong>Right-sized ceremony.</strong> Two docs for most projects; the optional four-doc pipeline only for ambitious ones; stable projects carry a single reactivation trigger instead of a task list.</li>
+    <li><strong>Walls, not wishes.</strong> Wherever a rule matters, gravity builds the mechanical wall that catches its violation — a checker, a gate, a tagged test — instead of trusting an agent's prose compliance ("built so a weaker agent can't&hellip;"). Corollary: <em>intent graduates to contract only by earning a wall</em> — a scenario enters a PLAN as given/when/then and becomes a SPEC Behavioral Contract line only when a named test asserts it; bugs enter the same door as currently-false scenarios.</li>
   </ul>
 
   <h2 id="architecture"><span class="n">04</span>Architecture Principle</h2>
@@ -258,6 +261,7 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
     <li>The workspace does not manage credentials or secrets; that stays with each project and the local toolchain.</li>
     <li><code>CONTEXT.md</code> is not a changelog — never duplicate git history into it.</li>
     <li>Do not grow ceremony where it doesn't pay: small and one-shot projects stay on the light setup.</li>
+    <li><strong>Gravity is not an ALM / project-management suite.</strong> It covers a lifecycle phase only where <em>knowledge loss between sessions</em> is the failure mode (a bug's repro, a deploy's steps, a rule's wall) — never sprints, boards, estimates, a CI service, or metrics dashboards. That knowledge doesn't evaporate; it just doesn't belong here.</li>
   </ul>
 
   <div class="note warn">

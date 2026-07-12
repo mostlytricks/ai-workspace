@@ -189,6 +189,7 @@
       <li><a href="#staging">Why this first</a></li>
       <li><a href="#principles">Product principles</a></li>
       <li><a href="#architecture">Architecture principle</a></li>
+      <li><a href="#domains">The system in N domains</a></li>
       <li><a href="#pipeline">Planning pipeline</a></li>
       <li><a href="#non-goals">Current non-goals</a></li>
     </ol></div>
@@ -231,7 +232,22 @@
   <p><!-- FILL: the seam / shared shape / invariant that every feature should extend rather than bypass. --></p>
   <pre><!-- FILL: optional ASCII diagram. Use <b>green</b> and .c faint spans for highlights. --></pre>
 
-  <h2 id="pipeline"><span class="n">05</span>Planning Pipeline</h2>
+  <h2 id="domains"><span class="n">05</span>The System in N Domains</h2>
+  <!-- ONLY for projects on the .gravity/ doc system (workspace CLAUDE.md §6) — DELETE this
+       section for flat projects. MISSION owns each domain's singular WHY: one row per
+       .gravity/<domain>/ folder, stating the principle that justifies its existence and the
+       non-goal that fences it. /new-domain adds a row here when it mints a folder (this is
+       one of the four registry indexes; check.py consistency FAILs a domain missing its
+       MISSION row). Keep each cell to one sentence — the full rationale lives in the domain's
+       ARCHITECTURE.html, which points BACK here, never re-derives. -->
+  <table>
+    <thead><tr><th>Domain</th><th>Why it exists (the principle)</th><th>Non-goal guard</th></tr></thead>
+    <tbody>
+      <tr><td><code><!-- FILL: domain-slug --></code></td><td><!-- FILL: the one-sentence principle. --></td><td><!-- FILL: what this domain must NOT become. --></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="pipeline"><span class="n">06</span>Planning Pipeline</h2>
   <p>The project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time. <strong>One concern, one home:</strong> each doc owns its column; if another doc needs a fact, it links here rather than restating it.</p>
   <table>
     <thead><tr><th>Document</th><th>Job (what it owns)</th><th>Changes</th></tr></thead>
@@ -244,7 +260,7 @@
     </tbody>
   </table>
 
-  <h2 id="non-goals"><span class="n">06</span>Current Non-Goals</h2>
+  <h2 id="non-goals"><span class="n">07</span>Current Non-Goals</h2>
   <!-- The most valuable section for keeping an agent on-mission. State what you are deliberately NOT doing.
        /triage and /mission check recent work against these to flag drift. -->
   <ul>

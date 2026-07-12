@@ -21,6 +21,12 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 _Nothing yet._
 
+## [2.4.0] - 2026-07-12
+
+### Changed
+- **`MISSION.template.html` gains the "System in N Domains" section** the ownership rule always assigned it (CLAUDE.md §6: MISSION owns each domain's singular why; `check.py consistency` asserts the row) but the stencil never carried — `.gravity/` adopters had to hand-roll the table `/new-domain` wires rows into. One optional section (delete for flat projects), one row stub, guidance in the comment.
+- **`docs/MISSION.html` catches up with the system it justifies** (patch — no rule changes): the north star generalizes from *context* to **knowledge** loss; §02 gains the fourth failure mode ("did the agent do it right, or just say it did?" → *mechanical walls over prose promises*) and drops the dead `/promote`; §03 states the walls doctrine + the graduation rule as a principle; §06 gains the SDLC scope fence — gravity covers a lifecycle phase **only where knowledge loss between sessions is the failure mode**, never sprints/boards/estimates/CI/metrics.
+
 ## [2.3.0] - 2026-07-12
 
 ### Added
@@ -134,7 +140,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.4.0
 [2.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.3.0
 [2.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.2.0
 [2.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.1.0
