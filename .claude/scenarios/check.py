@@ -66,6 +66,11 @@ REGIONS = {
 FAIL = "FAIL"
 WARN = "WARN"
 
+# Every word of the root manual auto-loads into every session — the workspace's
+# own CONTEXT-prune rule, applied to itself. Grow past this and push detail
+# down into .claude/commands/ or docs/HANDBOOK.md (one concern, one home).
+MANUAL_WORD_BUDGET = 5500
+
 
 @dataclass
 class Finding:
@@ -505,6 +510,18 @@ def check_workspace(root: str | Path | None = None) -> list[Finding]:
         add(WARN, "REPO_ORPHAN", name, "repos/ folder with no junction in any tier")
     for name in facts["not_indexed"]:
         add(WARN, "NOT_INDEXED", name, "on disk in a tier but has no PROJECTS.md row")
+
+    # The manual's own bloat wall — projects get a CONTEXT prune trigger (~80
+    # lines); the root CLAUDE.md gets a word budget, because it auto-loads
+    # into every session across every project.
+    manual = (root or Path(__file__).resolve().parents[2]) / "CLAUDE.md"
+    if manual.exists():
+        words = len(manual.read_text(encoding="utf-8").split())
+        if words > MANUAL_WORD_BUDGET:
+            add(WARN, "MANUAL_BLOAT", "ai-workspace",
+                f"root CLAUDE.md is {words} words (budget {MANUAL_WORD_BUDGET}) "
+                f"— push detail down to .claude/commands/ or docs/HANDBOOK.md "
+                f"(one concern, one home)")
 
     findings += _check_adoption_table(root, facts)
     return findings
