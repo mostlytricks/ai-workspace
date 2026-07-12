@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-07-12
+
 ### Changed
 - **§7 compressed to a pointer table + the manual gets its own bloat wall** (the dogfood gap: projects have a CONTEXT prune trigger, but the root CLAUDE.md — which auto-loads into *every* session — had no size wall and had grown to ~6,700 words, with §7 alone restating every command at ~1,800 words across three homes). §7's command bullets are now one-liners keeping only the safety-critical fact (procedure → `.claude/commands/<name>.md`, human detail → HANDBOOK — one concern, one home applied to gravity itself); `check.py workspace` gains `MANUAL_BLOAT` (WARN over `MANUAL_WORD_BUDGET` = 5,500 words). Proven red (6,688 words → WARN) then green (5,411 after compression).
 
