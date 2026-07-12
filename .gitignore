@@ -35,6 +35,10 @@
 !.claude/
 !.claude/**
 
+# …except per-machine agent state: permission grants differ per machine/user and
+# must never ship with the skeleton (Claude Code convention: *.local = untracked).
+.claude/settings.local.json
+
 # Generated, local-only dashboard output. The generator scripts stay tracked
 # (whitelisted above via .claude/**); the regenerated HTML is not.
 .claude/dashboard/dashboard.html

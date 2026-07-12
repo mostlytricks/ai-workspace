@@ -19,7 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+- **`.claude/settings.local.json` untracked** — the blanket `!.claude/**` whitelist had been shipping per-machine permission grants with the skeleton; now excluded (Claude Code convention: `*.local` = personal state) and removed from the index. History still contains old copies (harmless — permission allowlists, no secrets).
 
 ## [2.4.0] - 2026-07-12
 
