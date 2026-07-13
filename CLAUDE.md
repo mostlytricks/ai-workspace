@@ -22,7 +22,8 @@ ai-workspace/
 ├── .gitignore                      # Deny-all/whitelist: tracks only the portable skeleton (§2).
 │
 ├── docs/                           # Human/browser READ-DOCS (rarely change):
-│   ├── INTRO.html                  #   Browser-read introduction to gravity — what it is, the doc model, the philosophy. Start here.
+│   ├── INTRO.html                  #   Browser-read introduction to gravity. Start here.
+│   ├── OVERVIEW.md / OVERVIEW.ko.md #  Dev-professional system overview + coverage map (EN · KR).
 │   ├── HANDBOOK.md                 #   Human-facing guide: workflows, slash commands, glossary.
 │   ├── MISSION.html                #   The workspace's own north star — the durable why behind these rules.
 │   └── DESIGN.docs.md              #   Shared theme for browser-read project HTML docs (distinct from DESIGN.md — §6).
