@@ -527,6 +527,124 @@ def check_workspace(root: str | Path | None = None) -> list[Finding]:
     return findings
 
 
+# ---------------------------------------------------------------------------
+# intake sheets — docs/intake/*.md (the /intake command's output)
+
+INTAKE_FIELDS = ("Reporter", "Observed", "Expected", "Repro", "Env", "Evidence")
+_INTAKE_ITEM_RE = re.compile(r"^### +(I\d+)[^\n]*", re.MULTILINE)
+
+
+def _intake_value(block: str, label: str) -> str | None:
+    """The text after a '- **<label> …:**' field line; None if the line is absent."""
+    m = re.search(rf"^\s*-\s+\*\*{label}[^\n]*?\*\*:?\s*(.*)$", block, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
+def _intake_unfilled(value: str) -> bool:
+    """Template stubs start with '<'; honest unknowns start with 'OPEN:'."""
+    v = value.strip().strip("`").strip()
+    return (not v) or v.startswith("<")
+
+
+def check_intake(project_dir: str | Path) -> list[Finding]:
+    """Intake-sheet honesty (docs/intake/*.md, from INTAKE.template.md): every
+    item carries the six required facts (filled, or an honest 'OPEN: awaiting
+    …'), every row on a ✓-closed sheet routes somewhere, a route naming a PLAN
+    file points at one that exists, and bugs never become a domain. Severity
+    bar: FAIL = the sheet contradicts reality or itself; WARN = a required
+    fact is absent or still a template stub."""
+    project = Path(project_dir)
+    findings: list[Finding] = []
+
+    if (project / ".gravity" / "bugs").is_dir():
+        findings.append(Finding(
+            FAIL, "BUGS_FOLDER", "bugs", "",
+            ".gravity/bugs/ exists — bugs are never a domain; intake rows "
+            "route to owning-domain slice PLANs"))
+
+    for sheet in sorted((project / "docs" / "intake").glob("*.md")):
+        text = sheet.read_text(encoding="utf-8")
+        rel = f"docs/intake/{sheet.name}"
+        closed = bool(re.search(r"^Status:\s*✓", text, re.MULTILINE))
+        parts = _INTAKE_ITEM_RE.split(text)
+        for item_id, block in zip(parts[1::2], parts[2::2]):
+            where = f"{rel} {item_id}"
+            for label in INTAKE_FIELDS:
+                value = _intake_value(block, label)
+                if value is None:
+                    findings.append(Finding(
+                        WARN, "INTAKE_FIELD_MISSING", item_id, "",
+                        f"{where}: required field '{label}' absent — elicit "
+                        f"it or write 'OPEN: awaiting …', never leave a blank"))
+                elif _intake_unfilled(value):
+                    findings.append(Finding(
+                        WARN, "INTAKE_FIELD_UNFILLED", item_id, "",
+                        f"{where}: '{label}' still carries the template stub"))
+            route = _intake_value(block, "→")
+            if route is None or _intake_unfilled(route):
+                findings.append(Finding(
+                    FAIL if closed else WARN, "INTAKE_UNROUTED", item_id, "",
+                    f"{where}: no routed '→' line" + (
+                        " on a ✓-closed sheet — the Status is lying"
+                        if closed else " yet (sheet still ○ triaging)")))
+            else:
+                for path in re.findall(r"[\w./\\-]*PLAN[\w.\\-]*\.md", route):
+                    if not (project / path.replace("\\", "/")).exists():
+                        findings.append(Finding(
+                            FAIL, "INTAKE_DEAD_ROUTE", item_id, "",
+                            f"{where}: routed to '{path}' which does not exist"))
+    return findings
+
+
+def _intake_fixture(base: Path) -> None:
+    """A mini project whose intake sheet is honest: three items — routed to a
+    real PLAN, rejected with a reason, honestly OPEN — on a ✓-closed sheet."""
+    (base / ".gravity" / "support").mkdir(parents=True)
+    (base / ".gravity" / "support" / "PLAN.timeout.md").write_text(
+        "# support — PLAN.timeout\n\nStatus: ○ planned\n\n## Scenario\n"
+        "- given a slow upstream, when sync runs → it times out at 30s "
+        "(currently false — the repro from intake I1/I2)\n", encoding="utf-8")
+    intake = base / "docs" / "intake"
+    intake.mkdir(parents=True)
+    (intake / "2026-01-15.md").write_text(
+        "# INTAKE — fixture-helpdesk — 2026-01-15\n\n"
+        "Batch: 3 items from support channel.\n"
+        "Status: ✓ closed\n\n"
+        "## Items\n\n"
+        "### I1 — sync times out on big folders\n"
+        "- **Reporter · date:** Kim · 2026-01-10\n"
+        "- **Observed (verbatim):** \"sync hangs then dies after exactly 30 seconds\"\n"
+        "- **Expected:** sync completes or reports progress past 30s\n"
+        "- **Repro:** 1. seed 10k files 2. run sync — times out at 30s\n"
+        "- **Env:** v1.2.0 · Windows 11 · ko-KR · 10k-file folder\n"
+        "- **Evidence:** support ticket #4411, timeout stack trace attached\n"
+        "- **Triage:** real: yes · kind: bug · domain: support · severity: S2\n"
+        "- **→** `.gravity/support/PLAN.timeout.md`\n\n"
+        "### I2 — \"same timeout as Kim\"\n"
+        "- **Reporter · date:** Lee · 2026-01-11\n"
+        "- **Observed (verbatim):** \"same timeout as Kim reported\"\n"
+        "- **Expected:** same as I1\n"
+        "- **Repro:** same as I1\n"
+        "- **Env:** v1.2.0 · macOS · en-US · 8k-file folder\n"
+        "- **Evidence:** ticket #4415\n"
+        "- **Triage:** real: yes · kind: bug · domain: support · severity: S2\n"
+        "- **→** rejected: duplicate of I1 (see Root causes)\n\n"
+        "### I3 — export button greyed out sometimes\n"
+        "- **Reporter · date:** Park · 2026-01-12\n"
+        "- **Observed (verbatim):** \"export button is greyed out sometimes??\"\n"
+        "- **Expected:** export available whenever a folder is selected\n"
+        "- **Repro:** OPEN: awaiting the reporter's screen recording — cannot reproduce\n"
+        "- **Env:** v1.2.0 · Windows 10 · ko-KR\n"
+        "- **Evidence:** OPEN: awaiting screenshot\n"
+        "- **Triage:** real: OPEN · kind: bug · domain: support · severity: S3\n"
+        "- **→** OPEN: awaiting repro from Park — stays in the sheet\n\n"
+        "## Root causes (dedupe)\n\n"
+        "| Cause | Items | Slice PLAN | Queue lane |\n"
+        "|---|---|---|---|\n"
+        "| 30s hard timeout in sync client | I1, I2 | `.gravity/support/PLAN.timeout.md` | now |\n",
+        encoding="utf-8")
+
+
 def _check_adoption_table(root: Path | None, facts: dict) -> list[Finding]:
     """PROJECTS.md's hand-kept 'Gravity adoption' table vs disk reality.
     All WARN — the table is a snapshot view (the dashboard computes live);
@@ -796,7 +914,10 @@ def _patchloop_selftest() -> bool:
         # them, making state/ git-invisible so only the snap protects it.
         repo = base / name
         shutil.copytree(fixture, repo)
-        (repo / ".gitignore").write_text("state/\n", encoding="utf-8")
+        # state/ = the fixture's gitignored ledger; __pycache__/ = bytecode the
+        # gate's test runs write on some platforms (Linux) — without ignoring it
+        # the preflight/rollback tree-clean proofs fail on dirt the tool made.
+        (repo / ".gitignore").write_text("state/\n__pycache__/\n", encoding="utf-8")
         g(repo, "init", "-q", "-b", "main")
         g(repo, "add", "-A")
         g(repo, "commit", "-qm", "fixture baseline")
@@ -890,6 +1011,29 @@ def _patchloop_selftest() -> bool:
                "execution log survives the hard reset (anchor→attempts→rollback intact)")
 
     return ok
+
+
+def _rewrite(path: Path, old: str, new: str) -> None:
+    """Seed a drift into a fixture copy: replace `old` with `new` in-place."""
+    path.write_text(path.read_text(encoding="utf-8").replace(old, new),
+                    encoding="utf-8")
+
+
+def cmd_intake(args) -> int:
+    project = Path(args.project).resolve()
+    findings = check_intake(project)
+    sheets = sorted((project / "docs" / "intake").glob("*.md"))
+    print(f"project: {project}")
+    print(f"intake sheets: {len(sheets)}"
+          + (f" ({', '.join(s.name for s in sheets)})" if sheets else ""))
+    _print(findings)
+    fails = sum(1 for f in findings if f.severity == FAIL)
+    if findings:
+        print(f"{fails} fail(s), {len(findings) - fails} warning(s).")
+    else:
+        print("OK — every item carries its six facts and routes somewhere; "
+              "bugs never a domain.")
+    return 1 if fails else 0
 
 
 def cmd_selftest(args) -> int:
@@ -1015,6 +1159,43 @@ def cmd_selftest(args) -> int:
                 ok = False
                 print(f"selftest: EXPECTED {code}, but the workspace checker stayed silent.")
 
+    # --- intake half: an honest sheet passes; each drift is caught. ---
+    with tempfile.TemporaryDirectory() as tmp:
+        good = Path(tmp) / "intake-good"
+        _intake_fixture(good)
+        good_findings = check_intake(good)
+        if good_findings:
+            ok = False
+            print("selftest: EXPECTED honest intake fixture to pass, but:")
+            _print(good_findings)
+        else:
+            print("selftest: honest intake fixture passes (six facts, routed, no bugs domain).")
+
+        drifts = {
+            "BUGS_FOLDER": lambda p: (p / ".gravity" / "bugs").mkdir(),
+            "INTAKE_DEAD_ROUTE": lambda p: (p / ".gravity" / "support" / "PLAN.timeout.md").unlink(),
+            "INTAKE_UNROUTED": lambda p: _rewrite(
+                p / "docs" / "intake" / "2026-01-15.md",
+                "- **→** `.gravity/support/PLAN.timeout.md`\n", ""),
+            "INTAKE_FIELD_UNFILLED": lambda p: _rewrite(
+                p / "docs" / "intake" / "2026-01-15.md",
+                "v1.2.0 · Windows 11 · ko-KR · 10k-file folder",
+                "<version/tag · OS · locale · data>"),
+            "INTAKE_FIELD_MISSING": lambda p: _rewrite(
+                p / "docs" / "intake" / "2026-01-15.md",
+                "- **Evidence:** ticket #4415\n", ""),
+        }
+        for code, mutate in drifts.items():
+            bad = Path(tmp) / f"intake-bad-{code.lower()}"
+            shutil.copytree(good, bad)
+            mutate(bad)
+            caught = [f for f in check_intake(bad) if f.code == code]
+            if caught:
+                print(f"selftest: intake drift correctly caught -> {code}.")
+            else:
+                ok = False
+                print(f"selftest: EXPECTED {code}, but the intake checker stayed silent.")
+
     # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
     ok = _patchloop_selftest() and ok
 
@@ -1050,6 +1231,10 @@ def main(argv=None) -> int:
 
     w = sub.add_parser("workspace", help="check tier/index drift across the whole workspace")
     w.set_defaults(func=cmd_workspace)
+
+    n = sub.add_parser("intake", help="check docs/intake sheets — six facts per item, routing, no bugs domain")
+    n.add_argument("--project", required=True, help="path to the project root")
+    n.set_defaults(func=cmd_intake)
 
     t = sub.add_parser("selftest", help="prove the checker on the bundled fixture")
     t.set_defaults(func=cmd_selftest)

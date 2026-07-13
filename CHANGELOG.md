@@ -19,6 +19,13 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Added
+- **`check.py intake` — the `/intake` ritual gets its mechanical wall** (the newest command was the only one with zero regression coverage, and the one that misfired in the field first). Verifies every `docs/intake/*.md` sheet: six required facts per item (filled or an honest `OPEN: awaiting …` — `INTAKE_FIELD_MISSING`/`INTAKE_FIELD_UNFILLED`), routing (`INTAKE_UNROUTED`: FAIL on a ✓-closed sheet, WARN while triaging), live route targets (`INTAKE_DEAD_ROUTE`), and the bugs-are-never-a-domain rule (`BUGS_FOLDER`). Judgment (verdicts, dedupe, severity) deliberately unchecked. `selftest` gains the intake half: honest fixture passes, five seeded drifts each caught. Wired into the command (step 5: prove it green before reporting) and `scenarios/README.md`.
+- **Gravity dogfoods its own intake** — `docs/intake/2026-07-13.md`, the first real batch: this week's two field-reported gravity bugs (selftest red on Linux; `/intake` over-trigger), verbatim, triaged, both routed to their fixes. The feedback loop now lives in the system instead of in chat memory; the sheet passes its own checker.
+
+### Fixed
+- **`check.py selftest` was red on Linux** (pre-existing, first recorded at `abe2b4d`): the patch-loop replay seeded its temp repo's `.gitignore` with only `state/`, so the gate's test runs littered `__pycache__/` as untracked dirt and failed the preflight + rollback tree-clean proofs on platforms where Python writes bytecode. The replay now ignores `__pycache__/` too — a red wall trains agents to ignore red, so this was fix #1 of the test-and-feedback-loop slice. Selftest green on Linux for the first time.
+
 ## [2.5.1] - 2026-07-13
 
 ### Changed

@@ -96,8 +96,20 @@ The workspace-level twin of `consistency`: it judges the **facts** emitted by `.
 | `MISSING_TRIGGER` / `MISSING_BLOCKER` | WARN | stable Next Step isn't a reactivation trigger · dormant names no resume blocker |
 | `REPO_ORPHAN` / `NOT_INDEXED` | WARN | repos/ folder with no junction · tiered project with no index row |
 | `ADOPTION_STALE` / `ADOPTION_MISSING_ROW` | WARN | adoption-table cell ≠ disk · gravity project absent from the table (`scan_workspace.py --adoption-table` prints the correct table) |
+| `MANUAL_BLOAT` | WARN | root CLAUDE.md over its word budget (5,500) — push detail down to `.claude/commands/` / HANDBOOK |
 
 `selftest` proves this checker too: a healthy mini-workspace passes; three seeded drifts are each caught.
+
+## The intake check (`check.py intake --project <path>`)
+
+The `/intake` command's mechanical wall: it verifies every sheet under `docs/intake/` against the ritual's non-negotiables — the six required facts per item (filled, or an honest `OPEN: awaiting …`), routing on closed sheets, live route targets, and the bugs-are-never-a-domain rule. The agent's *judgment* (triage verdicts, dedupe, severity) stays unchecked — this asserts only what a sheet can't honestly lack. `selftest` proves it: an honest fixture sheet passes; five seeded drifts are each caught.
+
+| Finding | Severity | Meaning |
+|---|---|---|
+| `BUGS_FOLDER` | FAIL | `.gravity/bugs/` exists — bugs route to owning-domain slice PLANs, never a domain |
+| `INTAKE_UNROUTED` | FAIL/WARN | an item with no `→` destination: FAIL on a ✓-closed sheet (the Status is lying), WARN while still ○ triaging |
+| `INTAKE_DEAD_ROUTE` | FAIL | the `→` line names a PLAN file that doesn't exist |
+| `INTAKE_FIELD_MISSING` / `INTAKE_FIELD_UNFILLED` | WARN | one of the six required facts is absent · still a template stub |
 
 ## The patch-loop check (the selftest's third half)
 

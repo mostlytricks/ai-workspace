@@ -46,6 +46,7 @@ Assign severity (S1 data loss/corruption · S2 wrong output/blocked task · S3 c
 2. **One slice PLAN per accepted cause** (never per report): seed `.gravity/<domain>/PLAN.<slug>.md` from `PLAN.template.md` with the **bug-intake shape** — the repro enters the Scenario block as a *currently-false* `given/when/then`, and the Verification names the regression test the fix must leave (which later graduates the scenario into the domain SPEC's Behavioral Contract). Cite the item IDs (`I3, I7`) in the PLAN for two-way traceability.
 3. **Queue, don't juggle**: add one row per slice to `IMPLEMENTATION_PLAN.md`'s slice queue — severity orders the lanes, and the queue's own rules hold: **exactly one slice in `now`**, `next` ≤3 ordered, the rest `later`. An S1 may swap `now`; say so out loud.
 4. **Point every `→` line somewhere**: slice PLAN / rejected-with-reason / `OPEN: awaiting <what>`. Tick the *Batch close* checklist; a sheet with every row routed flips its Status to ✓ and freezes (append-only, like a walkthrough).
+5. **Prove it mechanically**: `python .claude/scenarios/check.py intake --project <project>` — the wall that catches a missing fact, an unrouted row on a closed sheet, a dead PLAN route, or a `.gravity/bugs/` folder. Green before you report.
 
 ## Step 4 — Report & hand off
 
