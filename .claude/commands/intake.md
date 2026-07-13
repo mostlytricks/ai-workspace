@@ -1,9 +1,18 @@
 ---
-description: Triage a batch of user bug/issue reports into the gravity docs — verify each report carries the minimum useful facts (eliciting or marking OPEN what's missing, never inventing), run the real?/domain?/kind? triage per item, dedupe to root causes, and route each into a slice PLAN + queue row. Bugs are not a domain; the intake sheet is the evidence log they route out of.
+description: Triage a batch of user bug/issue reports into the gravity docs — verify each report carries the minimum useful facts (eliciting or marking OPEN what's missing, never inventing), run the real?/domain?/kind? triage per item, dedupe to root causes, and route each into a slice PLAN + queue row. Bugs are not a domain; the intake sheet is the evidence log they route out of. Reach for this ONLY when the input is a batch of claims reported by users/QA — NOT for analyzing code or a domain (read the code + domain SPEC directly), not for brownfield archaeology (/excavate), not for a bug you found yourself mid-development (write the bug-intake slice PLAN directly; a batch of one needs no sheet).
 argument-hint: <project-name>
 ---
 
 You are running `/intake` from `ai-workspace/` to triage a batch of user-reported bugs/issues into project **`$ARGUMENTS`**'s gravity docs. This is the front half of the maintenance loop — `/patch-slice` is the back half. The honesty discipline is `/interview`'s pointed at *reports* instead of intent: **a report is evidence; never paraphrase a symptom, never invent a missing fact, never plan from an unreproduced report.** Bugs are not a domain — there is never a `.gravity/bugs/` folder; items route *out* of the intake sheet into slice PLANs in their owning domains.
+
+## When NOT to reach for this (the trigger fence)
+
+The test: **is the input a claim someone *else* reported, that must be verified before it's actionable?** If no, this command adds ceremony, not evidence:
+
+- **"Analyze this code / this domain"** with no reports in hand → read the code; the router table + domain SPEC are the entry points, not a sheet.
+- **Surveying an unfamiliar/legacy system** → `/excavate`.
+- **A bug you found yourself while developing** → write the bug-intake slice PLAN directly in its owning domain and land it with `/patch-slice` — a batch of one needs no sheet.
+- **A feature idea** (yours or a user's, arriving alone) → `/interview <project> <feature>`.
 
 ## Step 0 — Locate & collect
 
