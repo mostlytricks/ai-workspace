@@ -111,6 +111,16 @@ The `/intake` command's mechanical wall: it verifies every sheet under `docs/int
 | `INTAKE_DEAD_ROUTE` | FAIL | the `→` line names a PLAN file that doesn't exist |
 | `INTAKE_FIELD_MISSING` / `INTAKE_FIELD_UNFILLED` | WARN | one of the six required facts is absent · still a template stub |
 
+## The given check (`check.py given --project <path>`)
+
+The `/given` command's mechanical wall: nothing rots in the drop zone, every file in a `given/` folder carries a provenance row, and the manifest never lies about what's on disk. Fidelity/privacy judgments stay the agent's; `private` rows are committed pointers to local-only files and are exempt from the ghost check. `selftest` proves it: an honest fixture passes; three seeded drifts are each caught.
+
+| Finding | Severity | Meaning |
+|---|---|---|
+| `GIVEN_GHOST_ROW` | FAIL | a non-private manifest File row names a file that doesn't exist |
+| `INBOX_UNROUTED` | WARN | a file sitting in `.gravity/inbox/` — knowledge outside the system; run `/given` |
+| `GIVEN_UNMANIFESTED` | WARN | a file in `given/` with no manifest row — provenance unknown |
+
 ## The patch-loop check (the selftest's third half)
 
 `/patch-slice`'s walls live in a script (`.claude/scripts/patch_slice.py`), not a checker — so its scenario is asserted differently: `selftest` **drives the script itself** over `patch-slice/fixture` through both fork branches. Green: preflight → anchor (SHA lands in the PLAN) → snap (SPEC-declared `state/data.txt`) → the fix + regression test → verify green → cleanup retires the snap. Red: a bad patch that also mangles the gitignored ledger → three red verifies (third exits **75**, the exhaustion wall) → four-proof rollback → the ledger is byte-identical again and the PLAN still tells the whole anchor→attempts→rollback story across the hard reset. Run it after editing `patch_slice.py`, the fixture, or `patch-slice.md`.

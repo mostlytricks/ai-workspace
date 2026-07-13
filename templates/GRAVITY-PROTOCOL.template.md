@@ -28,6 +28,7 @@ This project organizes its documentation with **gravity**. Two files auto-load f
 |---|---|---|
 | `.gravity/MISSION.html` | **why** — north star, principles, non-goals | rarely |
 | root `CLAUDE.md` | **how** — identity, stack, run/test, conventions, routing | on refactors |
+| `.gravity/<domain>/given/` + `MANIFEST.md` | **received** — knowledge handed in from outside (quarry, never contract; disputes resolve against `raw/`) | when material arrives via `.gravity/inbox/` |
 | `.gravity/ARCHITECTURE.html` | **how it's built** — system overview | on structural change |
 | `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status | per phase/slice |
 | root `CONTEXT.md` | **now** — current state + the single next step | every session |

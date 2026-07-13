@@ -1013,6 +1013,90 @@ def _patchloop_selftest() -> bool:
     return ok
 
 
+# ---------------------------------------------------------------------------
+# the given layer — .gravity/inbox/ + given/ + MANIFEST.md (the /given command)
+
+
+def _given_dirs(project: Path):
+    gravity = project / ".gravity"
+    dirs = [gravity / "given"] + sorted(gravity.glob("*/given"))
+    return [d for d in dirs if d.is_dir()]
+
+
+def check_given(project_dir: str | Path) -> list[Finding]:
+    """Given-layer honesty: nothing rots in the drop zone, every file in a
+    given/ folder has a manifest row, and no non-private row points at a ghost
+    file. Severity bar: FAIL = manifest contradicts disk; WARN = unrouted or
+    unregistered material (knowledge sitting outside the system)."""
+    project = Path(project_dir)
+    findings: list[Finding] = []
+
+    inbox = project / ".gravity" / "inbox"
+    if inbox.is_dir():
+        for f in sorted(inbox.rglob("*")):
+            if f.is_file() and f.name != ".gitkeep":
+                findings.append(Finding(
+                    WARN, "INBOX_UNROUTED", "", "",
+                    f".gravity/inbox/{f.relative_to(inbox).as_posix()} is "
+                    f"sitting unrouted in the drop zone — run /given"))
+
+    for gdir in _given_dirs(project):
+        rel = gdir.relative_to(project).as_posix()
+        manifest = gdir / "MANIFEST.md"
+        text = manifest.read_text(encoding="utf-8") if manifest.exists() else ""
+        for f in sorted(gdir.rglob("*")):
+            if not f.is_file() or f.name == "MANIFEST.md":
+                continue
+            frel = f.relative_to(gdir).as_posix()
+            if frel not in text and f.name not in text:
+                findings.append(Finding(
+                    WARN, "GIVEN_UNMANIFESTED", "", "",
+                    f"{rel}/{frel} has no manifest row — provenance unknown"))
+        # ghost rows: a manifested File-column path that doesn't exist on disk.
+        # Rows marked 'private' are committed POINTERS to local-only files —
+        # skipped; only the first cell is the file claim (later cells may cite
+        # raw/ freely). Template stubs (<...>) are the stencil, not a claim.
+        for line in text.splitlines():
+            cells = [c.strip() for c in line.split("|")]
+            if len(cells) < 3 or "private" in line.lower() or "<" in cells[1]:
+                continue
+            m = re.fullmatch(r"`([^`]+\.[A-Za-z0-9]{1,5})`", cells[1])
+            if m and not (gdir / m.group(1)).exists():
+                findings.append(Finding(
+                    FAIL, "GIVEN_GHOST_ROW", "", "",
+                    f"{rel}/MANIFEST.md names '{m.group(1)}' which does not exist"))
+    return findings
+
+
+def _given_fixture(base: Path) -> None:
+    """A mini project whose given layer is honest: empty inbox, one cross-cutting
+    doc, one domain doc + a private raw pointer, all manifested."""
+    (base / ".gravity" / "inbox").mkdir(parents=True)
+    cross = base / ".gravity" / "given"
+    cross.mkdir()
+    (cross / "company-context.md").write_text(
+        "# What the earth is\n\nThe org sells sync tooling to mid-market teams.\n",
+        encoding="utf-8")
+    (cross / "MANIFEST.md").write_text(
+        "# GIVEN — fixture-helpdesk — manifest\n\n"
+        "| File | Source (who gave it) | Received | Version / validity | Authoritative for | Fidelity | Privacy |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| `company-context.md` | workspace owner | 2026-01-14 | evergreen | org context | verbatim | committable |\n",
+        encoding="utf-8")
+    dom = base / ".gravity" / "support" / "given"
+    dom.mkdir(parents=True)
+    (dom / "erp-data-dictionary.md").write_text(
+        "# ERP data dictionary (readable)\n\n| table | meaning |\n|---|---|\n"
+        "| SYNC_JOB | one sync attempt |\n", encoding="utf-8")
+    (dom / "MANIFEST.md").write_text(
+        "# GIVEN — fixture-helpdesk, domain: support — manifest\n\n"
+        "| File | Source (who gave it) | Received | Version / validity | Authoritative for | Fidelity | Privacy |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| `erp-data-dictionary.md` | Kim (DBA) | 2026-01-10 | ERP v11 | table/column meanings | reformatted (from `raw/erp-dict.xlsx`) | committable |\n"
+        "| `raw/erp-dict.xlsx` | Kim (DBA) | 2026-01-10 | ERP v11 | tiebreak original | verbatim | private — local only, git-ignored |\n",
+        encoding="utf-8")
+
+
 def _rewrite(path: Path, old: str, new: str) -> None:
     """Seed a drift into a fixture copy: replace `old` with `new` in-place."""
     path.write_text(path.read_text(encoding="utf-8").replace(old, new),
@@ -1033,6 +1117,20 @@ def cmd_intake(args) -> int:
     else:
         print("OK — every item carries its six facts and routes somewhere; "
               "bugs never a domain.")
+    return 1 if fails else 0
+
+
+def cmd_given(args) -> int:
+    project = Path(args.project).resolve()
+    findings = check_given(project)
+    print(f"project: {project}")
+    print(f"given dirs: {len(_given_dirs(project))}")
+    _print(findings)
+    fails = sum(1 for f in findings if f.severity == FAIL)
+    if findings:
+        print(f"{fails} fail(s), {len(findings) - fails} warning(s).")
+    else:
+        print("OK — inbox empty, every given file manifested, no ghost rows.")
     return 1 if fails else 0
 
 
@@ -1196,6 +1294,37 @@ def cmd_selftest(args) -> int:
                 ok = False
                 print(f"selftest: EXPECTED {code}, but the intake checker stayed silent.")
 
+    # --- given half: an honest given layer passes; each drift is caught. ---
+    with tempfile.TemporaryDirectory() as tmp:
+        good = Path(tmp) / "given-good"
+        _given_fixture(good)
+        good_findings = check_given(good)
+        if good_findings:
+            ok = False
+            print("selftest: EXPECTED honest given fixture to pass, but:")
+            _print(good_findings)
+        else:
+            print("selftest: honest given fixture passes (inbox empty, manifested, no ghosts).")
+
+        drifts = {
+            "INBOX_UNROUTED": lambda p: (p / ".gravity" / "inbox" / "dropped.xlsx").write_text(
+                "raw", encoding="utf-8"),
+            "GIVEN_UNMANIFESTED": lambda p: (p / ".gravity" / "given" / "stray-notes.md").write_text(
+                "unregistered", encoding="utf-8"),
+            "GIVEN_GHOST_ROW": lambda p: (p / ".gravity" / "support" / "given"
+                                          / "erp-data-dictionary.md").unlink(),
+        }
+        for code, mutate in drifts.items():
+            bad = Path(tmp) / f"given-bad-{code.lower()}"
+            shutil.copytree(good, bad)
+            mutate(bad)
+            caught = [f for f in check_given(bad) if f.code == code]
+            if caught:
+                print(f"selftest: given drift correctly caught -> {code}.")
+            else:
+                ok = False
+                print(f"selftest: EXPECTED {code}, but the given checker stayed silent.")
+
     # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
     ok = _patchloop_selftest() and ok
 
@@ -1235,6 +1364,10 @@ def main(argv=None) -> int:
     n = sub.add_parser("intake", help="check docs/intake sheets — six facts per item, routing, no bugs domain")
     n.add_argument("--project", required=True, help="path to the project root")
     n.set_defaults(func=cmd_intake)
+
+    g = sub.add_parser("given", help="check the given layer — empty inbox, manifested files, no ghost rows")
+    g.add_argument("--project", required=True, help="path to the project root")
+    g.set_defaults(func=cmd_given)
 
     t = sub.add_parser("selftest", help="prove the checker on the bundled fixture")
     t.set_defaults(func=cmd_selftest)
