@@ -19,7 +19,7 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-## [2.5.1] - 2026-07-12
+## [2.5.1] - 2026-07-13
 
 ### Changed
 - **`/intake` gets its trigger fence** (field report from the first live use: a coding agent routed a plain "analyze this code/domain" task through intake — the ceremony-temptation failure mode; `/intake` is deliberately model-invocable, so its description must carry the boundary). The frontmatter description now states the fence — input must be a batch of claims reported by users/QA — and the command body gains a "When NOT to reach for this" section with the test (*is this someone else's claim that must be verified before it's actionable?*) and the redirects: code/domain analysis → read the code; legacy survey → `/excavate`; self-found bug → bug-intake slice PLAN directly (a batch of one needs no sheet); lone feature idea → `/interview`. HANDBOOK row updated. Wording only; no rule changes.
