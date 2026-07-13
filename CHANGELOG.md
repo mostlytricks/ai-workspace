@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-07-13
+
 ### Added
 - **`docs/OVERVIEW.md` + `docs/OVERVIEW.ko.md`** — the dev-professional system overview: what gravity is, the seven design principles, all four layers (workspace · project docs · evidence · commands), the full verification-harness table with an **honest coverage map** (which commands have golden scenarios, which don't), versioning, the feedback loop with July-2026 worked examples, and the scope fence. English + professionally rendered Korean, kept in lockstep.
 
