@@ -19,6 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Changed
+- **The Codex shim tightened from a pointer to a reading protocol** (`AGENTS.template.md` + the workspace `AGENTS.md`; field report: an AGENTS.md-reading agent (Codex) treated the passive "use `CLAUDE.md` as canonical" as an FYI — the link chain was too loose to pull it into `CONTEXT.md`, the protocol card, or the domain SPECs, so it worked outside the gravity strategy entirely). The shim still owns **zero rules** (one concern, one home — it's a router), but the routing is now an **imperative, ordered reading protocol**: (1) `CLAUDE.md` + `CONTEXT.md` before any work, (2) `.gravity/GRAVITY.md` before touching `.gravity/`, (3) the domain `SPEC.md` before changing a domain — paths from the Doc Map, never guessed, (4) `integration/SPEC.md` first on boundary changes, (5) `CONTEXT.md` updated before ending, plus the conflict-priority order. Existing projects refresh with a plain re-copy (`cp templates/AGENTS.template.md <project>/AGENTS.md`) — safe wherever the shim was never customized, which the "no rules here" contract already required.
+
 ## [2.6.0] - 2026-07-13
 
 ### Added
