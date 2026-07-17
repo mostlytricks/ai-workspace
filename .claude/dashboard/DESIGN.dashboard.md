@@ -22,7 +22,7 @@ and dashed "move-line" thresholds.
 - **Generated, not hand-written.** The HTML is emitted by `generate_dashboard.py`; never hand-edit `dashboard.html` (it's overwritten + git-ignored). Change the `TEMPLATE` string / color constants in the generator, then rerun `python .claude/dashboard/generate_dashboard.py`.
 - **Offline / self-contained.** No CDN at view time (`file://` blocks fetch). Chart.js **and** the fonts are vendored under `vendor/`; data is baked into the page as inline JSON. Keep it that way — re-vendor assets rather than linking out.
 - **Stdlib-only generator.** No pip/venv (workspace rule). Pure-Python string templating via token replacement (`__DATA_JSON__`, `__CARDS__`, `__GENERATED__`, `__TOTAL__`) — so CSS/JS braces stay literal.
-- **Data source = `PROJECTS.md`.** One bar/slice/card per indexed project; the dashboard inherits any index drift. It does not scan disk.
+- **Data source = `PROJECTS.md`** for the project inventory (one card/planet/bar per indexed project; the dashboard inherits any index drift). **Two elements read live from disk instead**, by design — because they describe *reality*, not the index: the **gravity-adoption chips** (per `repos/<name>/`) and the **contribution heatmap** (`git log` across every `repos/*/.git`). These never drift from git because they *are* git.
 - **Semantics drive color, not decoration.** Every hue means something (tier, or staleness). Don't add color that doesn't carry meaning.
 - **Chrome is themeable; semantics are not.** The palette below is the **default theme (`aurora`)**. A top-right switcher swaps five themes via `[data-theme]` on `<html>` (persisted in `localStorage` under `dash-theme`). Themes only change *chrome* — bg/surface/ink, ambient glows, glass shadow, hover ring, chart axes/grid. **Tier-accent hues and the staleness heat scale stay constant across all themes** (they're meaning, not style) — so they're still set per-section in Python, not in a theme block.
 
@@ -168,6 +168,18 @@ Two panels side by side: the SVG **orbital map** (left, `minmax(300px,460px)`) a
 
 ---
 
+## 5a. Contribution heatmap (GitHub-style, live from git)
+
+A full-width `.panel.glass.contrib` band between the instrument row and the tier cards — the workspace's own commit graph, answering *"how did I do?"* at a glance. Built by JS (`buildContrib()`) from `DATA.contrib`, which `commit_activity()` computes in Python by running `git log --all --no-merges` over every `repos/*/.git` and bucketing author-dates per day. Stdlib `subprocess` only; degrades to an empty grid if git is absent or a repo has no history (one bad repo never sinks the band).
+
+- **Grid = one cell per day**, 7 rows (Sun→Sat) × `CONTRIB_WEEKS` columns (default **27**, a trailing ~6-month window whose first column starts on a Sunday). Chronological cells + `grid-auto-flow:column` means appending in date order fills each column top-to-bottom, exactly like GitHub. The final partial week is padded with empty cells for a clean rectangle.
+- **Heat = commits that day**, five levels. Level 0 (no commits) = `--chart-grid`; levels 1–4 are an **alpha ramp of the theme accent `--ring-a`** (0.30 / 0.52 / 0.78 / 1.0), parsed hex→rgb in JS — so the ramp **recolors on every theme switch** (rebuilt from `setTheme()`, same as the charts). Thresholds are **quartiles of nonzero days over all history** (`levels` in the payload), a stable scale that doesn't recolor the past when the window slides.
+- **Reuses `#tip`** (see §4): hover a day → `<b>N commits</b>` / the date / a `top`-projects breakdown (`forge-world 8 · ara 5`). Month labels ride above the grid (one slot per week column, named on turnover); a Mon/Wed/Fri day-of-week rail sits left.
+- **Stat strip** (`#contribStats`, mono): total commits · repos · active days · 🔥 current streak · longest streak · busiest day. Streaks are consecutive calendar days with ≥1 commit. `Less ▪▪▪ More` legend swatches share the ramp.
+- **Semantics constant:** like tiers/staleness, the heat *means* commit volume — it's derived from the theme accent purely so the band reads on every palette, not as decoration.
+
+---
+
 ## 6. Micro-animations
 
 - **`fadeIn`** — `opacity 0→1` + `translateY(10px→0)`, on header, charts, and each tier section.
@@ -185,5 +197,6 @@ Two panels side by side: the SVG **orbital map** (left, `minmax(300px,460px)`) a
 - **Change the palette** — edit `:root` + the `TIERS` / `FRESH/STALE/VSTALE` constants in the generator together; rerun.
 - **Add/rename a tier** — add a `(name, solid, gradient)` row to `TIERS` (keep a glow that carries meaning) and a matching `## name/` section in `PROJECTS.md`.
 - **Adjust the move-lines** — edit the `THRESHOLDS` array in the chart JS (values, colors, labels). Keep them aligned with the lifecycle rule in workspace `CLAUDE.md`.
+- **Resize the heatmap window** — change `CONTRIB_WEEKS` in the generator (columns shown). Heat thresholds are computed from all history, so the window only widens/narrows the view, never recolors it. To change the ramp intensity, edit the alpha stops in `heatRamp()`.
 - **Add a font weight** — vendor the woff2 (see §3) + add an `@font-face`.
 - Always finish by regenerating and confirming: new palette present, `0` unreplaced tokens, charts render.

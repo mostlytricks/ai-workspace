@@ -68,6 +68,7 @@ Rules for the output:
    ```
 
    - It parses `PROJECTS.md` and writes the self-contained `.claude/dashboard/dashboard.html` (offline, no deps — Chart.js and the Outfit/Inter/Fira Code fonts are vendored under `vendor/`). If `python` isn't found, try `py`.
+   - The HTML also carries a **GitHub-style contribution heatmap** — commits/day across every `repos/*/.git` (`git log --all --no-merges`), with per-day project tooltips, streak/busiest-day stats, and a theme-aware heat ramp. Unlike the cards, this reads **live from git** (like the adoption chips), not from `PROJECTS.md` — so it can't drift.
    - **Visual source of truth:** the HTML's design system (premium glassmorphism, deep-navy palette, glow gradients, vendored fonts) is specified in `.claude/dashboard/DESIGN.dashboard.md`. It's deliberately **distinct** from the muted-teal flat doc theme (`DESIGN.docs.md`) — the dashboard is built for *scanning*, docs for *reading*. To restyle the dashboard, edit `DESIGN.dashboard.md` and the `TEMPLATE` in `generate_dashboard.py` together (and re-vendor any new fonts).
    - The HTML is derived from `PROJECTS.md`, **not** from the live disk scan above — so if step 4 surfaced index drift, the HTML inherits it. Mention that in one line and offer to reconcile `PROJECTS.md` first.
    - Then offer to open it: `start .claude/dashboard/dashboard.html`. Don't open it unprompted.

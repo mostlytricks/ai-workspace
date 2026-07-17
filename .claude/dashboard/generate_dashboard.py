@@ -31,7 +31,8 @@ from __future__ import annotations
 import html
 import json
 import re
-from datetime import date, datetime
+import subprocess
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 # --- paths -----------------------------------------------------------------
@@ -52,6 +53,11 @@ TIERS = [
 
 # Staleness palette (active projects, by days since last touch) — a heat scale.
 FRESH, STALE, VSTALE = "#00E5E8", "#FBBF24", "#FF4D6D"
+
+# Contribution heatmap: trailing window shown (columns = weeks, Sunday-start).
+# ~6 months — wide enough to read like a GitHub graph, long enough to hold the
+# whole "when did I get going" story without a year of empty leading columns.
+CONTRIB_WEEKS = 27
 
 DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
@@ -192,6 +198,111 @@ def adoption_chips(name: str) -> str:
     return f'<div class="gvbar">{"".join(chips)}</div>'
 
 
+# --- commit heatmap (live from every repos/<name>/.git, not from PROJECTS.md) ---
+# GitHub-style contribution graph for the *workspace*: one square per day, colored
+# by how many commits landed across ALL project repos that day. Read straight from
+# git so it never drifts. Stdlib subprocess only — no deps, degrades to empty if
+# git is missing or a repo has no history.
+
+def _git_dates(repo: Path) -> list[str]:
+    """Author-dates (YYYY-MM-DD) of every non-merge commit across all refs.
+
+    `--all` walks each commit once even when it's on several branches/tags, so
+    there's no double-counting. Returns [] on any failure (no git, not a repo,
+    empty history) so one bad repo never sinks the whole heatmap."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(repo), "log", "--all", "--no-merges",
+             "--pretty=format:%ad", "--date=format:%Y-%m-%d"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if out.returncode != 0:
+        return []
+    return [ln.strip() for ln in out.stdout.splitlines() if ln.strip()]
+
+
+def _sun_index(dt: date) -> int:
+    """Day-of-week with Sunday=0 (git/GitHub column convention). weekday() is Mon=0."""
+    return (dt.weekday() + 1) % 7
+
+
+def commit_activity(today: date) -> dict:
+    """Aggregate commits/day across repos/*/ into the heatmap payload."""
+    repos_dir = WORKSPACE_ROOT / "repos"
+    daily: dict[str, dict] = {}           # iso -> {"c": total, "p": {project: n}}
+    per_project: dict[str, int] = {}
+
+    if repos_dir.is_dir():
+        for repo in sorted(repos_dir.iterdir()):
+            if not (repo / ".git").exists():
+                continue
+            for d in _git_dates(repo):
+                slot = daily.setdefault(d, {"c": 0, "p": {}})
+                slot["c"] += 1
+                slot["p"][repo.name] = slot["p"].get(repo.name, 0) + 1
+                per_project[repo.name] = per_project.get(repo.name, 0) + 1
+
+    # Trailing window, first column starts on a Sunday so rows line up Sun..Sat.
+    start = today - timedelta(days=_sun_index(today) + 7 * (CONTRIB_WEEKS - 1))
+    days = []
+    cur = start
+    total_window = 0
+    while cur <= today:
+        iso = cur.isoformat()
+        slot = daily.get(iso)
+        c = slot["c"] if slot else 0
+        top = (sorted(slot["p"].items(), key=lambda kv: -kv[1])[:6]
+               if slot else [])
+        days.append({"d": iso, "c": c, "top": top})
+        total_window += c
+        cur += timedelta(days=1)
+
+    # Heat thresholds = quartiles of nonzero days over ALL history (stable scale,
+    # so switching the window later doesn't recolor the past).
+    nonzero = sorted(v["c"] for v in daily.values() if v["c"] > 0)
+
+    def q(frac: float) -> int:
+        if not nonzero:
+            return 0
+        return nonzero[min(len(nonzero) - 1, int(frac * (len(nonzero) - 1)))]
+
+    levels = [q(0.25), q(0.5), q(0.75), q(1.0)]
+
+    # Streaks (consecutive calendar days with >=1 commit).
+    with_commits = {datetime.strptime(d, "%Y-%m-%d").date()
+                    for d, v in daily.items() if v["c"] > 0}
+    current = 0
+    probe = today
+    while probe in with_commits:
+        current += 1
+        probe -= timedelta(days=1)
+    longest = 0
+    if with_commits:
+        ordered = sorted(with_commits)
+        run = longest = 1
+        for i in range(1, len(ordered)):
+            run = run + 1 if (ordered[i] - ordered[i - 1]).days == 1 else 1
+            longest = max(longest, run)
+
+    busiest = max(daily.items(), key=lambda kv: kv[1]["c"]) if daily else None
+
+    return {
+        "days": days,
+        "weeks": CONTRIB_WEEKS,
+        "levels": levels,
+        "totalAll": sum(per_project.values()),
+        "totalWindow": total_window,
+        "repos": len(per_project),
+        "activeDays": len(with_commits),
+        "currentStreak": current,
+        "longestStreak": longest,
+        "busiest": ({"d": busiest[0], "c": busiest[1]["c"]}
+                    if busiest else None),
+    }
+
+
 def build_payload(tiers: dict[str, list[dict]], today: date) -> dict:
     """Everything the page's JS needs, as a JSON-serializable dict."""
     counts = {name: len(tiers[name]) for name, _, _ in TIERS}
@@ -238,6 +349,7 @@ def build_payload(tiers: dict[str, list[dict]], today: date) -> dict:
         "orbit": orbit,
         "tiersMeta": tiers_meta,
         "activity": activity,
+        "contrib": commit_activity(today),
     }
 
 
@@ -553,6 +665,30 @@ TEMPLATE = """<!DOCTYPE html>
   .cap .dot { font-size:9px; vertical-align:1px; }
   .cap .teal { color:#00E5E8; }
 
+  /* --- contribution heatmap (GitHub-style, built by JS from DATA.contrib) --- */
+  .contrib { margin-bottom:28px; overflow-x:auto; }
+  .contrib-wrap { min-width:max-content; }
+  .contrib-months { display:grid; grid-auto-flow:column; grid-auto-columns:13px; gap:3px;
+    margin-left:26px; margin-bottom:5px; height:11px; }
+  .contrib-months span { font:9px/1 var(--mono); color:var(--muted); white-space:nowrap; }
+  .contrib-body { display:flex; gap:6px; }
+  .contrib-dows { display:grid; grid-template-rows:repeat(7,13px); gap:3px; width:20px; }
+  .contrib-dows span { font:8.5px/13px var(--mono); color:var(--muted); text-align:right; }
+  .contrib-grid { display:grid; grid-template-rows:repeat(7,13px); grid-auto-flow:column;
+    grid-auto-columns:13px; gap:3px; }
+  .contrib-grid .cell { width:13px; height:13px; border-radius:3px; background:var(--chart-grid);
+    transition:transform .1s; }
+  .contrib-grid .cell.has { cursor:default; }
+  .contrib-grid .cell.has:hover { transform:scale(1.4); outline:1.5px solid var(--border-focus); outline-offset:-1px; }
+  .contrib-foot { display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:12px; margin-top:14px; }
+  .contrib-stats { font:11.5px var(--mono); color:var(--muted); }
+  .contrib-stats b { color:var(--ink); font-weight:600; }
+  .contrib-stats .fire { color:#FF8A3D; }
+  .contrib-stats .sep { opacity:.4; margin:0 7px; }
+  .contrib-legend { font:10px var(--mono); color:var(--muted); display:flex; align-items:center; gap:4px; }
+  .contrib-legend .hl { width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--chart-grid); }
+
   footer { margin-top:34px; color:var(--muted); font-size:12px; font-family:var(--mono); }
 
   @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
@@ -589,6 +725,23 @@ TEMPLATE = """<!DOCTYPE html>
       <h3>Staleness · active</h3>
       <div class="chartbox"><canvas id="activityChart"></canvas></div>
       <div class="cap"><span class="dot teal">●</span> active only — stable/dormant/archive quiet is intentional &nbsp;·&nbsp; dashed <b style="color:#FBBF24">14d</b> stale · <b style="color:#FF4D6D">30d → decide</b> (/ship if shipped · dormant/ if blocked)</div>
+    </div>
+  </div>
+
+  <div class="panel glass contrib" id="contribPanel">
+    <h3>Contributions · commits across all project repos</h3>
+    <div class="contrib-wrap">
+      <div class="contrib-months" id="contribMonths"></div>
+      <div class="contrib-body">
+        <div class="contrib-dows" id="contribDows"></div>
+        <div class="contrib-grid" id="contribGrid"></div>
+      </div>
+    </div>
+    <div class="contrib-foot">
+      <div class="contrib-stats" id="contribStats"></div>
+      <div class="contrib-legend">Less
+        <span class="hl" data-l="0"></span><span class="hl" data-l="1"></span><span class="hl" data-l="2"></span><span class="hl" data-l="3"></span><span class="hl" data-l="4"></span>
+        More</div>
     </div>
   </div>
 
@@ -765,6 +918,116 @@ TEMPLATE = """<!DOCTYPE html>
     }).join(' &nbsp;·&nbsp; ');
   }
 
+  // --- contribution heatmap: the workspace as a GitHub-style squares grid -----
+  // One cell per day, colored by total commits across every project repo. The
+  // heat ramp is derived from the live theme accent (--ring-a) so it recolors on
+  // theme switch; empty days sit at --chart-grid. Rebuilt from setTheme().
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function heatRamp() {
+    var hex = (cssVar('--ring-a') || '#00E5E8').replace('#', '');
+    if (hex.length === 3) hex = hex.replace(/./g, function (c) { return c + c; });
+    var r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+    var base = cssVar('--chart-grid') || 'rgba(148,163,184,0.12)';
+    return [base,
+      'rgba(' + r + ',' + g + ',' + b + ',0.30)',
+      'rgba(' + r + ',' + g + ',' + b + ',0.52)',
+      'rgba(' + r + ',' + g + ',' + b + ',0.78)',
+      'rgba(' + r + ',' + g + ',' + b + ',1)'];
+  }
+
+  function placeContribTip(target) {
+    var r = target.getBoundingClientRect();
+    tip.classList.add('show');
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
+    var y = r.top - th - 10;
+    if (y < 8) y = r.bottom + 10;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+
+  function buildContrib() {
+    var C = DATA.contrib;
+    if (!C) return;
+    var grid = document.getElementById('contribGrid');
+    var months = document.getElementById('contribMonths');
+    var dows = document.getElementById('contribDows');
+    grid.innerHTML = ''; months.innerHTML = ''; dows.innerHTML = '';
+
+    var ramp = heatRamp(), lv = C.levels;
+    function level(c) {
+      if (c <= 0) return 0;
+      if (c <= lv[0]) return 1;
+      if (c <= lv[1]) return 2;
+      if (c <= lv[2]) return 3;
+      return 4;
+    }
+
+    ['', 'Mon', '', 'Wed', '', 'Fri', ''].forEach(function (n) {
+      var s = document.createElement('span'); s.textContent = n; dows.appendChild(s);
+    });
+
+    // chronological append → grid-auto-flow:column fills Sun..Sat down each column
+    C.days.forEach(function (day) {
+      var el = document.createElement('div');
+      el.className = 'cell' + (day.c > 0 ? ' has' : '');
+      el.style.background = ramp[level(day.c)];
+      if (day.c > 0) {
+        el.addEventListener('mouseenter', function () {
+          var p = day.d.split('-');
+          var lbl = MON[+p[1] - 1] + ' ' + (+p[2]) + ', ' + p[0];
+          var h = '<b>' + day.c + (day.c === 1 ? ' commit' : ' commits') + '</b>' +
+                  '<div class="t-meta">' + lbl + '</div>';
+          if (day.top && day.top.length) {
+            h += '<div class="t-focus">' +
+                 day.top.map(function (t) { return escHtml(t[0]) + ' ' + t[1]; }).join('  ·  ') +
+                 '</div>';
+          }
+          tip.innerHTML = h;
+          placeContribTip(el);
+        });
+        el.addEventListener('mouseleave', hideTip);
+      }
+      grid.appendChild(el);
+    });
+    // pad the final partial week so the last column is a clean rectangle
+    var pad = (7 - (C.days.length % 7)) % 7;
+    for (var i = 0; i < pad; i++) {
+      var e = document.createElement('div'); e.className = 'cell'; grid.appendChild(e);
+    }
+
+    // month labels: one slot per week column, named on the month it turns over
+    var nweeks = Math.ceil(C.days.length / 7), prev = null;
+    for (var w = 0; w < nweeks; w++) {
+      var s = document.createElement('span'), first = C.days[w * 7];
+      if (first) {
+        var m = +first.d.split('-')[1] - 1;
+        if (m !== prev) { s.textContent = MON[m]; prev = m; }
+      }
+      months.appendChild(s);
+    }
+
+    // legend swatches share the ramp
+    Array.prototype.forEach.call(document.querySelectorAll('.contrib-legend .hl'), function (el) {
+      el.style.background = ramp[+el.getAttribute('data-l')];
+    });
+
+    // stat strip
+    var sep = '<span class="sep">·</span>', bits = [
+      '<b>' + C.totalAll + '</b> commits in <b>' + C.repos + '</b> repos',
+      '<b>' + C.activeDays + '</b> active days',
+      C.currentStreak > 0
+        ? '<span class="fire">🔥</span> <b>' + C.currentStreak + '</b>-day streak'
+        : 'streak <b>0</b>',
+      'longest <b>' + C.longestStreak + '</b>'
+    ];
+    if (C.busiest) {
+      var bp = C.busiest.d.split('-');
+      bits.push('busiest <b>' + MON[+bp[1] - 1] + ' ' + (+bp[2]) + '</b> (' + C.busiest.c + ')');
+    }
+    document.getElementById('contribStats').innerHTML = bits.join(sep);
+  }
+
   // --- starfield: twinkling canvas behind the glass ------------------------
   var starCanvas = document.getElementById('stars');
   var starCtx = starCanvas.getContext('2d');
@@ -819,6 +1082,7 @@ TEMPLATE = """<!DOCTYPE html>
       b.classList.toggle('active', b.getAttribute('data-theme') === t);
     });
     buildCharts();
+    buildContrib();
     refreshStarColor();
     if (REDUCED) drawStars(0);
   }
