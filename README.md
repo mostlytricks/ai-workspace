@@ -62,8 +62,12 @@ ai-workspace/
 |---|---|
 | `/init-project <name>` | Scaffold a new project: `repos/<name>/`, junction into `active/`, copy templates, `git init`, add a `PROJECTS.md` row |
 | `/ship <name>` | Move a shipped project to `stable/` — verify release evidence, set the reactivation trigger |
+| `/preflight <name> <domain>` | **Before an agent changes a domain**: assemble the pre-change packet — ordered read-first list, coupled SPECs, the runnable gate, honest warnings (unfenced / freeform / stale) |
+| `/observatory <name>` | One project, one page — Overview · Domains · Seams · Spec Health · Orbit 3D, scanned live from the docs |
 | `/triage` | Survey `active/` + `stable/` + `dormant/`, flag stale / bloated / drifted `CONTEXT.md` files |
 | `/dashboard` | One-screen status across all tiers |
+
+> The full cheat sheet (interview, intake, excavate, patch-slice, cut-release, …) lives in [`docs/HANDBOOK.md`](./docs/HANDBOOK.md).
 
 ---
 

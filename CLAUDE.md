@@ -57,7 +57,7 @@ ai-workspace/
 ```
 
 **Routing** (the lifecycle reads: *being worked · works · paused · over*):
-- New project or idea → `/init-project <name>` — `repos/<name>/`, junction into `active/<name>`. If the idea dies within days, `/retire <name>` and delete; scaffolding is one command, so there is no cheaper "incubator" stage (that tier was retired in v2.0).
+- New project or idea → `/init-project <name>` — `repos/<name>/`, junction into `active/<name>`. If the idea dies within days, `/retire <name>` and delete — there is no cheaper "incubator" stage (retired in v2.0).
 - Shipped and in use, nothing in flight → `/ship <name>` — junction moves to `stable/`; CONTEXT.md's Next Step becomes the **reactivation trigger** ("back to active when X"). Staleness rules don't apply in `stable/` — silence is success, not neglect.
 - Reactivate → `mv stable/<name> active/`. Refresh CONTEXT.md with the new arc.
 - Pause an active project → `mv active/<name> dormant/`. Update CONTEXT.md's Next Step with the resume blocker (something *blocks* it — that's what distinguishes dormant from stable).
@@ -86,7 +86,7 @@ A project's real files live in **one of two places**:
 - **An external path** (e.g. `D:\code\old-thing\`) — when something hardcodes the existing path (IDE workspace files, CI, different drive). Junction directly from the tier folder; skip `repos/`.
 
 **Invariants:**
-- Tier folders (`active/`, `stable/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. No exceptions (the real-folder `incubator/` tier was retired in v2.0).
+- Tier folders (`active/`, `stable/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. No exceptions.
 - Use junctions, not symbolic links. Junctions need no admin or Developer Mode on Windows. Use `mklink /D` only when crossing drives or needing full POSIX semantics under WSL.
 - **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` uses it.
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
@@ -101,7 +101,7 @@ A project's real files live in **one of two places**:
 - No root venv. Never create or activate `.venv` at `ai-workspace/` or `repos/`. Shared venvs cause silent version collisions.
 - One venv per project, inside its own `repos/<name>/` folder.
 - `cd` into the specific project folder (junction or real path — both work) before running `pip install` or `python -m venv`. The interpreter context must match the closest `.venv` to the file being edited.
-- A venv created via the junction path hardcodes the underlying real path. Fine in place — but if the real folder ever moves out of `repos/`, recreate the venv.
+- A venv created via the junction path hardcodes the real path — if the folder ever moves out of `repos/`, recreate the venv.
 
 ---
 
@@ -132,7 +132,7 @@ Templates are stencils, not config — nothing loads them automatically.
 **Session ritual** for `active/`, `stable/`, and `dormant/` projects:
 - **At start** (entering a project subdir): read `<project>/CONTEXT.md` first. If missing and the project qualifies, copy the template.
 - **At end** (before stopping): update Completed / Current State / Next Step, bump `Last touched`. For dormant projects, Next Step must name the resume blocker; for stable projects, the reactivation trigger.
-- A stale `CONTEXT.md` is worse than none. If you didn't update it, say so in the file rather than leaving outdated claims.
+- A stale `CONTEXT.md` is worse than none — if you didn't update it, say so in the file.
 
 A qualifying session that ends without updating `CONTEXT.md` is incomplete.
 
@@ -181,7 +181,7 @@ These docs answer *different* questions, so they shouldn't *collide* — but the
 | How it deploys · where it runs · how it recovers | **`<project>/RUNBOOK.md`** (copy `RUNBOOK.template.md`; `.gravity/` projects put it at `.gravity/RUNBOOK.md`, routed from the Doc Map) — for projects that deploy | "would you need this at 2am when it's down?" |
 | Browser-read HTML-doc look (MISSION.html / ARCHITECTURE.html) | **DESIGN.docs.md** | "is this about how a *doc page* renders, not the app?" |
 
-**`DESIGN.md` vs `DESIGN.docs.md` — don't conflate.** `DESIGN.md` owns the *running app's* visual identity (the thing users operate); `DESIGN.docs.md` owns the look of *browser-read project docs*. A project may have both — keep app design in `DESIGN.md` and the doc theme separate (a per-project doc-theme file may be named `DESIGN.docs.md`, as in agent-view-desktop). `DESIGN.md` is **recognized only when present** and **never mandated** — copy `DESIGN.template.md` only for projects with a UI worth protecting; skip it for libraries, CLIs, and scripts. (Heads-up: one project, `antigravity--pptx-template-manager`, uses `DESIGN.md` for a *JSON schema contract*, not UI — a legacy exception predating this rule, not the convention.)
+**`DESIGN.md` vs `DESIGN.docs.md` — don't conflate.** `DESIGN.md` owns the *running app's* visual identity (the thing users operate); `DESIGN.docs.md` owns the look of *browser-read project docs*. A project may have both — keep app design in `DESIGN.md` and the doc theme separate (a per-project doc-theme file may be named `DESIGN.docs.md`, as in agent-view-desktop). `DESIGN.md` is **recognized only when present** and **never mandated** — copy `DESIGN.template.md` only for projects with a UI worth protecting; skip it for libraries, CLIs, and scripts. (Legacy exception: `antigravity--pptx-template-manager` uses `DESIGN.md` for a JSON schema contract, not UI.)
 
 **Optional ops doc — `RUNBOOK.md` (how it deploys, runs, recovers).** Gravity's lifecycle used to end at the tag (`/cut-release` stops before push); everything after — environments, deploy steps, config/secret *pointers*, health checks, rollback — lived in the operator's head, the exact knowledge-loss failure gravity exists to prevent. A project that actually deploys somewhere may add `RUNBOOK.md` (copy `RUNBOOK.template.md`; flat projects at the root, `.gravity/` projects at `.gravity/RUNBOOK.md` routed from the Doc Map). **Recognized only when present and never mandated** — the DESIGN.md rule applied to ops: skip it for local tools, libraries, and scripts. Ownership test: *"would you need this at 2am when it's down?"* Every step must be runnable as written in the target environment (a GitHub-less workplace runbook can't lean on `gh`). Secrets stay pointers — names and vault locations, never values. In-flight incidents belong in CONTEXT.md; a runbook changes at deploy-shape rate, like CLAUDE.md.
 
@@ -212,7 +212,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 
 **How an agent uses it** (the discipline that keeps faceting from sprawling):
 - **Navigate** from the root `CLAUDE.md` Doc Map — never guess paths.
-- **Before changing a domain**, load that domain's `.gravity/<domain>/SPEC.md` (the contract); open `ARCHITECTURE.html` only when you need the rationale.
+- **Before changing a domain**, load that domain's `.gravity/<domain>/SPEC.md` (the contract); open `ARCHITECTURE.html` only when you need the rationale. **`/preflight <project> <domain>` assembles this packet mechanically** — prefer it over hand-walking the map.
 - **Before changing a boundary**, load `.gravity/integration/SPEC.md` when present (or `CONTRACT.md` for smaller projects), then load every affected domain SPEC. Boundary changes include API shape, generated types, auth/session behavior, ports/base URLs, shared env, queues/events, webhooks, or data access rules between services.
 - **Touch the doc that matches the change's rate:** *now* → `CONTEXT.md`; *what/next* → the domain's `PLAN.*.md`; *rules* → `SPEC.md`; *how-it's-built* → `ARCHITECTURE.html`; *why* → `MISSION.html`. Don't write *now* into MISSION or *why* into CONTEXT.
 - **Adding a feature?** Run the gate first — *is it a domain?* (its own principle + non-goal, rules worth a SPEC, a multi-step arc) or just a `PLAN.*.md` slice under an existing domain. Mint a folder only when it earns its own gravity, and **wire all four indexes** (Doc Map, router table, MISSION row, PLAN spine) so it's never orphaned.
@@ -248,9 +248,9 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 | `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · browser one-tap. |
-| `/observatory <name> [theme]` | One project, one page: Overview · Domains (cosmos) · Seams (boundary graph) · Spec Health · Orbit 3D, composed over a single live scan — a wrong page means doc drift. |
-| `/preflight <name> <domain>` | The agent's pre-change packet: ordered read-first list, coupled SPECs, runnable gate, honest warnings — then read what it lists. |
+| `/observatory <name> [theme]` | One project, one page: Overview · Domains · Seams · Spec Health · Orbit 3D over one live scan — a wrong page means doc drift. |
+| `/preflight <name> <domain>` | A domain's pre-change packet: read-first order, coupled SPECs, runnable gate, warnings — then read what it lists. |
 | `/mission <name>` | Re-orient on one project: what it's for, where it stands, what to ask next. Read-only. |
 | `/open-mission [name]` · `/open-architecture [name] [facet]` | Open the authored HTML docs in the browser; locate + launch, never regenerate. |
 
-- **`docs/HANDBOOK.md`** is the human-facing guide — workflows, the command cheat sheet, glossary. Not auto-loaded; agents read it when explicitly asked.
+- **`docs/HANDBOOK.md`** — workflows, the full command cheat sheet, glossary. Not auto-loaded; agents read it when asked.

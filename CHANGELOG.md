@@ -19,6 +19,11 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-07-20
+
+### Changed
+- **Agents are now steered to `/preflight` where they'd actually decide** (`CLAUDE.md` §6 + §7, `README.md`; the gap: v2.9.0 added the command but the §6 navigation-discipline block — the text an agent reads at the "before changing a domain" moment — still described only the manual walk, and README's tooling table predated the whole observatory arc). §6's before-changing-a-domain bullet now names `/preflight` as the mechanical way to assemble the packet; README's tooling table gains `/preflight` + `/observatory` rows and a pointer to the full HANDBOOK cheat sheet. Riding along: the additions pushed the root manual to 5,564 words and **gravity's own `MANUAL_BLOAT` wall caught it** — trimmed back to exactly 5,500 by tightening wording only (no rule changed; e.g. dropped a twice-told incubator-history aside and compressed the DESIGN.md legacy-exception note).
+
 ## [2.9.0] - 2026-07-20
 
 ### Added
