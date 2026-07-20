@@ -249,6 +249,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · browser one-tap. |
 | `/observatory <name> [theme]` | One project, one page: Overview · Domains (cosmos) · Seams (boundary graph) · Spec Health · Orbit 3D, composed over a single live scan — a wrong page means doc drift. |
+| `/preflight <name> <domain>` | The agent's pre-change packet: ordered read-first list, coupled SPECs, runnable gate, honest warnings — then read what it lists. |
 | `/mission <name>` | Re-orient on one project: what it's for, where it stands, what to ask next. Read-only. |
 | `/open-mission [name]` · `/open-architecture [name] [facet]` | Open the authored HTML docs in the browser; locate + launch, never regenerate. |
 

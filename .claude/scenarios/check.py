@@ -46,6 +46,19 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+# One scanner, many callers: coupling facts come from scripts/scan_project.py
+# (the same source the observatory and /preflight read). If the scanner is
+# missing/broken the coupling check stays silent — under-claiming, never noise.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+try:
+    from scan_project import scan_couplings
+except Exception:                                   # pragma: no cover
+    scan_couplings = None
+
+# Doc cross-references between two domains at/above this count are "strong"
+# coupling — enough that a shared contract should at least name the pair.
+COUPLING_THRESHOLD = 5
+
 # Top-level .gravity/ entries that are cross-cutting docs, NOT subject domains.
 CROSS_CUTTING = {
     "MISSION.html",
@@ -76,7 +89,7 @@ MANUAL_WORD_BUDGET = 5500
 class Finding:
     severity: str   # FAIL | WARN
     code: str       # UNDERWIRED | ORPHAN_ROUTE | MISSING_FILE | INDEX_ABSENT | STRUCTURE
-                    # | PROTOCOL_MISSING | PROTOCOL_STALE
+                    # | PROTOCOL_MISSING | PROTOCOL_STALE | COUPLING_UNCONTRACTED
     domain: str     # the slug it concerns ("" if structural)
     region: str     # which index/region ("" if n/a)
     message: str
@@ -92,9 +105,11 @@ class Finding:
 # --------------------------------------------------------------------------- #
 
 def _read(path: Path) -> str:
+    # Tolerant by design: a checker must never crash on a stray non-UTF8 or
+    # unreadable file (e.g. a binary under a test dir) — skip/replace and move on.
     try:
-        return path.read_text(encoding="utf-8")
-    except FileNotFoundError:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
         return ""
 
 
@@ -242,6 +257,31 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
             findings.append(Finding(
                 WARN, "ORPHAN_ROUTE", slug, "router",
                 f"CLAUDE.md references .gravity/{slug}/ but no such folder exists",
+            ))
+
+    # 3. COUPLING_UNCONTRACTED — two domains lean on each other's docs heavily
+    #    (path-shaped cross-references, scan_couplings) but no shared contract
+    #    names the pair. Weak signal -> WARN: the coupling may be doc-only; the
+    #    fix is a mention in integration/SPEC.md or CONTRACT.md — or an honest
+    #    "no seam here" judgment. Pairs involving `integration` itself are the
+    #    contract, not a missing one.
+    if scan_couplings is not None:
+        contract_text = " ".join([
+            _read(gravity / "integration" / "SPEC.md"),
+            _read(project / "CONTRACT.md"),
+            _read(project / "GLOBAL_RULES.md"),
+        ])
+        for link in scan_couplings(project):
+            a, b, refs = link["a"], link["b"], link["refs"]
+            if refs < COUPLING_THRESHOLD or "integration" in (a, b):
+                continue
+            if _slug_in(contract_text, a) and _slug_in(contract_text, b):
+                continue
+            findings.append(Finding(
+                WARN, "COUPLING_UNCONTRACTED", f"{a}+{b}", "",
+                f"domains '{a}' and '{b}' cross-reference each other's docs x{refs} "
+                "but neither integration/SPEC.md nor CONTRACT.md names the pair — "
+                "check whether a real seam is undocumented",
             ))
 
     return findings
@@ -412,7 +452,16 @@ def check_spec_honesty(project_dir: str | Path) -> list[Finding]:
                     continue  # 'name' is the template leftover, already FAILed above
                 if test_files is None:
                     test_files = _test_files(project)
-                if not any(name in _read(p) for p in test_files):
+                if "::" in name:
+                    # pytest node id (<file>::<test_fn>) — alive when the named
+                    # file exists and mentions the function; the full id string
+                    # never appears verbatim in any file.
+                    fpart, _, func = name.partition("::")
+                    alive = any(p.name == Path(fpart).name and func in _read(p)
+                                for p in test_files)
+                else:
+                    alive = any(name in _read(p) for p in test_files)
+                if not alive:
                     add(FAIL, "TAG_DEAD", slug,
                         f"[test:{name}] — no npm script and no test-ish file mentions '{name}'")
 
@@ -432,6 +481,21 @@ def check_spec_honesty(project_dir: str | Path) -> list[Finding]:
         if bullets and not any(re.match(r"-\s+`?\[", b) for b in bullets):
             add(WARN, "RULES_UNTAGGED", slug,
                 f"## Rules has {len(bullets)} bullet(s), none carrying an enforcement tag")
+
+        # SPEC_FREEFORM — no `## Rules` checklist at all: a pre-v2 sheet whose
+        # tags (if any) ride headings/prose. The census is tags-only on such a
+        # sheet, and no line-item rule can be checked off; retrofit with
+        # /new-spec to get a checkable rule list.
+        if not bullets:
+            if census:
+                add(WARN, "SPEC_FREEFORM", slug,
+                    f"SPEC.md has no '## Rules' checklist — {sum(census.values())} "
+                    "enforcement tag(s) ride headings/prose (pre-v2 freeform sheet); "
+                    "retrofit with /new-spec")
+            else:
+                add(WARN, "SPEC_FREEFORM", slug,
+                    "SPEC.md has no '## Rules' checklist and no enforcement tags — "
+                    "the contract has no walls at all; retrofit with /new-spec")
 
     return findings
 
@@ -1188,6 +1252,35 @@ def cmd_selftest(args) -> int:
             print(f"selftest: EXPECTED to catch under-wired '{seed_domain}' in the "
                   f"Doc Map, but the checker stayed silent.")
 
+    # --- coupling half: strongly cross-referenced domains with no contract. ---
+    if scan_couplings is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "coupled"
+            shutil.copytree(fixture, bad)
+            doms = sorted(discover_domains(bad / ".gravity"))
+            a = doms[0]
+            if len(doms) > 1:
+                b = doms[1]
+            else:
+                b = "partner"
+                (bad / ".gravity" / b).mkdir()
+                (bad / ".gravity" / b / "PLAN.md").write_text(
+                    "# PLAN — partner\n", encoding="utf-8")
+            plan_a = next((bad / ".gravity" / a).glob("PLAN*.md"),
+                          bad / ".gravity" / a / "PLAN.md")
+            with open(plan_a, "a", encoding="utf-8") as fh:
+                fh.write("\n" + "\n".join(
+                    f"- see {b}/SPEC.md" for _ in range(COUPLING_THRESHOLD)) + "\n")
+            caught = [f for f in check_gravity_consistency(bad)
+                      if f.code == "COUPLING_UNCONTRACTED"]
+            if caught:
+                print("selftest: uncontracted coupling correctly caught "
+                      f"({a}+{b} x{COUPLING_THRESHOLD} -> COUPLING_UNCONTRACTED).")
+            else:
+                ok = False
+                print("selftest: EXPECTED COUPLING_UNCONTRACTED for the seeded "
+                      f"{a}+{b} cross-references, but the checker stayed silent.")
+
     # --- spec-honesty half: an honest SPEC passes; each lie is caught. ---
     with tempfile.TemporaryDirectory() as tmp:
         good = Path(tmp) / "spec-good"
@@ -1219,6 +1312,23 @@ def cmd_selftest(args) -> int:
             else:
                 ok = False
                 print(f"selftest: EXPECTED {code} for '{new}', but the checker stayed silent.")
+
+        # SPEC_FREEFORM — strip the whole ## Rules checklist: a pre-v2 sheet.
+        bad = Path(tmp) / "spec-bad-freeform"
+        _spec_fixture(bad)
+        spec_path = bad / ".gravity" / "model" / "SPEC.md"
+        spec_path.write_text(
+            re.sub(r"^## Rules.*?(?=^## |\Z)", "",
+                   spec_path.read_text(encoding="utf-8"), flags=re.M | re.S),
+            encoding="utf-8")
+        caught = [f for f in check_spec_honesty(bad) if f.code == "SPEC_FREEFORM"]
+        if caught:
+            print("selftest: freeform SPEC (no ## Rules checklist) correctly "
+                  "caught -> SPEC_FREEFORM.")
+        else:
+            ok = False
+            print("selftest: EXPECTED SPEC_FREEFORM after stripping ## Rules, "
+                  "but the checker stayed silent.")
 
     # --- workspace half: a healthy mini-workspace passes; each drift is caught. ---
     with tempfile.TemporaryDirectory() as tmp:

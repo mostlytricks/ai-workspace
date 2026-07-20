@@ -50,7 +50,7 @@ python .claude/scenarios/check.py scenario \
 
 `check.py` uses **heuristic slug-match**: a domain is "wired" into an index region if its kebab-case slug appears in that region (the Doc Map code block, the router table, the MISSION rows, the PLAN status spine). Fixtures are author-controlled, so this is robust enough. If real projects start tripping it (a slug that's also a common English word, say), harden with machine-readable anchors in the templates — not before.
 
-Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`).
+Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`). `consistency` also emits **`COUPLING_UNCONTRACTED`** (WARN): two domains whose docs cross-reference each other ≥5 times (path-shaped mentions, from `scan_project.scan_couplings` — one scanner, many callers) while neither `integration/SPEC.md` nor `CONTRACT.md` names the pair — a strong doc seam no contract owns; the fix is naming the pair in the contract, or an honest "no seam here" judgment.
 
 **A domain can only be unwired from an index that exists.** A two-doc brownfield project (CLAUDE.md §5 brownfield inversion: `.gravity/integration/` with no MISSION/PLAN yet) is a sanctioned state — the checker skips the absent index files and emits one `INDEX_ABSENT` WARN each instead of FAILing every domain.
 
@@ -66,6 +66,9 @@ A SPEC.md's enforcement tags are a promise: `[lint]` means a linter really fails
 | `GATE_MISSING` | WARN | no `Gate:` line — an agent has no command to prove a change |
 | `TAG_UNBACKED` | WARN | `[lint]`/`[type]` tags with no lint/typecheck anywhere in the Gate or scripts |
 | `RULES_UNTAGGED` | WARN | a `## Rules` section in the legacy fully-untagged form |
+| `SPEC_FREEFORM` | WARN | no `## Rules` checklist at all — a pre-v2 sheet whose tags ride headings/prose; retrofit with `/new-spec` |
+
+Parsing tolerances: `_read` never crashes on a non-UTF8/unreadable file (replace + move on), and a `[test:<file>::<fn>]` pytest node id is alive when the named file exists and mentions the function (the full id string never appears verbatim anywhere).
 
 It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`) — the at-a-glance view of how much of each contract is real walls vs reviewer judgment. HTML comments are stripped before scanning: the enforcement legend legitimately spells out the tag grammar (`[test:name]` etc.) inside a comment, and commented-out template blocks are not active contract. `/triage` runs this per `.gravity/` project alongside `consistency`; `selftest` proves both checkers.
 

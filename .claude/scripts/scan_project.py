@@ -41,7 +41,8 @@ LAST_TOUCHED_RE = re.compile(r"^Last touched:\s*(\d{4}-\d{2}-\d{2})", re.M)
 # Markdown / text helpers (shared by the scanners and the renderers)
 # ---------------------------------------------------------------------------
 def strip_tags(s: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", s)).strip()
+    import html
+    return html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", s)).strip())
 
 
 def strip_md(s: str) -> str:
@@ -295,14 +296,19 @@ def scan_spec_census(project: Path) -> list[dict]:
     for d in sorted(p for p in g.iterdir() if p.is_dir()) if g.is_dir() else []:
         spec = d / "SPEC.md"
         entry = {"domain": d.name, "has_spec": spec.exists(), "gate": "",
-                 "form": "structured",
+                 "gate_cmd": "", "form": "structured",
                  "rules": {"wall": 0, "judgment": 0, "guidance": 0, "total": 0},
                  "rule_list": [], "bc_bound": 0, "bc_unbound": 0, "fills": 0}
         if spec.exists():
             text = spec.read_text(encoding="utf-8", errors="replace")
             body = re.sub(r"<!--.*?-->", "", text, flags=re.S)   # comments aren't contract
             gm = re.search(r"^\*\*Gate:\*\*\s*(.+)$", body, re.M)
-            entry["gate"] = strip_md(gm.group(1)) if gm else ""
+            if gm:
+                entry["gate"] = strip_md(gm.group(1))
+                # the RUNNABLE part is the first backtick token — the raw line
+                # usually carries prose after it that would break a shell
+                cm = re.search(r"`([^`]+)`", gm.group(1))
+                entry["gate_cmd"] = cm.group(1) if cm else ""
             entry["fills"] = len(re.findall(r"<?FILL[:\]]", body))
 
             chunks = re.split(r"^##\s+", body, flags=re.M)[1:]
@@ -419,19 +425,120 @@ def scan(project: Path) -> dict:
     return facts
 
 
+# ---------------------------------------------------------------------------
+# Preflight — the agent's pre-change packet for one domain, assembled
+# mechanically from the same facts the observatory renders. Pointer-first:
+# it hands paths + census + warnings, never restates rule prose (the SPEC
+# stays the one home; the agent must still read it).
+# ---------------------------------------------------------------------------
+def preflight(project: Path, domain: str) -> str:
+    facts = scan(project)
+    doms = {d["name"]: d for d in facts["domains"]}
+    if domain not in doms:
+        sys.exit(f"no domain '{domain}' in {facts['project']}/.gravity/ — "
+                 f"known: {' '.join(sorted(doms))}")
+    d = doms[domain]
+    census = {c["domain"]: c for c in facts["specs"]}
+    c = census[domain]
+    ctx = facts["context"]
+    integ = facts["integration"]
+
+    out: list[str] = []
+    A = out.append
+    A(f"# preflight — {facts['project']} / {domain}")
+    A(f"status {d['status']} · why: {d['why'] or '(no MISSION row — /triage would flag)'}")
+    if ctx.get("exists"):
+        stale = (f" ⚠ STALE ({ctx['days_ago']}d)"
+                 if ctx.get("days_ago") is not None and ctx["days_ago"] >= 14 else "")
+        A(f"context: last touched {ctx['last_touched']}{stale} · "
+          f"next step: {ctx['next_step'] or '(none recorded)'}")
+    else:
+        A("context: ⚠ no CONTEXT.md — the session ritual is broken here")
+    A("")
+
+    A("## Read in this order (paths from the project root)")
+    n = 1
+    if domain != "integration" and integ is not None:
+        A(f"{n}. `.gravity/integration/SPEC.md` — FIRST, but ONLY if the change "
+          "crosses a boundary (API/event shape, shared types, ports, auth, queues)")
+        n += 1
+    if c["has_spec"]:
+        r = c["rules"]
+        form = " · **freeform sheet** (tag census only)" if c["form"] == "freeform" else ""
+        A(f"{n}. `.gravity/{domain}/SPEC.md` — the contract: {r['total']} rules "
+          f"({r['wall']} walls · {r['judgment']} judgment · {r['guidance']} guidance){form}")
+    else:
+        A(f"{n}. ⚠ **UNFENCED** — no SPEC.md here. You'd be changing this domain "
+          f"without walls: propose `/new-spec {facts['project']} {domain}`, "
+          "or proceed and say so honestly in CONTEXT.md.")
+    n += 1
+    mine = sorted(((l["b"] if l["a"] == domain else l["a"], l["refs"])
+                   for l in facts["links"] if domain in (l["a"], l["b"])),
+                  key=lambda x: -x[1])
+    if mine:
+        A(f"{n}. coupled domains (doc cross-references — load before any "
+          "cross-domain edit):")
+        for other, refs in mine[:5]:
+            oc = census.get(other, {})
+            sp = (f"`.gravity/{other}/SPEC.md`" if oc.get("has_spec")
+                  else f"`.gravity/{other}/` (no SPEC)")
+            A(f"   - {sp}  (↔ ×{refs})")
+        n += 1
+    if d["plans"]:
+        A(f"{n}. open intent in this domain: "
+          + " · ".join(f"`.gravity/{domain}/{p}`" for p in d["plans"]))
+    A("")
+
+    A("## Walls")
+    if not c["has_spec"]:
+        A("none — unfenced domain (see above)")
+    if c["gate_cmd"]:
+        A(f"gate: `{c['gate_cmd']}`")
+        A(f"prove the change: `python .claude/scripts/run_gate.py "
+          f"{facts['project']} {domain}`")
+    elif c["has_spec"]:
+        A("gate: ⚠ none — nothing mechanical proves a change here")
+    if c["bc_bound"] or c["bc_unbound"]:
+        A(f"behavioral contract: {c['bc_bound']} test-bound"
+          + (f" · ⚠ {c['bc_unbound']} unbound (intent, not contract)"
+             if c["bc_unbound"] else ""))
+    if c["fills"]:
+        A(f"⚠ {c['fills']} template FILL leftover(s) in the SPEC")
+    A("")
+
+    A("## Before you finish")
+    A("- run the gate green (above)" if c["gate_cmd"]
+      else "- no gate exists: state your verification honestly")
+    A("- touched a boundary? follow `.gravity/integration/SPEC.md` **Change Order**"
+      if integ is not None
+      else "- touched a boundary? record it per workspace CLAUDE.md §5 "
+           "(CONTRACT.md / root CLAUDE.md)")
+    A("- update CONTEXT.md (Completed · Current State · Next Step) — "
+      "a session that skips this is incomplete")
+    return "\n".join(out)
+
+
 def main() -> None:
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8")
         except Exception:
             pass
+    import argparse
     from resolve_project import resolve
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    if not args:
-        sys.exit("usage: scan_project.py <project-or-alias> [--pretty]")
-    _, path = resolve(args[0])
-    indent = 2 if "--pretty" in sys.argv else None
-    print(json.dumps(scan(path), indent=indent, ensure_ascii=False))
+    ap = argparse.ArgumentParser(description="Scan one .gravity/ project → facts JSON, "
+                                             "or a per-domain preflight packet.")
+    ap.add_argument("project", help="project name or alias (resolve_project.py)")
+    ap.add_argument("--pretty", action="store_true", help="indent the JSON")
+    ap.add_argument("--preflight", metavar="DOMAIN",
+                    help="print the pre-change packet for one domain instead of JSON")
+    args = ap.parse_args()
+    _, path = resolve(args.project)
+    if args.preflight:
+        print(preflight(path, args.preflight))
+    else:
+        print(json.dumps(scan(path), indent=2 if args.pretty else None,
+                         ensure_ascii=False))
 
 
 if __name__ == "__main__":
