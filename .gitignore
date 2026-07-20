@@ -43,6 +43,8 @@
 # (whitelisted above via .claude/**); the regenerated HTML is not.
 .claude/dashboard/dashboard.html
 .claude/dashboard/cosmos/
+.claude/dashboard/boundary/
+.claude/dashboard/observatory/
 
 # Python bytecode from the helper scripts — never part of the tracked skeleton.
 .claude/**/__pycache__/

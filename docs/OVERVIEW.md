@@ -88,7 +88,7 @@ Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUD
 | Evidence & elicitation | `/interview` (head → docs, strawman-first) · `/intake` (reports) · `/given` (knowledge) · `/mission` (re-orient, read-only) |
 | Maintenance | `/patch-slice` (script-walled patch loop) |
 | Release | `/cut-release` (Change Order: confirmed bump from `[Unreleased]` evidence, green gate required, stops before push) |
-| Survey & views | `/triage` (weekly drift report; mechanical scan) · `/dashboard` / `/open-dashboard` · `/cosmos` (a project as a star system, scanned live from the indexes) · `/open-mission` / `/open-architecture` |
+| Survey & views | `/triage` (weekly drift report; mechanical scan) · `/dashboard` / `/open-dashboard` · `/observatory` (one project, one page — overview · domains · seams · spec health · 3D, scanned live from the docs) · `/open-mission` / `/open-architecture` |
 
 ## 7. Verification harness & coverage
 

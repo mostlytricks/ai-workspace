@@ -248,7 +248,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 | `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · browser one-tap. |
-| `/cosmos <name> [3d\|both] [theme]` | One `.gravity/` project rendered as a star system, scanned live from the four indexes — a wrong sky means index drift. |
+| `/observatory <name> [theme]` | One project, one page: Overview · Domains (cosmos) · Seams (boundary graph) · Spec Health · Orbit 3D, composed over a single live scan — a wrong page means doc drift. |
 | `/mission <name>` | Re-orient on one project: what it's for, where it stands, what to ask next. Read-only. |
 | `/open-mission [name]` · `/open-architecture [name] [facet]` | Open the authored HTML docs in the browser; locate + launch, never regenerate. |
 

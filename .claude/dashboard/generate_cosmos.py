@@ -17,8 +17,12 @@ MISSION.html's per-domain rows. No hand-kept data; if the cosmos looks wrong,
 the indexes are wrong (run /triage).
 
 Two renderers, one scanner: --mode 2d (SVG+CSS, the readable instrument) and
---mode 3d (hand-rolled canvas perspective, the orbitable observatory). Both are
-single self-contained local HTML files — no libraries, no CDN, no build step.
+--mode 3d (hand-rolled canvas perspective — coupling arcs, health rings,
+unfenced-domain pulses, comet trails). Both are single self-contained local
+HTML files — no libraries, no CDN, no build step.
+
+INTERNAL: the user-facing door is /observatory (generate_observatory.py embeds
+both renderers as tabs). This CLI remains for debugging a single view.
 
 Usage:
     python .claude/dashboard/generate_cosmos.py <project-or-alias>
@@ -33,14 +37,15 @@ import argparse
 import html as html_mod
 import json
 import math
-import re
 import sys
-import time
 import webbrowser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from resolve_project import resolve  # noqa: E402
+from scan_project import (  # noqa: E402  (one scanner, many instruments)
+    scan_couplings, scan_domains as scan, scan_spec_census,
+)
 
 STATUS_ORDER = {"◑": 0, "✓": 1, "○": 2}
 STATUS_LABEL = {"◑": "active", "✓": "stable", "○": "planned"}
@@ -98,74 +103,9 @@ THEMES: dict[str, dict] = {
 
 
 # ---------------------------------------------------------------------------
-# Scanner — reads the four registry owners live from disk.
+# Scanner — lives in scripts/scan_project.py (scan_domains), shared with the
+# boundary and observatory instruments so the docs are parsed exactly one way.
 # ---------------------------------------------------------------------------
-def strip_tags(s: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", s)).strip()
-
-
-def scan(project: Path) -> dict:
-    g = project / ".gravity"
-    if not g.is_dir():
-        sys.exit(f"no .gravity/ in {project} — the cosmos needs a faceted project "
-                 "(see workspace CLAUDE.md §6 / adopt with /adopt-gravity)")
-
-    # 1) domains = the directory (the registry IS the folder list)
-    domains: dict[str, dict] = {}
-    now = time.time()
-    for d in sorted(p for p in g.iterdir() if p.is_dir()):
-        entries = [p for p in d.iterdir() if p.is_file()]
-        files = sorted(p.name for p in entries)
-        newest = max((p.stat().st_mtime for p in entries), default=0)
-        age_days = (now - newest) / 86400 if newest else 999
-        domains[d.name] = {
-            "name": d.name,
-            "spec": "SPEC.md" in files,
-            "arch": "ARCHITECTURE.html" in files,
-            "plans": [f for f in files if f.startswith("PLAN")],
-            "files": files,
-            "age_days": age_days,
-            "status": "○", "spine": "", "why": "", "nongoal": "",
-        }
-
-    # 2) status spine from IMPLEMENTATION_PLAN.md
-    plan = g / "IMPLEMENTATION_PLAN.md"
-    goal = ""
-    if plan.exists():
-        text = plan.read_text(encoding="utf-8", errors="replace")
-        for m in re.finditer(r"^\|\s*`([\w-]+)`\s*\|\s*([✓◑○])\s*\|\s*(.+?)\s*\|\s*$",
-                             text, re.M):
-            name, status, spine = m.group(1), m.group(2), m.group(3)
-            if name in domains:
-                domains[name]["status"] = status
-                domains[name]["spine"] = re.sub(r"\*\*(.+?)\*\*", r"\1", spine)
-        gm = re.search(r"^goal:\s*(.+?)(?=^\S|\Z)", text, re.M | re.S)
-        if gm:
-            goal = re.sub(r"\s+", " ", gm.group(1)).strip()
-
-    # 3) per-domain why from MISSION.html rows.
-    #    td captures must not cross a </tr>: a two-column table earlier in the
-    #    file would otherwise backtrack across rows and swallow domain rows.
-    mission = g / "MISSION.html"
-    title = project.name
-    if mission.exists():
-        mtext = mission.read_text(encoding="utf-8", errors="replace")
-        tm = re.search(r"<title>(.*?)</title>", mtext, re.S)
-        if tm:
-            title = strip_tags(tm.group(1))
-        row_td = r"((?:(?!</tr>).)*?)"
-        for m in re.finditer(
-                r"<tr><td><code>([\w-]+)</code></td><td>" + row_td
-                + r"</td><td>" + row_td + r"</td></tr>", mtext, re.S):
-            name = m.group(1)
-            if name in domains:
-                domains[name]["why"] = strip_tags(m.group(2))
-                domains[name]["nongoal"] = strip_tags(m.group(3))
-
-    return {"project": project.name, "title": title, "goal": goal,
-            "domains": list(domains.values())}
-
-
 def prepare(data: dict) -> list[dict]:
     """Sort by status (active in, planned out) and compute the orbit physics."""
     doms = sorted(data["domains"],
@@ -224,6 +164,8 @@ def panel_css(t: dict) -> str:
 
 def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
     esc = html_mod.escape
+    census = {c["domain"]: c for c in data.get("specs", [])}
+    links = data.get("links", [])
     cards = []
     for i, d in enumerate(doms):
         docs = []
@@ -240,12 +182,30 @@ def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
         spine = f'<div class="spine">{esc(d["spine"][:400])}</div>' if d["spine"] else ""
         touched = ("today" if d["age_days"] < 1 else
                    f'{d["age_days"]:.0f}d ago' if d["age_days"] < 900 else "long ago")
+        c = census.get(d["name"])
+        if c and c["has_spec"] and c["rules"]["total"]:
+            r = c["rules"]
+            health = (f'<div class="orb">⊚ contract: <b>{r["wall"]}</b> wall'
+                      f'{"s" if r["wall"] != 1 else ""} · {r["judgment"]} judgment · '
+                      f'{r["guidance"]} guidance · gate {"✓" if c["gate"] else "—"}</div>')
+        elif c and c["has_spec"]:
+            health = '<div class="orb">⊚ SPEC present · no parsed rules</div>'
+        elif d["status"] == "◑":
+            health = '<div class="ng">unfenced — active domain with no SPEC</div>'
+        else:
+            health = ""
+        mine = sorted(((l["b"] if l["a"] == d["name"] else l["a"], l["refs"])
+                       for l in links if d["name"] in (l["a"], l["b"])),
+                      key=lambda x: -x[1])
+        coupled = ('<div class="orb">↔ coupled: '
+                   + " · ".join(f"{esc(n)} ×{k}" for n, k in mine[:4])
+                   + "</div>") if mine else ""
         cards.append(
             f'<div class="card" id="card-{i}">'
             f'<div class="card-h"><span class="dot" style="background:{t["status"][d["status"]]}"></span>'
             f'<code>{esc(d["name"])}</code><span class="st">{d["status"]} {STATUS_LABEL[d["status"]]}</span></div>'
             f'<div class="why">{why}</div>{ng}{spine}'
-            f'<div class="chips">{"".join(docs)}</div>'
+            f'<div class="chips">{"".join(docs)}</div>{health}{coupled}'
             f'<div class="orb">orbital period {d["period"]}s · activity {d["work"]} · touched {touched}</div>'
             f'<div class="path">.gravity/{esc(d["name"])}/</div></div>')
 
@@ -386,23 +346,43 @@ def render_2d(data: dict, t: dict) -> str:
 # ---------------------------------------------------------------------------
 def render_3d(data: dict, t: dict) -> str:
     doms = prepare(data)
+    census = {c["domain"]: c for c in data.get("specs", [])}
+
+    def wall_frac(d: dict) -> float:
+        c = census.get(d["name"])
+        if not (d["spec"] and c and c["rules"]["total"]):
+            return 0.0
+        return c["rules"]["wall"] / c["rules"]["total"]
+
     payload = json.dumps([{
         "name": d["name"], "status": d["status"], "spec": d["spec"],
         "plans": len(d["plans"]), "arch": d["arch"],
         "r": d["r"], "ang0": d["ang0"], "size": d["size"], "period": d["period"],
+        "wf": round(wall_frac(d), 3),
+        "unfenced": d["status"] == "◑" and not d["spec"],
+        "tail": d["age_days"] < 7,
     } for d in doms], ensure_ascii=False)
+    idx = {d["name"]: i for i, d in enumerate(doms)}
+    links_payload = json.dumps([
+        {"a": idx[l["a"]], "b": idx[l["b"]], "w": l["refs"]}
+        for l in data.get("links", []) if l["a"] in idx and l["b"] in idx],
+        ensure_ascii=False)
     theme_js = json.dumps({
         "line": t["line"], "ink": t["ink"], "dim": t["dim"], "bg": t["bg"],
         "bg2": t["bg2"], "bgstar": t["bgstar"], "ring": t["ring"],
         "moon": t["moon"], "sat": t["sat"], "star": t["star"],
         "starGlow": t["star_glow"], "starLabel": t["star_label"],
-        "status": t["status"], "grad": t["grad"],
+        "status": t["status"], "grad": t["grad"], "guard": t["guard"],
     }, ensure_ascii=False)
 
     panel, legend = cards_html(doms, data, t)
     panel = panel.replace("HINT_TEXT", "Drag the sky to orbit, wheel to zoom. Hover "
                           "holds a planet — click it (or the star) for its readout.")
-    legend += "<span>drag = orbit camera · wheel = zoom</span>"
+    legend += (f'<span>ring solid = walls share</span>'
+               f'<span>⌒ arc = doc coupling</span>'
+               f'<span>trail = touched &lt;7d</span>'
+               f'<span style="color:{t["guard"]}">pulse = unfenced ◑</span>'
+               f'<span>drag = orbit camera · wheel = zoom</span>')
     esc = html_mod.escape
     return f"""<!doctype html><html lang="en"><meta charset="utf-8">
 <title>{esc(data["project"])} — gravity cosmos 3D</title>
@@ -413,12 +393,23 @@ def render_3d(data: dict, t: dict) -> str:
   #view.dragging {{ cursor:grabbing }}
   canvas {{ display:block; width:100%; height:100% }}
   #legend {{ pointer-events:none }}
+  #hud {{ position:absolute; left:16px; top:12px; font-size:11.5px; color:{t["dim"]};
+    background:{t["panel"]}cc; border:1px solid {t["line"]}; border-radius:8px;
+    padding:7px 12px; display:flex; gap:14px }}
+  #hud label {{ cursor:pointer; user-select:none }}
+  #hud input {{ vertical-align:-2px; margin-right:4px }}
 </style>
-<div id="view"><canvas id="c"></canvas><div id="legend">{legend}</div></div>
+<div id="view"><canvas id="c"></canvas>
+<div id="hud"><label><input type="checkbox" id="cbArcs" checked>couplings</label>
+<label><input type="checkbox" id="cbTails" checked>trails</label></div>
+<div id="legend">{legend}</div></div>
 {panel}
 <script>
 const DOMS = {payload};
+const LINKS = {links_payload};
 const T = {theme_js};
+const cbArcs = document.getElementById('cbArcs');
+const cbTails = document.getElementById('cbTails');
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const view = document.getElementById('view');
 let W, H, DPR = Math.min(devicePixelRatio || 1, 2);
@@ -455,17 +446,39 @@ function project(x, y, z) {{
 function planetGlyph(d, p, tms) {{
   const R = Math.max(2.5, d.size * p.s * 1.35);
   const depth = Math.max(.25, Math.min(1, 1.65 - p.z / 1100));
+  if (d.tail && cbTails.checked) {{
+    for (let k = 1; k <= 7; k++) {{
+      const ta = d.ang - k * 0.055;
+      const tp = project(d.r * Math.cos(ta), 0, d.r * Math.sin(ta));
+      ctx.globalAlpha = depth * .32 * (1 - k / 8);
+      ctx.fillStyle = T.status[d.status];
+      ctx.beginPath();
+      ctx.arc(tp.sx, tp.sy, Math.max(1, 2.4 * tp.s), 0, Math.PI * 2); ctx.fill();
+    }}
+  }}
   ctx.globalAlpha = depth;
   if (d.spec) {{
-    ctx.strokeStyle = T.ring; ctx.lineWidth = 1.1;
-    ctx.beginPath();
-    ctx.ellipse(p.sx, p.sy, R*1.95, R*1.95*Math.abs(Math.sin(pitch))*.62 + R*.14, -0.42, 0, Math.PI*2);
-    ctx.globalAlpha = depth * .6; ctx.stroke(); ctx.globalAlpha = depth;
+    // the ring is the contract: solid arc = walls share, dashed = judgment/guidance
+    const rx = R * 1.95, ry = R * 1.95 * Math.abs(Math.sin(pitch)) * .62 + R * .14;
+    const split = Math.PI * 2 * d.wf;
+    ctx.strokeStyle = T.ring; ctx.lineWidth = 1.2; ctx.globalAlpha = depth * .75;
+    if (split > 0.02) {{
+      ctx.beginPath(); ctx.ellipse(p.sx, p.sy, rx, ry, -0.42, 0, split); ctx.stroke();
+    }}
+    if (split < Math.PI * 2 - 0.02) {{
+      ctx.setLineDash([3, 4]); ctx.globalAlpha = depth * .45;
+      ctx.beginPath(); ctx.ellipse(p.sx, p.sy, rx, ry, -0.42, split, Math.PI * 2);
+      ctx.stroke(); ctx.setLineDash([]);
+    }}
+    ctx.globalAlpha = depth;
   }}
   const g = ctx.createRadialGradient(p.sx - R*.35, p.sy - R*.35, R*.1, p.sx, p.sy, R);
   const cols = T.grad[d.status];
   g.addColorStop(0, cols[0]); g.addColorStop(1, cols[1]);
-  if (d.status === '◑') {{
+  if (d.unfenced) {{
+    const pulse = 8 + 5 * Math.sin(tms / 300 + d.r);   // faster, redder: risk
+    ctx.shadowColor = T.guard; ctx.shadowBlur = pulse * p.s * 2;
+  }} else if (d.status === '◑') {{
     const pulse = 6 + 4 * Math.sin(tms / 520 + d.r);
     ctx.shadowColor = T.status['◑']; ctx.shadowBlur = pulse * p.s * 2;
   }}
@@ -525,6 +538,23 @@ function frame(tms) {{
   }});
   drawn.push({{ sun: true, p: project(0, 0, 0) }});
   drawn.sort((a, b) => b.p.z - a.p.z);
+
+  if (cbArcs.checked) for (const L of LINKS) {{
+    const a = DOMS[L.a], b = DOMS[L.b];
+    const A = project(a.r * Math.cos(a.ang), 0, a.r * Math.sin(a.ang));
+    const B = project(b.r * Math.cos(b.ang), 0, b.r * Math.sin(b.ang));
+    const M = project((a.r * Math.cos(a.ang) + b.r * Math.cos(b.ang)) / 2,
+                      -70 - Math.min(90, L.w * 6),
+                      (a.r * Math.sin(a.ang) + b.r * Math.sin(b.ang)) / 2);
+    const hot = hover === L.a || hover === L.b;
+    ctx.strokeStyle = hot ? T.status['◑'] : T.dim;
+    ctx.globalAlpha = hot ? .85 : .18 + Math.min(.3, L.w * .03);
+    ctx.lineWidth = 1 + Math.min(2.5, L.w * .18);
+    ctx.beginPath(); ctx.moveTo(A.sx, A.sy);
+    ctx.quadraticCurveTo(M.sx, M.sy, B.sx, B.sy); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }}
+
   for (const it of drawn) {{
     if (it.sun) {{
       const R = 52 * it.p.s * 1.35, p = it.p;
@@ -607,6 +637,8 @@ def main() -> None:
 
     name, path = resolve(args.project)  # exits with candidates if ambiguous
     data = scan(path)
+    data["specs"] = scan_spec_census(path)      # spec-health rings + card readouts
+    data["links"] = scan_couplings(path)        # coupling arcs (3d) + card readouts
     theme = THEMES[args.theme]
     outdir = Path(__file__).resolve().parent / "cosmos"
     outdir.mkdir(exist_ok=True)
