@@ -22,6 +22,7 @@ python .claude/scripts/scan_project.py <project> --preflight <domain>
 1. **Read the files it lists, in the order it lists them** — the integration SPEC line is conditional (only when the change crosses a boundary); the domain SPEC is not. Coupled-domain SPECs matter the moment your change touches anything the cross-references cover.
 2. **Relay the warnings** to the user before starting work, briefly: `UNFENCED` (offer `/new-spec`), `freeform sheet` (census is tags-only), `STALE` CONTEXT (the next-step may be outdated), unbound Behavioral Contract lines, template FILLs.
 3. **When the work is done**, honor the packet's "Before you finish" block: run the gate (`run_gate.py` — it exits with the gate's own code and refuses honestly with exit 2 when there is no gate), follow the integration Change Order if a boundary moved, and update CONTEXT.md.
+4. **Attest the `[review]` rules.** The packet itemizes the domain's judgment rules as `R1..Rn` — they have no tooling behind them, so they are walls **only if this review happens**. In your finish note (slice PLAN, WALKTHROUGH, or CONTEXT bullet), name the R-numbers you actually checked against the change (e.g. "reviewed against R1, R3; R2 not touched by this change"). An unnamed review didn't happen; never write a blanket "all reviewed" you can't back.
 
 ## What NOT to do
 

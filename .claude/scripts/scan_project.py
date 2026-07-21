@@ -506,9 +506,32 @@ def preflight(project: Path, domain: str) -> str:
         A(f"⚠ {c['fills']} template FILL leftover(s) in the SPEC")
     A("")
 
+    # [review] rules are walls only if the review actually happens — give the
+    # judgment rules their execution moment: itemized here, attested at finish.
+    reviews = [r for r in c["rule_list"] if r["kind"] == "judgment"]
+    if reviews:
+        A("## Review attestation — the walls only YOU enforce")
+        A("No tooling checks these; they are walls only if this review happens.")
+        for i, r in enumerate(reviews, 1):
+            A(f"R{i}. {trunc(r['text'], 220)}")
+        A("")
+    elif c["has_spec"] and c["form"] == "freeform" and c["rules"]["judgment"]:
+        A("## Review attestation — the walls only YOU enforce")
+        A(f"⚠ freeform sheet: {c['rules']['judgment']} [review] tag(s) ride "
+          "headings/prose and can't be itemized — read the whole SPEC and "
+          "attest to it as one.")
+        A("")
+
     A("## Before you finish")
     A("- run the gate green (above)" if c["gate_cmd"]
       else "- no gate exists: state your verification honestly")
+    if reviews:
+        A("- attest the [review] rules: name the R-numbers you checked "
+          "(e.g. \"reviewed against R1, R3\") in the slice PLAN / WALKTHROUGH / "
+          "CONTEXT note — an unnamed review didn't happen")
+    elif c["has_spec"] and c["rules"]["judgment"]:
+        A("- attest the [review] rules: state that you read the SPEC's "
+          "review-tagged sections in your finish note")
     A("- touched a boundary? follow `.gravity/integration/SPEC.md` **Change Order**"
       if integ is not None
       else "- touched a boundary? record it per workspace CLAUDE.md §5 "

@@ -19,6 +19,14 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-07-21
+
+### Added
+- **`[review]` rules get their execution moment — preflight review attestation** (`scan_project.py` `preflight()` + the `/preflight` command doc; the gap: the tag system was honest about which rules are human-enforced, but nothing ever *triggered* the human — a `[review]` rule nobody reads at change time isn't a weaker wall, it's no wall with a label, and most SPECs are majority-`[review]`). The preflight packet now itemizes the domain's judgment rules as an **attestation checklist** (`R1..Rn`, full rule text), and the finish ritual requires naming the R-numbers actually checked ("reviewed against R1, R3") in the slice PLAN / WALKTHROUGH / CONTEXT note — an unnamed review didn't happen, and a blanket "all reviewed" is banned by the command doc. Freeform sheets, whose tags ride headings/prose and can't be itemized, get the honest fallback: read the whole SPEC and attest to it as one.
+
+### Changed
+- **`docs/INTRO.html` catches up with the observatory** — its command table still steered readers to the removed `/cosmos`; now points at `/observatory` (found by the v2.10 maintenance review's stale-reference sweep).
+
 ## [2.9.1] - 2026-07-20
 
 ### Changed
