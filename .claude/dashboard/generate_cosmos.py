@@ -26,7 +26,7 @@ both renderers as tabs). This CLI remains for debugging a single view.
 
 Usage:
     python .claude/dashboard/generate_cosmos.py <project-or-alias>
-        [--mode 2d|3d|both] [--theme nebula|ember|aurora|void] [--open]
+        [--mode 2d|3d|both] [--theme aurora|daylight|sandstone|forest|slate] [--open]
     python .claude/dashboard/generate_cosmos.py --list-themes
 
 Output: .claude/dashboard/cosmos/<project>[.3d].html (gitignored — regenerate).
@@ -51,53 +51,68 @@ STATUS_ORDER = {"◑": 0, "✓": 1, "○": 2}
 STATUS_LABEL = {"◑": "active", "✓": "stable", "○": "planned"}
 
 # ---------------------------------------------------------------------------
-# Themes — every color either renderer uses. "nebula" is the default (cool
-# indigo, white-blue star); "ember" is the original warm-gold look.
-# ---------------------------------------------------------------------------
+# Themes — every color either renderer uses. The five palettes ARE the
+# dashboard's theme family (generate_dashboard.py / DESIGN.dashboard.md):
+# aurora (default, navy+cyan) · daylight (light, blue) · sandstone (warm
+# light, amber) · forest (dark green) · slate (mono gray). One family, one
+# localStorage key (`dash-theme`) across dashboard, docs, and observatory.
+# The two light themes render instruments as a "paper chart": dark ink and
+# star cores on a pale canvas instead of glows on black.
 THEMES: dict[str, dict] = {
-    "nebula": {  # cool indigo · white-blue star · ice-blue activity
-        "bg": "#070b16", "bg2": "#0e1630", "panel": "#0a101f", "card": "#0d1526",
-        "line": "#1c2740", "ink": "#dfe6f4", "dim": "#8b98b8",
-        "star": ["#f4f8ff", "#9db8ff", "#22398f"],
-        "star_glow": "#9db8ff", "star_label": "#0d1c52",
-        "status": {"◑": "#7aa2ff", "✓": "#63d3a6", "○": "#56617f"},
-        "grad": {"◑": ["#e6eeff", "#3757c9"], "✓": ["#d2f5e0", "#2e7d5b"],
-                 "○": ["#8fa3c8", "#39445e"]},
-        "sat": "#a9c4ff", "ring": "#c9d6f2", "moon": "#b8c6e6",
-        "bgstar": "#cdd8f0", "guard": "#d99",
+    "aurora": {  # deep navy · cyan star · the dashboard default
+        "bg": "#0A0E1A", "bg2": "#141d36", "panel": "#0e1526", "card": "#111a2e",
+        "line": "#223050", "ink": "#F3F4F6", "dim": "#9CA3AF",
+        "star": ["#eafeff", "#00F2FE", "#0e4a66"],
+        "star_glow": "#00F2FE", "star_label": "#063a4a",
+        "status": {"◑": "#00E5E8", "✓": "#34D399", "○": "#566175"},
+        "grad": {"◑": ["#d8fbff", "#0891b2"], "✓": ["#d1fae5", "#059669"],
+                 "○": ["#94a3b8", "#334155"]},
+        "sat": "#67e8f9", "ring": "#c9d6f2", "moon": "#b8c6e6",
+        "bgstar": "#cbd5e1", "guard": "#e17a95",
     },
-    "ember": {  # the original — warm gold star, amber activity
-        "bg": "#070b16", "bg2": "#0d1428", "panel": "#0a101f", "card": "#0d1526",
-        "line": "#1c2740", "ink": "#dfe6f4", "dim": "#8b98b8",
-        "star": ["#fff7dc", "#ffd166", "#b0500f"],
-        "star_glow": "#ffd166", "star_label": "#5a3403",
-        "status": {"◑": "#ffb84d", "✓": "#7fd4a8", "○": "#5a6b8c"},
-        "grad": {"◑": ["#ffe3ae", "#c76b1d"], "✓": ["#d2f5e0", "#2e7d5b"],
-                 "○": ["#8fa3c8", "#39445e"]},
-        "sat": "#ffd166", "ring": "#c9d6f2", "moon": "#b8c6e6",
-        "bgstar": "#cdd8f0", "guard": "#d99",
+    "daylight": {  # light · blue-violet ink · paper-chart instruments
+        "bg": "#F7F9FC", "bg2": "#e9effc", "panel": "#ffffff", "card": "#ffffff",
+        "line": "#d8deea", "ink": "#1E293B", "dim": "#64748B",
+        "star": ["#1e3a8a", "#2563EB", "#c7d7fb"],
+        "star_glow": "#2563EB", "star_label": "#eef2ff",
+        "status": {"◑": "#2563EB", "✓": "#059669", "○": "#94a3b8"},
+        "grad": {"◑": ["#1d4ed8", "#93c5fd"], "✓": ["#047857", "#86efac"],
+                 "○": ["#64748b", "#cbd5e1"]},
+        "sat": "#4F46E5", "ring": "#64748B", "moon": "#7C3AED",
+        "bgstar": "#94a3b8", "guard": "#DC2626",
     },
-    "aurora": {  # deep-sea green · teal star · mint activity
-        "bg": "#04100c", "bg2": "#0a1f18", "panel": "#071711", "card": "#0b1d16",
-        "line": "#173428", "ink": "#dcf2e8", "dim": "#84a898",
-        "star": ["#eafff6", "#57e0b1", "#0b5c44"],
-        "star_glow": "#57e0b1", "star_label": "#043326",
-        "status": {"◑": "#57e0b1", "✓": "#6db9ed", "○": "#4c6a5e"},
-        "grad": {"◑": ["#dcfff2", "#1e8a67"], "✓": ["#d9edfb", "#2a6b9c"],
+    "sandstone": {  # warm light · amber ink · paper-chart instruments
+        "bg": "#FBF6EF", "bg2": "#f6ead6", "panel": "#FFFDFA", "card": "#fffcf7",
+        "line": "#e2d3bd", "ink": "#3D2E22", "dim": "#8C7A66",
+        "star": ["#7c2d12", "#D97706", "#f6dcb2"],
+        "star_glow": "#D97706", "star_label": "#fff7ed",
+        "status": {"◑": "#D97706", "✓": "#15803d", "○": "#a8988a"},
+        "grad": {"◑": ["#b45309", "#fcd34d"], "✓": ["#3f6212", "#bef264"],
+                 "○": ["#78716c", "#e7e5e4"]},
+        "sat": "#C2410C", "ring": "#8C7A66", "moon": "#B45309",
+        "bgstar": "#c9b8a2", "guard": "#BE123C",
+    },
+    "forest": {  # deep green · emerald star · lime activity
+        "bg": "#0C1A14", "bg2": "#163024", "panel": "#0f231b", "card": "#122921",
+        "line": "#24443a", "ink": "#E8F2EC", "dim": "#8BA89A",
+        "star": ["#f0fdf4", "#34D399", "#065f46"],
+        "star_glow": "#34D399", "star_label": "#022c22",
+        "status": {"◑": "#A3E635", "✓": "#34D399", "○": "#52705f"},
+        "grad": {"◑": ["#f7fee7", "#65a30d"], "✓": ["#d1fae5", "#059669"],
                  "○": ["#8fb8a8", "#2e4a3f"]},
-        "sat": "#a7f3d0", "ring": "#c6ead9", "moon": "#a8cfc0",
-        "bgstar": "#cdeadd", "guard": "#e8a",
+        "sat": "#a3e635", "ring": "#c6ead9", "moon": "#a8cfc0",
+        "bgstar": "#cdeadd", "guard": "#e08a8a",
     },
-    "void": {  # monochrome — for screenshots and quiet moods
-        "bg": "#050507", "bg2": "#101014", "panel": "#0a0a0d", "card": "#111116",
-        "line": "#26262e", "ink": "#e8e8ec", "dim": "#8a8a94",
-        "star": ["#ffffff", "#c9c9d2", "#4a4a55"],
-        "star_glow": "#c9c9d2", "star_label": "#26262e",
-        "status": {"◑": "#e8e8ec", "✓": "#9a9aa4", "○": "#4a4a55"},
-        "grad": {"◑": ["#ffffff", "#7a7a86"], "✓": ["#d5d5dc", "#55555f"],
-                 "○": ["#8a8a94", "#2e2e36"]},
-        "sat": "#d5d5dc", "ring": "#b5b5c0", "moon": "#9a9aa4",
-        "bgstar": "#d5d5dc", "guard": "#c99",
+    "slate": {  # mono gray — screenshots and quiet moods (was "void")
+        "bg": "#16181D", "bg2": "#23262e", "panel": "#1b1e24", "card": "#20242b",
+        "line": "#34383f", "ink": "#E5E7EB", "dim": "#9499A3",
+        "star": ["#ffffff", "#CBD5E1", "#475569"],
+        "star_glow": "#CBD5E1", "star_label": "#1e293b",
+        "status": {"◑": "#CBD5E1", "✓": "#94A3B8", "○": "#4b5563"},
+        "grad": {"◑": ["#ffffff", "#8b93a3"], "✓": ["#d8dde5", "#5b6472"],
+                 "○": ["#9499A3", "#33363e"]},
+        "sat": "#d5d9e0", "ring": "#b5bcc7", "moon": "#9aa2ad",
+        "bgstar": "#d5d9e0", "guard": "#c98b8b",
     },
 }
 
@@ -623,7 +638,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Render a project's .gravity/ as a star system.")
     ap.add_argument("project", nargs="?", help="project name or alias (resolve_project.py)")
     ap.add_argument("--mode", choices=("2d", "3d", "both"), default="2d")
-    ap.add_argument("--theme", choices=sorted(THEMES), default="nebula")
+    ap.add_argument("--theme", choices=sorted(THEMES), default="aurora")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     ap.add_argument("--list-themes", action="store_true")
     args = ap.parse_args()

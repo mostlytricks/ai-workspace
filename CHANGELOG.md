@@ -19,6 +19,12 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-07-22
+
+### Changed
+- **One theme family, one key — the observatory joins the dashboard's five themes** (`THEMES` in `generate_cosmos.py` rebuilt; key + defaults in `generate_observatory.py`/`generate_boundary.py`; `DESIGN.dashboard.md` records the contract). The product had grown two theme languages: dashboard + MISSION/ARCHITECTURE docs shared five glass themes under the `dash-theme` localStorage key, while the observatory spoke four private flat palettes (nebula/ember/aurora/void) under `obs-theme` — with **"aurora" meaning two different looks**. The observatory now renders the same five (aurora default · daylight · sandstone · forest · slate) with per-theme instrument colors (star/status/rings/guard), shares `dash-theme` so one pick follows the user across every surface, and gives the two light themes a **paper-chart** instrument treatment (dark ink and star cores on a pale canvas — no glows on white). nebula/ember/void retired; never reintroduce a second family or key.
+- **Observatory polish, and the UI is declared finished** (`generate_observatory.py` + the command doc; chosen deliberately over more instruments — the meta-gravity line). Two changes only: **attention badges** on the nav (count chips where something wants a look — Overview findings guard-red on any FAIL, Queue ◑ building, Seams `OPEN:` rows, Spec Health unfenced ◑ domains, Graduation dishonesty smells; no badge = nothing pending), and **deep-linkable tabs** (`#queue`/`#grad` hash, `history.replaceState` so no history spam) so docs and preflight packets can link straight into one instrument. Declined in the same breath: a cross-project launcher (duplicates `/dashboard`), live-serve mode (unfelt pain), and a `/dashboard` restyle (working tool, aesthetic rewrite). Further UI work waits for a complaint from real use — and the first one arrived the same day, honestly earned: **ember's chrome was a byte-level copy of nebula's** (`bg`/`panel`/`card`/`ink` identical; only accents differed), so switching the two flagship themes looked like the switcher was broken, and the content column was capped at 1060px on wide monitors. Ember now has its own warm-dark chrome family (propagates to every THEMES consumer — cosmos, boundary, dashboard), `.pad` widened 1060→1460 / `.pad.wide` 1360→1760, theme swatches 18→22px.
+
 ## [2.11.0] - 2026-07-22
 
 ### Added
@@ -228,7 +234,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.12.0
 [2.11.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.11.0
 [2.10.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.10.0
 [2.9.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.9.1

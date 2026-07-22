@@ -22,7 +22,7 @@ this renderer as the Seams tab). This CLI remains for debugging the one view.
 
 Usage:
     python .claude/dashboard/generate_boundary.py <project-or-alias>
-        [--theme nebula|ember|aurora|void] [--open]
+        [--theme aurora|daylight|sandstone|forest|slate] [--open]
 
 Output: .claude/dashboard/boundary/<project>.html (gitignored — regenerate).
 """
@@ -351,7 +351,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Render a project's integration Boundary Map as a seam graph.")
     ap.add_argument("project", help="project name or alias (resolve_project.py)")
-    ap.add_argument("--theme", choices=sorted(THEMES), default="nebula")
+    ap.add_argument("--theme", choices=sorted(THEMES), default="aurora")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     args = ap.parse_args()
 

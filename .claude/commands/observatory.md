@@ -21,14 +21,16 @@ You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` 
 
 ## Run it
 
-Parse `$ARGUMENTS` as `<project> [theme]` — theme is one of `nebula` (default) / `ember` / `aurora` / `void`. Then:
+Parse `$ARGUMENTS` as `<project> [theme]` — theme is one of `aurora` (default) / `daylight` / `sandstone` / `forest` / `slate` — the workspace-wide dashboard family (`DESIGN.dashboard.md`). Then:
 
 ```bash
 python .claude/dashboard/generate_observatory.py <project> --theme <theme> --open
 ```
 
 - The project token goes through `resolve_project.py`; if ambiguous the script prints candidates and exits — relay them, don't guess.
-- **Theming is live in the page** — the header's four swatch buttons switch the chrome *and* the embedded instruments in place (every palette is pre-rendered into the file; the choice persists in `localStorage` as `obs-theme`). `--theme` only sets the first-load default, so don't regenerate just to change color.
+- **The nav carries attention badges** — count chips only where something wants a look: Overview (checker findings; guard-red when any FAIL), Queue (◑ building), Seams (`OPEN:` rows), Spec Health (unfenced ◑ domains), Graduation (the two dishonesty smells). No badge = nothing pending there.
+- **Tabs are deep-linkable** — `<page>.html#queue`, `#grad`, etc.; docs and packets can link straight to one instrument of one project.
+- **Theming is live in the page** — the header's five swatch buttons switch the chrome *and* the embedded instruments in place (every palette is pre-rendered into the file; the choice persists in `localStorage` as `dash-theme` — shared with the workspace dashboard and the MISSION/ARCHITECTURE doc pages, so one pick follows you everywhere). The two light themes render instruments as a paper chart (dark ink on a pale canvas). `--theme` only sets the first-load default, so don't regenerate just to change color.
 - Requires a `.gravity/` directory (the scan stops with a pointer to `/adopt-gravity` otherwise). A missing integration SPEC is fine — the Seams tab shows the pointer instead.
 - Output lands in `.claude/dashboard/observatory/<name>.html` (gitignored, regenerate-at-will); `--open` launches the browser.
 

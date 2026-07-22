@@ -30,14 +30,16 @@ Tabs:
 
 Theming is live: the chrome runs on CSS variables and the embedded instruments
 are pre-rendered in every palette, so the header's theme buttons switch the
-whole page in place (persisted in localStorage under `obs-theme`; --theme only
+whole page in place (persisted in localStorage under `dash-theme` — the same
+key the workspace dashboard and the project MISSION/ARCHITECTURE docs use, so
+one choice follows you across every surface; --theme only
 sets the first-load default).
 
 Everything is scanned live from the docs. A wrong page means wrong docs.
 
 Usage:
     python .claude/dashboard/generate_observatory.py <project-or-alias>
-        [--theme nebula|ember|aurora|void] [--open]
+        [--theme aurora|daylight|sandstone|forest|slate] [--open]
 
 Output: .claude/dashboard/observatory/<project>.html (gitignored — regenerate).
 """
@@ -404,6 +406,30 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
         f'<button data-th="{n}" title="{n}" style="background:{t["star"][1]}"></button>'
         for n, t in THEMES.items())
 
+    # attention badges — a count chip only where something wants a look:
+    # Overview: checker findings (guard-red if any FAIL) · Queue: ◑ building ·
+    # Seams: OPEN rows · Spec Health: unfenced ◑ domains · Graduation: the two
+    # dishonesty smells (reworded-without-a-test + unbound BC lines)
+    def badge(n: int, guard: bool = False) -> str:
+        if not n:
+            return ""
+        return f'<span class="nbdg{" guard" if guard else ""}">{n}</span>'
+
+    n_fail = sum(1 for f in findings if f.severity == "FAIL") if findings else 0
+    b_overview = badge(len(findings), bool(n_fail)) if findings else ""
+    b_queue = badge(sum(1 for p in facts["queue"] if p["status"] == "◑"))
+    b_seams = badge(n_open if integ is not None else 0, guard=True)
+    census = {c["domain"]: c for c in facts["specs"]}
+    b_health = badge(sum(1 for d in facts["domains"]
+                         if d["status"] == "◑"
+                         and not census.get(d["name"], {}).get("has_spec")),
+                     guard=True)
+    n_smell = sum(1 for d in facts["scenarios"] for b in d["bc"]
+                  if not b["test"] and not b["matched"]) \
+        + sum(1 for d in facts["scenarios"] for p in d["plans"]
+              for s in p["scenarios"] if s["match"] is not None and not s["test"])
+    b_grad = badge(n_smell, guard=True)
+
     return f"""<!doctype html><html lang="en" data-theme="{theme}"><meta charset="utf-8">
 <title>{esc(facts["project"])} — gravity observatory</title>
 <style>
@@ -416,7 +442,7 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
   header h1 {{ font-size:16px; margin:0 }}
   header .census {{ color:var(--dim); font-size:12px; flex:1 }}
   #themebar {{ display:flex; gap:6px; align-self:center }}
-  #themebar button {{ width:18px; height:18px; border-radius:50%; cursor:pointer;
+  #themebar button {{ width:22px; height:22px; border-radius:50%; cursor:pointer;
     border:2px solid transparent; padding:0 }}
   #themebar button.on {{ border-color:var(--ink) }}
   #themebar button:hover {{ transform:scale(1.15) }}
@@ -431,7 +457,7 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
   .tab.on {{ display:block }}
   .tab.scroll {{ overflow-y:auto }}
   .inst {{ width:100%; height:100%; border:none; display:block }}
-  .pad {{ padding:18px 22px; max-width:1060px }}
+  .pad {{ padding:18px 26px; max-width:1460px }}
   .goal {{ font-size:14.5px; margin-bottom:14px }}
   .ocard {{ border:1px solid var(--line); border-radius:12px; background:var(--card);
     padding:13px 16px; margin-bottom:14px }}
@@ -474,7 +500,7 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
   .gsrc:first-child {{ margin-top:0 }}
   .gline {{ font-size:12.5px; margin:3px 0 3px 6px; padding-left:16px; text-indent:-16px }}
   .gtest {{ font-size:11px; margin-left:6px }}
-  .pad.wide {{ max-width:1360px }}
+  .pad.wide {{ max-width:1760px }}
   table.queue td {{ vertical-align:top }}
   table.queue td.qgoal, table.queue td.qnext {{ color:var(--dim); max-width:360px }}
   table.queue td.qst {{ white-space:nowrap }}
@@ -489,6 +515,10 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
   .tchip {{ font-size:10.5px; color:var(--sat); border:1px solid var(--line);
     border-radius:8px; padding:0 7px; flex-shrink:0 }}
   .tchip.none {{ color:var(--guard) }}
+  .nbdg {{ display:inline-block; margin-left:7px; font-size:10px; line-height:15px;
+    min-width:15px; text-align:center; border-radius:8px; padding:0 4px;
+    background:var(--sat); color:var(--bg); vertical-align:1px }}
+  .nbdg.guard {{ background:var(--guard) }}
   footer {{ padding:6px 20px; color:var(--dim); font-size:11px; font-family:monospace;
     border-top:1px solid var(--line) }}
 </style>
@@ -497,12 +527,12 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
     {fenced}/{len(facts["specs"])} fenced · generated {facts["generated"]}</span>
   <div id="themebar">{swatches}</div></header>
 <nav>
-  <button class="on" data-tab="overview">Overview</button>
-  <button data-tab="queue">Queue</button>
+  <button class="on" data-tab="overview">Overview{b_overview}</button>
+  <button data-tab="queue">Queue{b_queue}</button>
   <button data-tab="domains">Domains</button>
-  <button data-tab="seams">Seams</button>
-  <button data-tab="health">Spec Health</button>
-  <button data-tab="grad">Graduation</button>
+  <button data-tab="seams">Seams{b_seams}</button>
+  <button data-tab="health">Spec Health{b_health}</button>
+  <button data-tab="grad">Graduation{b_grad}</button>
   <button data-tab="timeline">Timeline</button>
   <button data-tab="orbit">Orbit 3D</button>
 </nav>
@@ -528,22 +558,28 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
     domIF.srcdoc = INST[n].domains;
     orbIF.srcdoc = INST[n].orbit;
     if (seamIF && INST[n].seams) seamIF.srcdoc = INST[n].seams;
-    try {{ localStorage.setItem('obs-theme', n); }} catch (e) {{}}
+    try {{ localStorage.setItem('dash-theme', n); }} catch (e) {{}}
     document.querySelectorAll('#themebar button').forEach(b =>
       b.classList.toggle('on', b.dataset.th === n));
   }}
   document.querySelectorAll('#themebar button').forEach(b =>
     b.addEventListener('click', () => setTheme(b.dataset.th)));
   let saved = null;
-  try {{ saved = localStorage.getItem('obs-theme'); }} catch (e) {{}}
+  try {{ saved = localStorage.getItem('dash-theme'); }} catch (e) {{}}
   setTheme(INST[saved] ? saved : "{theme}");
 
-  document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {{
-    document.querySelectorAll('nav button').forEach(x => x.classList.remove('on'));
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    document.getElementById('tab-' + b.dataset.tab).classList.add('on');
-  }}));
+  function setTab(name) {{
+    if (!document.getElementById('tab-' + name)) return;
+    document.querySelectorAll('nav button').forEach(x =>
+      x.classList.toggle('on', x.dataset.tab === name));
+    document.querySelectorAll('.tab').forEach(x =>
+      x.classList.toggle('on', x.id === 'tab-' + name));
+    history.replaceState(null, '', '#' + name);   // deep-linkable, no history spam
+  }}
+  document.querySelectorAll('nav button').forEach(b =>
+    b.addEventListener('click', () => setTab(b.dataset.tab)));
+  window.addEventListener('hashchange', () => setTab(location.hash.slice(1)));
+  if (location.hash.length > 1) setTab(location.hash.slice(1));
 </script>
 </html>"""
 
@@ -556,7 +592,7 @@ def main() -> None:
             pass
     ap = argparse.ArgumentParser(description="One project, one page — the unified gravity view.")
     ap.add_argument("project", help="project name or alias (resolve_project.py)")
-    ap.add_argument("--theme", choices=sorted(THEMES), default="nebula",
+    ap.add_argument("--theme", choices=sorted(THEMES), default="aurora",
                     help="first-load default; the page has live theme buttons")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     args = ap.parse_args()
