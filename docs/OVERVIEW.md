@@ -2,7 +2,7 @@
 
 > The developer-professional view of the whole system, in one read.
 > Current as of **gravity v2.5.1 + unreleased** (2026-07). Korean edition: `OVERVIEW.ko.md`.
-> Deep dives: `CLAUDE.md` (the agent contract) · `HANDBOOK.md` (workflows) · `.claude/scenarios/README.md` (checker reference).
+> Deep dives: `CLAUDE.md` (the agent operating manual) · `HANDBOOK.md` (workflows) · `.claude/scenarios/README.md` (checker reference).
 
 ---
 
@@ -54,7 +54,7 @@ ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the 
 
 | Kind | Role |
 |---|---|
-| `SPEC.md` | the **agent contract**: a generative *Minimal Shape* + *Rules* where **every rule carries an enforcement tag** (`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`) naming the wall that catches violations — the contract never lies about which rules are real walls vs judgment. Behavioral domains add a `given/when/then` **Behavioral Contract**, each line bound to a named test. |
+| `SPEC.md` | the **change contract**: a generative *Minimal Shape* + *Rules* where **every rule carries an enforcement tag** (`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`) naming the wall that catches violations — the contract never lies about which rules are real walls vs judgment. Behavioral domains add a `given/when/then` **Behavioral Contract**, each line bound to a named test. |
 | `ARCHITECTURE.html` | the human deep-dive (rationale), when it outgrows a file map |
 | `PLAN.*.md` | one slice's intent: Goal · Scenario (`given/when/then`) · Slice · Verification. **Bugs enter here as *currently-false* scenarios** (the repro), and their fix must leave the regression test that graduates the scenario into the SPEC. |
 | `given/` + `MANIFEST.md` | received domain knowledge (§5) |

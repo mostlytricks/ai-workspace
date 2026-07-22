@@ -16,7 +16,7 @@ does not restate them. One concern, one home.
 
 ## Doc Map (`.gravity/`)
 
-Docs are grouped by **subject domain**, not by doc-type. A domain folder holds whichever of three kinds it needs — `ARCHITECTURE.html` (human deep-dive), `SPEC.md` (agent contract), `PLAN.*.md` (what/next) — named by *kind* because the folder already names the subject. **Recognized only when present.**
+Docs are grouped by **subject domain**, not by doc-type. A domain folder holds whichever of three kinds it needs — `ARCHITECTURE.html` (human deep-dive), `SPEC.md` (change contract), `PLAN.*.md` (what/next) — named by *kind* because the folder already names the subject. **Recognized only when present.**
 
 ```
 .gravity/
@@ -33,7 +33,7 @@ Docs are grouped by **subject domain**, not by doc-type. A domain folder holds w
 
 ## What to read before a change (router)
 
-Before touching a domain, load its `SPEC.md` — the compact agent contract. The paired `ARCHITECTURE.html` is the human reference behind it (read only when you need the full rationale). A "—" means that kind doesn't exist for the domain yet.
+Before touching a domain, load its `SPEC.md` — the compact change contract. The paired `ARCHITECTURE.html` is the human reference behind it (read only when you need the full rationale). A "—" means that kind doesn't exist for the domain yet.
 
 | If you're changing… | Read first | Human reference |
 |---|---|---|

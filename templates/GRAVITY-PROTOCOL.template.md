@@ -32,7 +32,7 @@ This project organizes its documentation with **gravity**. Two files auto-load f
 | `.gravity/ARCHITECTURE.html` | **how it's built** — system overview | on structural change |
 | `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status | per phase/slice |
 | root `CONTEXT.md` | **now** — current state + the single next step | every session |
-| `.gravity/<domain>/SPEC.md` | the **agent contract** for changing this domain | when rules change |
+| `.gravity/<domain>/SPEC.md` | the **change contract** for this domain (agent-loadable) | when rules change |
 | `.gravity/<domain>/ARCHITECTURE.html` | the domain's human deep-dive / full rationale | on structural change |
 | `.gravity/<domain>/PLAN.*.md` | the **intent of one change** — goal, scenario, slice, verification | per slice |
 
@@ -49,7 +49,7 @@ Two disciplines bind them:
 
 ## Reading (and honoring) a SPEC.md
 
-A SPEC is two halves at once:
+A SPEC is a **change contract** — a shape to build *from* plus fenced rules — not a generation blueprint: it governs changes to a system rather than scaffolding one from scratch. It is two halves at once:
 - **Generative** — a **Minimal Shape** plus a short **Generate loop**: the template you instantiate a correct unit *from*.
 - **Limiting** — a **Rules** checklist where **every rule carries an enforcement tag** naming the wall that catches a violation: `[lint]` / `[type]` / `[test:name]` are real, named checks; `[review]` / `[—]` mean human judgment only, no wall. A **Gate:** line names the command that must pass before the change ships.
 

@@ -23,7 +23,7 @@
 
 Canonical human-readable reference: `ARCHITECTURE.<facet>.html`.
 
-This is the compact agent-loadable contract for `<domain>` — enough to **build** a valid unit and the **walls** it can't cross. Keep it short. Full rationale belongs in the facet HTML above.
+This is the compact agent-loadable **change contract** for `<domain>` — enough to **build** a valid unit and the **walls** it can't cross; it governs changes, it does not scaffold the system from scratch. Keep it short. Full rationale belongs in the facet HTML above.
 
 > **Integration domain?** This same template flexes into a **boundary contract**: it owns only the seams *between* services/domains — the wire envelope, generated client types, auth/session flow, ports/base URLs, the database-access boundary, and the **change order** — while each service's internals stay in its own domain SPEC. Use the **INTEGRATION VARIANT** block below (swap Minimal Shape → Boundary Map, Generate → Change Order); delete it for a normal domain. Load this SPEC *first* before any cross-boundary edit, then the affected domain SPECs.
 
