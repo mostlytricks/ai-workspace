@@ -68,6 +68,12 @@ CROSS_CUTTING = {
     "README.md",
 }
 
+# Top-level .gravity/ DIRECTORIES that are evidence doors (workspace CLAUDE.md
+# §6: the git-ignored intake drop zone and the cross-cutting given layer),
+# never subject domains — they must not be index-wired or FAIL as UNDERWIRED.
+# check_given owns their health.
+NON_DOMAIN_DIRS = {"inbox", "given"}
+
 # The four index regions a domain must appear in, by id -> human label.
 REGIONS = {
     "doc_map": "CLAUDE.md Doc Map",
@@ -150,7 +156,8 @@ def discover_domains(gravity_dir: Path) -> set[str]:
     return {
         p.name
         for p in gravity_dir.iterdir()
-        if p.is_dir() and p.name not in CROSS_CUTTING and not p.name.startswith(".")
+        if p.is_dir() and p.name not in CROSS_CUTTING
+        and p.name not in NON_DOMAIN_DIRS and not p.name.startswith(".")
     }
 
 

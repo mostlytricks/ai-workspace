@@ -10,13 +10,23 @@ boundary generators are its renderer modules (their CLIs remain for debugging)
 and render the same facts, so the views can't disagree.
 
 Tabs:
-    Overview    — goal, the now (CONTEXT), the spine table, authored-doc links
+    Overview    — goal, the now (CONTEXT), the drift card (check.py findings,
+                  imported never reimplemented; "unavailable" is not "clean"),
+                  the spine table, authored-doc links
+    Queue       — every PLAN.*.md as one work table (status/goal/next/age),
+                  building first; a PLAN without a Status: line is flagged
     Domains     — the cosmos 2D star system (embedded)
     Seams       — the boundary seam graph (embedded; empty-state if no
                   integration SPEC — with the pointer, never a guess)
     Spec Health — per-domain contract honesty: walls vs [review] judgment,
                   gates, Behavioral Contract lines bound to tests, template
                   FILL leftovers. Freeform SPECs get a tag census, labeled so.
+    Graduation  — intent → contract: PLAN Scenario bullets paired (token
+                  heuristic, said so on the page) with SPEC Behavioral
+                  Contract lines; graduated / still-intent / reworded-without-
+                  a-test / unbound BC lines, per domain.
+    Timeline    — docs/walkthroughs/ as a reverse-chron proof strip (date ·
+                  domain chips · title), each entry linking to its file.
 
 Theming is live: the chrome runs on CSS variables and the embedded instruments
 are pre-rendered in every palette, so the header's theme buttons switch the
@@ -41,16 +51,47 @@ import webbrowser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scenarios"))
 from resolve_project import resolve  # noqa: E402
 from scan_project import scan, trunc  # noqa: E402
 from generate_cosmos import THEMES, STATUS_LABEL, render_2d, render_3d  # noqa: E402
 from generate_boundary import render as render_boundary  # noqa: E402
+try:  # findings stay check.py's concern — imported, never reimplemented here
+    from check import check_gravity_consistency, check_spec_honesty  # noqa: E402
+except Exception:  # pragma: no cover — checker unavailable ≠ checker clean
+    check_gravity_consistency = check_spec_honesty = None
 
 esc = html_mod.escape
 STATUS_CLASS = {"◑": "st-a", "✓": "st-s", "○": "st-p"}
 
 
-def overview_html(facts: dict, project_path: Path) -> str:
+def drift_card(findings) -> str:
+    """The /triage view of this one project, inline where you look first.
+    findings=None means the checkers couldn't run — said so, never shown green."""
+    if findings is None:
+        return ('<div class="ocard warn"><div class="ohead">drift — checkers unavailable</div>'
+                '<div class="okv">check.py could not be imported; run '
+                '<span class="mono">python .claude/scenarios/check.py consistency --project '
+                '&lt;name&gt;</span> yourself — unavailable is not clean.</div></div>')
+    if not findings:
+        return ('<div class="ocard"><div class="ohead">drift — consistency + spec honesty</div>'
+                '<div class="okv okc">0 findings — indexes wired, protocol card current, '
+                'SPEC walls verified against repo reality</div></div>')
+    rows = []
+    for f in findings:
+        cls = "wt" if f.severity == "FAIL" else "satc"
+        dom = f' <code>{esc(f.domain)}</code>' if f.domain else ""
+        rows.append(f'<div class="okv"><b class="{cls}">[{f.severity}]</b> '
+                    f'<span class="mono">{esc(f.code)}</span>{dom} — '
+                    f'{esc(trunc(f.message, 220))}</div>')
+    n_fail = sum(1 for f in findings if f.severity == "FAIL")
+    return (f'<div class="ocard warn"><div class="ohead">drift — {len(findings)} finding'
+            f'{"s" if len(findings) != 1 else ""}'
+            f'{f" · {n_fail} FAIL" if n_fail else ""} (fix the docs, rerun)</div>'
+            + "".join(rows) + "</div>")
+
+
+def overview_html(facts: dict, project_path: Path, findings) -> str:
     ctx = facts["context"]
     if ctx.get("exists"):
         days = ctx["days_ago"]
@@ -88,6 +129,7 @@ def overview_html(facts: dict, project_path: Path) -> str:
     return f"""<div class="pad">
   <div class="goal">{esc(facts["goal"]) or "<em>no goal: line in IMPLEMENTATION_PLAN.md</em>"}</div>
   {now}
+  {drift_card(findings)}
   <div class="ocard"><div class="ohead">spine — {len(facts["domains"])} domains</div>
   <table class="spine"><tr><th>domain</th><th>status</th><th>SPEC</th><th>ARCH</th>
   <th>PLANs</th><th>touched</th><th>why</th></tr>{"".join(rows)}</table></div>
@@ -157,6 +199,171 @@ def spec_health_html(facts: dict) -> str:
 </div>"""
 
 
+QUEUE_ORDER = {"◑": 0, "○": 1, "": 2, "✓": 3}
+
+
+def queue_html(facts: dict, project_path: Path) -> str:
+    """Every PLAN.*.md as one work table: what's building, what's queued,
+    what shipped — without opening ten files. The PLANs stay the one home
+    of the intent; this only surfaces their own status/goal/next lines."""
+    q = facts["queue"]
+    if not q:
+        return ('<div class="pad"><div class="ocard"><div class="ohead">no slice queue</div>'
+                '<div class="okv">No <span class="mono">PLAN.*.md</span> under any '
+                '<span class="mono">.gravity/&lt;domain&gt;/</span>. Intent enters as a slice '
+                'PLAN (<span class="mono">/interview</span> / <span class="mono">/new-domain</span> '
+                'seed one); the roadmap spine lives in IMPLEMENTATION_PLAN.md.</div></div></div>')
+
+    n_b = sum(1 for p in q if p["status"] == "◑")
+    n_p = sum(1 for p in q if p["status"] == "○")
+    n_s = sum(1 for p in q if p["status"] == "✓")
+    n_none = sum(1 for p in q if not p["status"])
+    rows = []
+    for p in sorted(q, key=lambda x: (QUEUE_ORDER[x["status"]], x["age_days"])):
+        href = (project_path / p["rel"]).as_uri()
+        if p["status"]:
+            st = (f'<span class="dot {STATUS_CLASS[p["status"]]}"></span>'
+                  f'{p["status"]} {STATUS_LABEL[p["status"]]}')
+        else:
+            st = '<span class="wt">no Status: line</span>'
+        nxt = p["next"] or p["note"]
+        shipped = ' class="qdone"' if p["status"] == "✓" else ""
+        touched = "today" if p["age_days"] < 1 else f'{p["age_days"]:.0f}d'
+        rows.append(
+            f'<tr{shipped}><td><a class="qlink" href="{href}" target="_blank">'
+            f'<code>{esc(p["domain"])}/</code>{esc(p["file"])}</a></td>'
+            f'<td class="qst">{st}</td>'
+            f'<td class="qgoal">{esc(p["goal"]) or "<em>no Goal section</em>"}</td>'
+            f'<td class="qnext">{esc(nxt) or "—"}</td>'
+            f'<td>{touched}</td></tr>')
+
+    warn = f' · <b class="wt">{n_none} without a Status line</b>' if n_none else ""
+    return f"""<div class="pad wide">
+  <div class="hsum"><b>{len(q)}</b> slices ·
+    <b class="satc">{n_b} building</b> · {n_p} planned · <b class="okc">{n_s} shipped</b>{warn}</div>
+  <div class="hint">One row per <span class="mono">PLAN.*.md</span>, straight from each PLAN's
+    own Status/Goal/Next lines — building first, shipped last. A PLAN without a
+    <span class="mono">Status:</span> line can't be mirrored into the
+    IMPLEMENTATION_PLAN.md spine; give it one.</div>
+  <table class="spine queue"><tr><th>plan</th><th>status</th><th>goal</th>
+  <th>next / note</th><th>touched</th></tr>{"".join(rows)}</table>
+</div>"""
+
+
+def timeline_html(facts: dict, project_path: Path) -> str:
+    """The frozen history: docs/walkthroughs/ as a reverse-chron strip —
+    what shipped, when, in which domain(s), each linking to its proof."""
+    wts = facts["walkthroughs"]
+    if not wts:
+        return ('<div class="pad"><div class="ocard"><div class="ohead">no walkthroughs</div>'
+                '<div class="okv">Nothing under <span class="mono">docs/walkthroughs/</span>. '
+                'A walkthrough is the per-slice trust artifact (what changed + the proof it '
+                'works) — copy <span class="mono">WALKTHROUGH.template.md</span> when a '
+                'reviewable slice ships; skip it for trivial fixes.</div></div></div>')
+
+    rows, last_month = [], ""
+    for w in wts:
+        month = w["date"][:7]
+        if month != last_month:
+            rows.append(f'<div class="tmonth">{month}</div>')
+            last_month = month
+        href = (project_path / "docs" / "walkthroughs" / w["file"]).as_uri()
+        chips = "".join(f'<span class="tchip">{esc(d)}</span>' for d in w["domains"]) \
+                or '<span class="tchip none">no domain header</span>'
+        rows.append(f'<div class="trow"><span class="tdate mono">{w["date"]}</span>'
+                    f'{chips}<a class="qlink" href="{href}" target="_blank">'
+                    f'{esc(w["title"])}</a></div>')
+    return f"""<div class="pad">
+  <div class="hsum"><b>{len(wts)}</b> walkthroughs · {wts[-1]["date"]} → {wts[0]["date"]}</div>
+  <div class="hint">The append-only proof log — newest first, tagged by domain, never
+    foldered by it. Each entry closes a slice PLAN; CONTEXT.md links here instead of
+    restating what shipped.</div>
+  {"".join(rows)}
+</div>"""
+
+
+def graduation_html(facts: dict) -> str:
+    """Intent → contract, per domain: which PLAN scenarios earned a test wall
+    in the SPEC's Behavioral Contract, which are still intent, and which BC
+    lines are dressed as contract with no test. Pairing is a token heuristic
+    (scanner fact) — the tab says so instead of pretending certainty."""
+    status_of = {d["name"]: d["status"] for d in facts["domains"]}
+    doms = facts["scenarios"]
+    if not doms:
+        return ('<div class="pad"><div class="ocard"><div class="ohead">no scenarios yet</div>'
+                '<div class="okv">No PLAN <b>Scenario</b> blocks and no SPEC <b>Behavioral '
+                'Contract</b> lines in this project. Intent enters as given/when/then in a '
+                'slice PLAN (<span class="mono">/interview</span> seeds it) and graduates to '
+                'the SPEC once a named test asserts it.</div></div></div>')
+
+    n_scen = n_grad = n_reword = n_shipped_intent = 0
+    n_bound = n_unbound = 0
+    cards = []
+    for d in doms:
+        st = status_of.get(d["domain"], "○")
+        rows = []
+        for pl in d["plans"]:
+            pst = f' · {pl["status"]}' if pl["status"] else ""
+            rows.append(f'<div class="gsrc"><span class="mono">{esc(pl["file"])}</span>{pst}</div>')
+            for s in pl["scenarios"]:
+                n_scen += 1
+                txt = esc(trunc(s["text"], 150))
+                if s["match"] is not None and s["test"]:
+                    n_grad += 1
+                    rows.append(f'<div class="gline"><b class="okc">✔</b> {txt} '
+                                f'<span class="gtest okc mono">[test:{esc(trunc(s["test"], 60))}]</span></div>')
+                elif s["match"] is not None:
+                    n_reword += 1
+                    rows.append(f'<div class="gline"><b class="wt">⚠</b> {txt} '
+                                '<span class="gtest wt">reworded into the BC without a test '
+                                '— not a graduation</span></div>')
+                else:
+                    note = ""
+                    if pl["status"] == "✓":
+                        n_shipped_intent += 1
+                        note = ('<span class="gtest wt">PLAN shipped, scenario never '
+                                'graduated — its wall may live in a gate; check</span>')
+                    rows.append(f'<div class="gline"><span class="dimc">○</span> '
+                                f'<span class="dimc">{txt}</span> {note}</div>')
+        orphans = [b for b in d["bc"] if not b["matched"]]
+        if orphans:
+            rows.append('<div class="gsrc"><span class="mono">SPEC.md</span> · '
+                        'Behavioral Contract lines with no PLAN intent above</div>')
+            for b in orphans:
+                txt = esc(trunc(b["text"], 150))
+                if b["test"]:
+                    n_bound += 1
+                    rows.append(f'<div class="gline"><b class="okc">✔</b> <span class="dimc">{txt}</span> '
+                                f'<span class="gtest dimc mono">[test:{esc(trunc(b["test"], 60))}]</span></div>')
+                else:
+                    n_unbound += 1
+                    rows.append(f'<div class="gline"><b class="wt">⚠</b> {txt} '
+                                '<span class="gtest wt">unbound — contract line with no test</span></div>')
+        n_bound += sum(1 for b in d["bc"] if b["matched"] and b["test"])
+        cards.append(f'<div class="ocard"><div class="ohead">'
+                     f'<span class="dot {STATUS_CLASS[st]}"></span>'
+                     f'<code>{esc(d["domain"])}</code></div>{"".join(rows)}</div>')
+
+    warn = ""
+    if n_reword or n_shipped_intent or n_unbound:
+        bits = ([f'<b class="wt">{n_reword} reworded without a test</b>'] * bool(n_reword)
+                + [f'<b class="wt">{n_shipped_intent} shipped-but-never-graduated</b>'] * bool(n_shipped_intent)
+                + [f'<b class="wt">{n_unbound} unbound BC line{"s" if n_unbound != 1 else ""}</b>'] * bool(n_unbound))
+        warn = " · " + " · ".join(bits)
+    return f"""<div class="pad">
+  <div class="hsum"><b>{n_scen}</b> scenarios in PLANs ·
+    <b class="okc">{n_grad} graduated</b> to test-bound contract ·
+    <span class="dimc">{n_scen - n_grad - n_reword} still intent</span> ·
+    <b>{n_bound}</b> BC lines test-bound{warn}</div>
+  <div class="hint">Behavior <b>graduates</b> when a named test asserts it: given/when/then
+    enters a slice PLAN as intent and is promoted to the SPEC's Behavioral Contract only
+    with a <span class="mono">[test:name]</span> binding — never by rewording. Pairing here
+    is a token-overlap heuristic over the docs: a ○ scenario may still hold a wall
+    elsewhere (a gate line) — read the SPEC before judging.</div>
+  {"".join(cards)}
+</div>"""
+
+
 def theme_vars(name: str, t: dict) -> str:
     return (f'[data-theme="{name}"] {{ --bg:{t["bg"]}; --bg2:{t["bg2"]}; '
             f'--panel:{t["panel"]}; --card:{t["card"]}; --line:{t["line"]}; '
@@ -165,7 +372,7 @@ def theme_vars(name: str, t: dict) -> str:
             f'--guard:{t["guard"]}; --sat:{t["sat"]} }}')
 
 
-def render_page(facts: dict, theme: str, project_path: Path) -> str:
+def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
     integ = facts["integration"]
 
     # every theme's instruments, pre-rendered — the buttons swap them in place
@@ -262,6 +469,26 @@ def render_page(facts: dict, theme: str, project_path: Path) -> str:
   .seg-w {{ background:var(--ok) }} .seg-j {{ background:var(--sat) }}
   .seg-g {{ background:var(--dim) }}
   .gate {{ color:var(--dim) }}
+  .gsrc {{ font-size:11px; letter-spacing:.6px; text-transform:none; color:var(--dim);
+    margin:9px 0 4px }}
+  .gsrc:first-child {{ margin-top:0 }}
+  .gline {{ font-size:12.5px; margin:3px 0 3px 6px; padding-left:16px; text-indent:-16px }}
+  .gtest {{ font-size:11px; margin-left:6px }}
+  .pad.wide {{ max-width:1360px }}
+  table.queue td {{ vertical-align:top }}
+  table.queue td.qgoal, table.queue td.qnext {{ color:var(--dim); max-width:360px }}
+  table.queue td.qst {{ white-space:nowrap }}
+  tr.qdone {{ opacity:.6 }}
+  .qlink {{ color:var(--ink); text-decoration:none }}
+  .qlink:hover {{ color:var(--sat); text-decoration:underline }}
+  .tmonth {{ font-size:11px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--accent); margin:16px 0 6px }}
+  .trow {{ display:flex; align-items:baseline; gap:10px; padding:5px 0;
+    border-top:1px solid var(--line); font-size:13px }}
+  .tdate {{ color:var(--dim); font-size:11.5px; flex-shrink:0 }}
+  .tchip {{ font-size:10.5px; color:var(--sat); border:1px solid var(--line);
+    border-radius:8px; padding:0 7px; flex-shrink:0 }}
+  .tchip.none {{ color:var(--guard) }}
   footer {{ padding:6px 20px; color:var(--dim); font-size:11px; font-family:monospace;
     border-top:1px solid var(--line) }}
 </style>
@@ -271,16 +498,22 @@ def render_page(facts: dict, theme: str, project_path: Path) -> str:
   <div id="themebar">{swatches}</div></header>
 <nav>
   <button class="on" data-tab="overview">Overview</button>
+  <button data-tab="queue">Queue</button>
   <button data-tab="domains">Domains</button>
   <button data-tab="seams">Seams</button>
   <button data-tab="health">Spec Health</button>
+  <button data-tab="grad">Graduation</button>
+  <button data-tab="timeline">Timeline</button>
   <button data-tab="orbit">Orbit 3D</button>
 </nav>
 <main>
-  <div class="tab scroll on" id="tab-overview">{overview_html(facts, project_path)}</div>
+  <div class="tab scroll on" id="tab-overview">{overview_html(facts, project_path, findings)}</div>
+  <div class="tab scroll" id="tab-queue">{queue_html(facts, project_path)}</div>
   <div class="tab" id="tab-domains"><iframe class="inst" id="if-domains"></iframe></div>
   <div class="tab{"" if integ is not None else " scroll"}" id="tab-seams">{seams_tab}</div>
   <div class="tab scroll" id="tab-health">{spec_health_html(facts)}</div>
+  <div class="tab scroll" id="tab-grad">{graduation_html(facts)}</div>
+  <div class="tab scroll" id="tab-timeline">{timeline_html(facts, project_path)}</div>
   <div class="tab" id="tab-orbit"><iframe class="inst" id="if-orbit"></iframe></div>
 </main>
 <footer>gravity observatory · scanned live from the project docs — a wrong page means
@@ -330,16 +563,31 @@ def main() -> None:
 
     name, path = resolve(args.project)  # exits with candidates if ambiguous
     facts = scan(path)
+    findings = None
+    if check_gravity_consistency is not None:
+        try:
+            findings = (check_gravity_consistency(path)
+                        + check_spec_honesty(path))
+        except SystemExit:
+            findings = None
     outdir = Path(__file__).resolve().parent / "observatory"
     outdir.mkdir(exist_ok=True)
     out = outdir / f"{name}.html"
-    out.write_text(render_page(facts, args.theme, path), encoding="utf-8")
+    out.write_text(render_page(facts, args.theme, path, findings), encoding="utf-8")
 
     integ = facts["integration"]
     seams = f"{len(integ['seams'])} seams" if integ else "no integration SPEC"
     fenced = sum(1 for c in facts["specs"] if c["has_spec"])
+    scens = [s for d in facts["scenarios"] for p in d["plans"] for s in p["scenarios"]]
+    grads = sum(1 for s in scens if s["match"] is not None and s["test"])
+    building = sum(1 for p in facts["queue"] if p["status"] == "◑")
+    drift = ("checkers unavailable" if findings is None
+             else f"{len(findings)} finding{'s' if len(findings) != 1 else ''}")
     print(f"observatory[{args.theme}]: {len(facts['domains'])} domains · {seams} · "
-          f"{fenced}/{len(facts['specs'])} fenced · {len(THEMES)} live themes -> {out}")
+          f"{fenced}/{len(facts['specs'])} fenced · {grads}/{len(scens)} scenarios "
+          f"graduated · {building}/{len(facts['queue'])} slices building · "
+          f"{len(facts['walkthroughs'])} walkthroughs · {drift} · "
+          f"{len(THEMES)} live themes -> {out}")
     if args.open:
         webbrowser.open(out.as_uri())
 

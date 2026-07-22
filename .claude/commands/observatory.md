@@ -8,10 +8,13 @@ You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` 
 
 | Tab | Contents | Renderer (module) |
 |---|---|---|
-| **Overview** | goal (MISSION/PLAN) · the now (CONTEXT: last touched, next step) · the spine table (per-domain status/SPEC/ARCH/PLANs/why) · clickable authored-doc links | native (`generate_observatory.py`) |
+| **Overview** | goal (MISSION/PLAN) · the now (CONTEXT: last touched, next step) · the **drift card** (live `check.py` consistency + spec-honesty findings, imported never reimplemented; "checkers unavailable" renders as a warning, never as clean) · the spine table (per-domain status/SPEC/ARCH/PLANs/why) · clickable authored-doc links | native (`generate_observatory.py`) |
+| **Queue** | every `PLAN.*.md` across the domains as one work table — status glyph + note, Goal snippet, Next line, last-touched — building first, shipped dimmed last. A PLAN without a `Status:` line is flagged (it can't be mirrored into the spine). | native |
 | **Domains** | the cosmos 2D star system: MISSION at the core, domains orbiting at activity speed, SPEC rings, PLAN satellites — a wrong sky means index drift | `generate_cosmos.render_2d` |
 | **Seams** | the boundary seam graph: Boundary Map rows as flowing edges (packets = direction), evidence citations per seam, `OPEN:` rows dashed guard-red, unparseable rows listed loud — or an honest empty state pointing to `/new-spec <p> integration` / `/excavate` when no integration SPEC exists | `generate_boundary.render` |
 | **Spec Health** | per-domain contract honesty: walls (`[lint]/[type]/[test:…]`) vs judgment (`[review]`) vs guidance (`[—]`), gate presence, Behavioral Contract lines bound to tests, template `FILL` leftovers. Freeform (pre-v2) SPECs get a **tag census** and are labeled `freeform` — the census never invents discrete rules. | native |
+| **Graduation** | intent → contract, per domain: PLAN **Scenario** bullets paired with SPEC **Behavioral Contract** lines (token-overlap heuristic — the page says so). Shows ✔ graduated (test-bound), ○ still intent, and the two dishonesty smells loud: a scenario **reworded into the BC without a test**, and **unbound BC lines**. A shipped PLAN whose scenarios never graduated is flagged (its wall may live in a gate — check before judging). | native |
+| **Timeline** | `docs/walkthroughs/` as a reverse-chron proof strip — date · domain chips (from the `Domain(s):` header, filename fallback) · title, each linking to its file. Honest empty state pointing at `WALKTHROUGH.template.md` when the log doesn't exist. | native |
 | **Orbit 3D** | the analytical 3D system: health rings (solid arc = walls share), **coupling arcs** between domains from doc cross-references, comet trails on recently-touched domains, guard-red pulse on unfenced ◑ domains; HUD toggles for arcs/trails | `generate_cosmos.render_3d` |
 
 (The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command.)
@@ -36,6 +39,9 @@ Glance at the script's summary line and the facts you already have; note anythin
 - **Low wall-share** — a domain whose rules are mostly `[review]` promises; suggest promoting rules by giving them tests (`/new-spec` retrofit).
 - **No Gate line** — nothing proves a change in that domain; the SPEC template wants one.
 - **Unbound Behavioral Contract lines** — scenario intent dressed as contract; it graduates only with a named test.
+- **Shipped-but-never-graduated scenarios** (Graduation tab) — a ✓ PLAN whose given/when/then never earned a `[test:…]` line; either the wall lives in a gate (fine — say where) or the regression test was skipped.
+- **Drift findings on Overview** — the card is `/triage` for this one project; FAILs mean a domain is unwired from an index. Relay them; the fix is always in the docs.
+- **Status-less PLANs piling up** (Queue tab) — intent stubs that can't be mirrored into the spine; either give them a `Status: ○ planned` line or fold them into a neighbor.
 - **A stale CONTEXT next-step** against a busy spine — session-ritual drift; suggest `/triage`.
 
 Keep it short — the page is the report.

@@ -11,6 +11,9 @@ Callers:
     scan_domains(path)      — cosmos facts: domains + spine + MISSION rows
     scan_integration(path)  — boundary facts from integration/SPEC.md (None if absent)
     scan_spec_census(path)  — per-domain SPEC health: rule tags, gate, contract lines
+    scan_scenarios(path)    — graduation facts: PLAN Scenario intent vs SPEC BC lines
+    scan_plans(path)        — slice-queue facts: every PLAN.*.md (status/goal/next/age)
+    scan_walkthroughs(path) — the dated docs/walkthroughs/ log (date/title/domains)
     scan_context(path)      — CONTEXT.md now-facts
     scan(path)              — everything above in one dict (the observatory's input)
 
@@ -89,6 +92,19 @@ def rule_kind(tag: str) -> str:
             else "judgment" if tag == "review" else "guidance")
 
 
+# Evidence doors (workspace CLAUDE.md §6) — top-level .gravity/ dirs that are
+# never subject domains; check.py holds the same set for its index checks.
+NON_DOMAIN_DIRS = {"inbox", "given"}
+
+
+def domain_dirs(g: Path) -> list[Path]:
+    if not g.is_dir():
+        return []
+    return sorted(p for p in g.iterdir()
+                  if p.is_dir() and p.name not in NON_DOMAIN_DIRS
+                  and not p.name.startswith("."))
+
+
 # ---------------------------------------------------------------------------
 # Domains + spine + MISSION rows (cosmos facts)
 # ---------------------------------------------------------------------------
@@ -101,7 +117,7 @@ def scan_domains(project: Path) -> dict:
     # 1) domains = the directory (the registry IS the folder list)
     domains: dict[str, dict] = {}
     now = time.time()
-    for d in sorted(p for p in g.iterdir() if p.is_dir()):
+    for d in domain_dirs(g):
         entries = [p for p in d.iterdir() if p.is_file()]
         files = sorted(p.name for p in entries)
         newest = max((p.stat().st_mtime for p in entries), default=0)
@@ -293,7 +309,7 @@ TAG = re.compile(r"`\[((?:test|type|lint|review)[^\]`]*|—)\]`")
 def scan_spec_census(project: Path) -> list[dict]:
     g = project / ".gravity"
     out = []
-    for d in sorted(p for p in g.iterdir() if p.is_dir()) if g.is_dir() else []:
+    for d in domain_dirs(g):
         spec = d / "SPEC.md"
         entry = {"domain": d.name, "has_spec": spec.exists(), "gate": "",
                  "gate_cmd": "", "form": "structured",
@@ -358,7 +374,7 @@ def scan_couplings(project: Path) -> list[dict]:
     g = project / ".gravity"
     if not g.is_dir():
         return []
-    domains = sorted(p.name for p in g.iterdir() if p.is_dir())
+    domains = [p.name for p in domain_dirs(g)]
     texts: dict[str, str] = {}
     for d in domains:
         buf = []
@@ -384,6 +400,189 @@ def scan_couplings(project: Path) -> list[dict]:
                 entry["dirs"][d] = n
     return [{"a": a, "b": b, "refs": v["refs"], "dirs": v["dirs"]}
             for (a, b), v in sorted(links.items())]
+
+
+# ---------------------------------------------------------------------------
+# Slice queue — every PLAN.*.md across the domains, as work-table facts:
+# status glyph (+ its trailing note), a Goal snippet, the Next line, age.
+# The queue view answers "what is in flight project-wide" without opening
+# ten files; the PLANs themselves stay the one home of the intent.
+# ---------------------------------------------------------------------------
+STATUS_FULL = re.compile(r"^Status:\s*([✓◑○])\s*([^<\n]*)", re.M)
+
+
+def _snippet(block: str, n: int) -> str:
+    lines = [ln.strip().lstrip("- ").strip() for ln in block.splitlines()
+             if ln.strip() and not ln.strip().startswith(("<!--", "|"))]
+    return trunc(strip_md(" ".join(lines)), n) if lines else ""
+
+
+def scan_plans(project: Path) -> list[dict]:
+    g = project / ".gravity"
+    now = time.time()
+    out = []
+    for d in domain_dirs(g):
+        for f in sorted(d.glob("PLAN*.md")):
+            body = re.sub(r"<!--.*?-->", "",
+                          f.read_text(encoding="utf-8", errors="replace"), flags=re.S)
+            sm = STATUS_FULL.search(body)
+            out.append({
+                "domain": d.name, "file": f.name,
+                "rel": f".gravity/{d.name}/{f.name}",
+                "status": sm.group(1) if sm else "",
+                "note": strip_md(sm.group(2)).strip() if sm else "",
+                "goal": _snippet(section(body, "Goal"), 160),
+                "next": _snippet(section(body, "Next"), 120),
+                "age_days": (now - f.stat().st_mtime) / 86400,
+            })
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Walkthroughs — the frozen per-slice trust artifacts under docs/walkthroughs/
+# (dated, append-only; workspace CLAUDE.md §6). Facts per file: date (from the
+# filename — the one mandatory part), title, and Domain(s) from the header
+# line in either wild style (plain `Domain(s): dram` or blockquote
+# `> Domain(s): \`agent-console\`.`), slug-fallback when absent.
+# ---------------------------------------------------------------------------
+WT_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.md$")
+WT_DOMS = re.compile(r"Domain\(s\):\s*(.+)$", re.M)
+
+
+def scan_walkthroughs(project: Path) -> list[dict]:
+    wdir = project / "docs" / "walkthroughs"
+    if not wdir.is_dir():
+        return []
+    known = {p.name for p in domain_dirs(project / ".gravity")}
+    out = []
+    for f in sorted(wdir.glob("*.md")):
+        m = WT_NAME.match(f.name)
+        if not m:
+            continue
+        head = "\n".join(f.read_text(encoding="utf-8",
+                                     errors="replace").splitlines()[:20])
+        tm = re.search(r"^#\s+(.+)$", head, re.M)
+        title = strip_md(re.sub(r"^Walkthrough\s*[—-]\s*", "",
+                                tm.group(1))) if tm else m.group(2)
+        dm = WT_DOMS.search(head)
+        doms = (re.findall(r"[a-z0-9][\w-]*", dm.group(1).lower())
+                if dm else [])
+        if not doms:
+            doms = [t for t in m.group(2).split("-") if t in known]
+        out.append({"file": f.name, "date": m.group(1), "slug": m.group(2),
+                    "title": trunc(title, 120), "domains": doms})
+    return sorted(out, key=lambda w: w["date"], reverse=True)
+
+
+# ---------------------------------------------------------------------------
+# Scenario graduation — intent vs contract, per domain.
+#
+# A behavior enters gravity as a given/when/then bullet in a PLAN's Scenario
+# block (intent) and graduates into the SPEC's Behavioral Contract only once a
+# named test asserts it. This scanner reads both sides and pairs them by token
+# overlap so a renderer can show the pipeline: which scenarios earned a wall,
+# which are still intent, and which BC lines are dressed as contract with no
+# test. The pairing is a text heuristic — it is reported as `match` facts
+# (score included), never as a verdict; a scenario may earn its wall elsewhere
+# (a gate line), and only reading the docs settles that.
+# ---------------------------------------------------------------------------
+STATUS_RE = re.compile(r"^Status:\s*([✓◑○])", re.M)
+TEST_TAG = re.compile(r"`?\[test:([^\]`]+)\]`?")
+GWT_WORDS = {"given", "when", "then"}
+
+
+def _match_tokens(s: str) -> set[str]:
+    # camelCase split before tokenizing, so `executionPath` and
+    # `execution_path` (the same fact on two sides of a seam) can meet
+    return tokens(re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", s)) - GWT_WORDS
+
+
+def _chunks_starting(body: str, prefix: str) -> list[str]:
+    """Contents of every ## section whose heading starts with prefix
+    (case-insensitive; headings may carry suffixes like '(bug intake)')."""
+    out = []
+    for c in re.split(r"^##\s+", body, flags=re.M)[1:]:
+        head, _, rest = c.partition("\n")
+        if head.strip().lower().startswith(prefix):
+            out.append(rest)
+    return out
+
+
+def _bullets(block: str) -> list[str]:
+    """Top-level `- ` bullets, continuation lines joined; FILL stubs dropped."""
+    items: list[str] = []
+    cur: list[str] = []
+    for line in block.splitlines():
+        s = line.strip()
+        if s.startswith("- "):
+            if cur:
+                items.append(" ".join(cur))
+            cur = [s[2:].strip()]
+        elif cur and s:
+            cur.append(s)
+        elif cur:
+            items.append(" ".join(cur))
+            cur = []
+    if cur:
+        items.append(" ".join(cur))
+    return [b for b in items if "<FILL" not in b]
+
+
+def scan_scenarios(project: Path) -> list[dict]:
+    g = project / ".gravity"
+    out = []
+    for d in domain_dirs(g):
+        plans = []
+        for f in sorted(d.glob("PLAN*.md")):
+            body = re.sub(r"<!--.*?-->", "",
+                          f.read_text(encoding="utf-8", errors="replace"), flags=re.S)
+            sm = STATUS_RE.search(body)
+            scens = [{"text": strip_md(b), "test": "", "match": None}
+                     for blk in _chunks_starting(body, "scenario")
+                     for b in _bullets(blk)]
+            if scens:
+                plans.append({"file": f.name,
+                              "status": sm.group(1) if sm else "",
+                              "scenarios": scens})
+        bc_lines = []
+        spec = d / "SPEC.md"
+        if spec.exists():
+            body = re.sub(r"<!--.*?-->", "",
+                          spec.read_text(encoding="utf-8", errors="replace"), flags=re.S)
+            for blk in _chunks_starting(body, "behavioral contract"):
+                for b in _bullets(blk):
+                    tm = TEST_TAG.search(b)
+                    bc_lines.append({"text": strip_md(TEST_TAG.sub(" ", b)),
+                                     "test": tm.group(1).strip() if tm else "",
+                                     "matched": False})
+
+        # pair scenarios ↔ BC lines: greedy best-first on token overlap
+        all_scens = [s for p in plans for s in p["scenarios"]]
+        pairs = []
+        for si, s in enumerate(all_scens):
+            st = _match_tokens(s["text"])
+            for bi, b in enumerate(bc_lines):
+                bt = _match_tokens(b["text"])
+                if not st or not bt:
+                    continue
+                inter = len(st & bt)
+                score = inter / min(len(st), len(bt))
+                if inter >= 4 and score >= 0.45:
+                    pairs.append((score, si, bi))
+        used_s: set[int] = set()
+        used_b: set[int] = set()
+        for score, si, bi in sorted(pairs, reverse=True):
+            if si in used_s or bi in used_b:
+                continue
+            used_s.add(si)
+            used_b.add(bi)
+            all_scens[si]["match"] = round(score, 2)
+            all_scens[si]["test"] = bc_lines[bi]["test"]
+            bc_lines[bi]["matched"] = True
+
+        if plans or bc_lines:
+            out.append({"domain": d.name, "plans": plans, "bc": bc_lines})
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -420,6 +619,9 @@ def scan(project: Path) -> dict:
     facts["integration"] = scan_integration(project)
     facts["specs"] = scan_spec_census(project)
     facts["links"] = scan_couplings(project)
+    facts["scenarios"] = scan_scenarios(project)
+    facts["queue"] = scan_plans(project)
+    facts["walkthroughs"] = scan_walkthroughs(project)
     facts["context"] = scan_context(project)
     facts["generated"] = date.today().isoformat()
     return facts
