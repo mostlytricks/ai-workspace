@@ -12,10 +12,11 @@ and render the same facts, so the views can't disagree.
 Tabs:
     Overview    — goal, the now (CONTEXT), the drift card (check.py findings,
                   imported never reimplemented; "unavailable" is not "clean"),
-                  the spine table, authored-doc links
+                  the spine table, the tracks card (direction axis, when the
+                  IMPLEMENTATION_PLAN has a Tracks table), authored-doc links
     Queue       — every PLAN.*.md as one work table (status/goal/next/age),
-                  building first; a PLAN without a Status: line is flagged
-    Domains     — the cosmos 2D star system (embedded)
+                  building first; a PLAN without a Status: line is flagged;
+                  slices carried by a track wear its ⟡ chip
     Seams       — the boundary seam graph (embedded; empty-state if no
                   integration SPEC — with the pointer, never a guess)
     Spec Health — per-domain contract honesty: walls vs [review] judgment,
@@ -54,9 +55,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scenarios"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
 from resolve_project import resolve  # noqa: E402
 from scan_project import scan, trunc  # noqa: E402
-from generate_cosmos import THEMES, STATUS_LABEL, render_2d, render_3d  # noqa: E402
+from generate_cosmos import THEMES, STATUS_LABEL, render_3d  # noqa: E402
 from generate_boundary import render as render_boundary  # noqa: E402
 try:  # findings stay check.py's concern — imported, never reimplemented here
     from check import check_gravity_consistency, check_spec_honesty  # noqa: E402
@@ -119,6 +121,25 @@ def overview_html(facts: dict, project_path: Path, findings) -> str:
             f'<td>{len(d["plans"]) or "—"}</td><td>{touched}</td>'
             f'<td class="why">{esc(trunc(d["why"], 90)) or "<em>no MISSION row</em>"}</td></tr>')
 
+    tracks_card = ""
+    if facts.get("tracks"):
+        trows = []
+        for tr in facts["tracks"]:
+            st = tr["status"] or "◑"
+            chips = "".join(f'<span class="tchip">{esc(d)}</span>' for d in tr["domains"]) \
+                    or '<span class="tchip none">no carrying slices</span>'
+            dangling = [p["rel"] for p in tr["plans"] if not p["exists"]]
+            warn = (f' <span class="wt">⚠ {len(dangling)} carrying PLAN'
+                    f'{"s" if len(dangling) != 1 else ""} missing on disk</span>'
+                    if dangling else "")
+            mref = (f' <span class="dimc">(→ MISSION {esc(tr["mission"])})</span>'
+                    if tr["mission"] else ' <span class="wt">(no MISSION § pointer)</span>')
+            trows.append(f'<div class="okv"><b>⟡ {esc(tr["name"])}</b> '
+                         f'<span class="dot {STATUS_CLASS.get(st, "st-a")}"></span>{st} — '
+                         f'{esc(trunc(tr["direction"], 140))}{mref} · {chips}{warn}</div>')
+        tracks_card = (f'<div class="ocard"><div class="ohead">tracks — the direction axis '
+                       f'({len(facts["tracks"])} of ≤3)</div>' + "".join(trows) + '</div>')
+
     links = []
     for label, rel in (("MISSION.html", ".gravity/MISSION.html"),
                        ("ARCHITECTURE.html", ".gravity/ARCHITECTURE.html"),
@@ -135,6 +156,7 @@ def overview_html(facts: dict, project_path: Path, findings) -> str:
   <div class="ocard"><div class="ohead">spine — {len(facts["domains"])} domains</div>
   <table class="spine"><tr><th>domain</th><th>status</th><th>SPEC</th><th>ARCH</th>
   <th>PLANs</th><th>touched</th><th>why</th></tr>{"".join(rows)}</table></div>
+  {tracks_card}
   <div class="ocard"><div class="ohead">authored docs</div>
   <div class="links">{" · ".join(links) or "—"}</div></div>
 </div>"""
@@ -216,6 +238,11 @@ def queue_html(facts: dict, project_path: Path) -> str:
                 'PLAN (<span class="mono">/interview</span> / <span class="mono">/new-domain</span> '
                 'seed one); the roadmap spine lives in IMPLEMENTATION_PLAN.md.</div></div></div>')
 
+    track_of: dict[str, list[str]] = {}
+    for tr in facts.get("tracks", []):
+        for pl in tr["plans"]:
+            track_of.setdefault(pl["rel"], []).append(tr["name"])
+
     n_b = sum(1 for p in q if p["status"] == "◑")
     n_p = sum(1 for p in q if p["status"] == "○")
     n_s = sum(1 for p in q if p["status"] == "✓")
@@ -231,9 +258,11 @@ def queue_html(facts: dict, project_path: Path) -> str:
         nxt = p["next"] or p["note"]
         shipped = ' class="qdone"' if p["status"] == "✓" else ""
         touched = "today" if p["age_days"] < 1 else f'{p["age_days"]:.0f}d'
+        tchips = "".join(f'<span class="tchip">⟡ {esc(n)}</span>'
+                         for n in track_of.get(p["rel"], []))
         rows.append(
             f'<tr{shipped}><td><a class="qlink" href="{href}" target="_blank">'
-            f'<code>{esc(p["domain"])}/</code>{esc(p["file"])}</a></td>'
+            f'<code>{esc(p["domain"])}/</code>{esc(p["file"])}</a> {tchips}</td>'
             f'<td class="qst">{st}</td>'
             f'<td class="qgoal">{esc(p["goal"]) or "<em>no Goal section</em>"}</td>'
             f'<td class="qnext">{esc(nxt) or "—"}</td>'
@@ -380,7 +409,7 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
     # every theme's instruments, pre-rendered — the buttons swap them in place
     inst: dict[str, dict] = {}
     for tn, tt in THEMES.items():
-        entry = {"domains": render_2d(facts, tt), "orbit": render_3d(facts, tt)}
+        entry = {"orbit": render_3d(facts, tt)}
         if integ is not None:
             entry["seams"] = render_boundary(integ, tt)
         inst[tn] = entry
@@ -529,7 +558,6 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
 <nav>
   <button class="on" data-tab="overview">Overview{b_overview}</button>
   <button data-tab="queue">Queue{b_queue}</button>
-  <button data-tab="domains">Domains</button>
   <button data-tab="seams">Seams{b_seams}</button>
   <button data-tab="health">Spec Health{b_health}</button>
   <button data-tab="grad">Graduation{b_grad}</button>
@@ -539,7 +567,6 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
 <main>
   <div class="tab scroll on" id="tab-overview">{overview_html(facts, project_path, findings)}</div>
   <div class="tab scroll" id="tab-queue">{queue_html(facts, project_path)}</div>
-  <div class="tab" id="tab-domains"><iframe class="inst" id="if-domains"></iframe></div>
   <div class="tab{"" if integ is not None else " scroll"}" id="tab-seams">{seams_tab}</div>
   <div class="tab scroll" id="tab-health">{spec_health_html(facts)}</div>
   <div class="tab scroll" id="tab-grad">{graduation_html(facts)}</div>
@@ -550,12 +577,10 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
  wrong docs (fix them, rerun)</footer>
 <script>
   const INST = {payload};
-  const domIF = document.getElementById('if-domains');
   const seamIF = document.getElementById('if-seams');
   const orbIF = document.getElementById('if-orbit');
   function setTheme(n) {{
     document.documentElement.dataset.theme = n;
-    domIF.srcdoc = INST[n].domains;
     orbIF.srcdoc = INST[n].orbit;
     if (seamIF && INST[n].seams) seamIF.srcdoc = INST[n].seams;
     try {{ localStorage.setItem('dash-theme', n); }} catch (e) {{}}
@@ -622,6 +647,7 @@ def main() -> None:
     print(f"observatory[{args.theme}]: {len(facts['domains'])} domains · {seams} · "
           f"{fenced}/{len(facts['specs'])} fenced · {grads}/{len(scens)} scenarios "
           f"graduated · {building}/{len(facts['queue'])} slices building · "
+          f"{len(facts['tracks'])} tracks · "
           f"{len(facts['walkthroughs'])} walkthroughs · {drift} · "
           f"{len(THEMES)} live themes -> {out}")
     if args.open:

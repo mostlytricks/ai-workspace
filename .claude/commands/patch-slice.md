@@ -14,7 +14,7 @@ Exit codes from the script: `0` ok · `1` a wall failed (stop, read its output) 
 
 ## Step 1 — Intent first: the slice PLAN
 
-A slice PLAN must exist **before any edit** (`templates/PLAN.template.md` shape, at `.gravity/<domain>/PLAN.<slug>.md`). If it doesn't, write it now — Goal, Scenario, Slice, Verification. Derive `<slug>` from it if the user didn't give one.
+A slice PLAN must exist **before any edit** (`gravity/templates/PLAN.template.md` shape, at `.gravity/<domain>/PLAN.<slug>.md`). If it doesn't, write it now — Goal, Scenario, Slice, Verification. Derive `<slug>` from it if the user didn't give one.
 
 **Bug intake rule:** if this slice is a bug fix, the Scenario block must state the repro as a **currently-false** `given/when/then` — the observable behavior the system does *not* yet exhibit. That failing scenario is the slice's contract-to-be: the fix isn't done until a named test asserts it (step 5). Don't patch a bug you can't state.
 
@@ -64,7 +64,7 @@ Give a `--probe` whenever state was snapped ("restored state actually functions"
 3. **RE-PLAN** — the step that closes the loop, same session:
    - Slice PLAN: status → ✓ (or the rollback finding), Execution block already carries the mechanical story.
    - `CONTEXT.md`: Completed bullet + fresh Next Step; fix any preflight drift findings.
-   - Shipping something reviewable → a WALKTHROUGH (`templates/WALKTHROUGH.template.md`), linked not restated.
+   - Shipping something reviewable → a WALKTHROUGH (`gravity/templates/WALKTHROUGH.template.md`), linked not restated.
    - **Bug graduation:** the once-false scenario now has a named test → promote it into the domain SPEC's **Behavioral Contract** as a `[test:<name>]` line. Intent graduates to contract by earning a wall — bug fixes are the fastest source of honest contract lines.
 
 ## Report back

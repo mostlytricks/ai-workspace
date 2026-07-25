@@ -30,7 +30,7 @@ Gravity는 여러 소프트웨어 프로젝트를 AI 코딩 에이전트와 함�
 ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화이트리스트가 곧 이식 가능한 스켈레톤)
 ├── CLAUDE.md            # 에이전트 운영 매뉴얼 — 자동 로드; 단어 예산 방벽(MANUAL_BLOAT) 적용
 ├── docs/                # 사람이 읽는 문서 (본 문서, HANDBOOK, INTRO, MISSION, intake 시트)
-├── templates/           # 16개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
+├── gravity/templates/           # 16개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
 ├── .claude/commands/    # 20개 슬래시 커맨드 (lazy: 호출 시에만 로드)
 ├── .claude/scenarios/   # 검증 하네스 (check.py + 골든 픽스처)
 ├── repos/               # 프로젝트 정본 저장소 — 각각 독립된 git 저장소

@@ -20,6 +20,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# resolve_project is workspace-side (manager) tooling — reach for it beside the
+# workspace commands; scan_project sits next to this file in gravity/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".claude" / "scripts"))
 from resolve_project import resolve  # noqa: E402
 from scan_project import scan_spec_census  # noqa: E402
 

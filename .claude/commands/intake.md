@@ -18,7 +18,7 @@ The test: **is the input a claim someone *else* reported, that must be verified 
 
 1. **Resolve the project** under `active/`, `stable/`, or `repos/`. Not found → list candidates and stop.
 2. **Collect the raw reports** from whatever the user gives you (pasted text, files, a support-channel dump). If nothing was provided, ask for the batch — this command has no other input.
-3. **Seed the sheet**: copy `templates/INTAKE.template.md` → `<project>/docs/intake/<YYYY-MM-DD>.md` (date from the system, never hardcoded; a second batch the same day gets `-b` suffixed). One item block per report, **reporter's words quoted verbatim** in *Observed*. If the reports carry private user data, put the sheet under a git-ignored path instead and note that in CONTEXT.md.
+3. **Seed the sheet**: copy `gravity/templates/INTAKE.template.md` → `<project>/docs/intake/<YYYY-MM-DD>.md` (date from the system, never hardcoded; a second batch the same day gets `-b` suffixed). One item block per report, **reporter's words quoted verbatim** in *Observed*. If the reports carry private user data, put the sheet under a git-ignored path instead and note that in CONTEXT.md.
 
 ## Step 1 — The required-fields check (per item, before any triage)
 

@@ -1,7 +1,7 @@
 ---
 description: Assemble the pre-change packet for one domain — the ordered read-first list (integration gate, the domain SPEC, coupled domains from live doc cross-references, open PLANs), the walls (runnable gate, contract census), and honest warnings (unfenced, freeform, stale CONTEXT). Run before changing a domain; then actually read what it lists.
 argument-hint: <project-or-alias> <domain>
-allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/scan_project.py:*), Bash(python .claude/scripts/run_gate.py:*)
+allowed-tools: Read, Glob, Grep, Bash(python gravity/lib/scan_project.py:*), Bash(python gravity/lib/run_gate.py:*)
 ---
 
 You are running `/preflight` from `ai-workspace/`. It turns the navigation discipline of workspace CLAUDE.md §6 ("load the SPEC before changing a domain; integration first on boundary changes") from prose an agent must remember into a **mechanically assembled packet**. Same scanner as the observatory (`scan_project.py`) — the packet and the human's page can't disagree.
@@ -11,7 +11,7 @@ You are running `/preflight` from `ai-workspace/`. It turns the navigation disci
 Parse `$ARGUMENTS` as `<project> <domain>`, then:
 
 ```bash
-python .claude/scripts/scan_project.py <project> --preflight <domain>
+python gravity/lib/scan_project.py <project> --preflight <domain>
 ```
 
 - Unknown domain → the script lists the known ones; relay, don't guess.

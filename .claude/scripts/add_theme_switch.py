@@ -150,8 +150,8 @@ WIDGET = (
 
 # Workspace-level docs always carry the switcher (the stencils, so new copies inherit it).
 WORKSPACE_DOCS = (
-    "templates/MISSION.template.html",
-    "templates/ARCHITECTURE.template.html",
+    "gravity/templates/MISSION.template.html",
+    "gravity/templates/ARCHITECTURE.template.html",
     "docs/MISSION.html",
     "docs/INTRO.html",
 )

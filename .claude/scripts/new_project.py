@@ -26,7 +26,7 @@ WORKSPACE_ROOT = SCRIPT_DIR.parent.parent             # ai-workspace/
 TIERS = ("repos", "active", "stable", "dormant", "archive")
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 PROJECTS_MD = WORKSPACE_ROOT / "PROJECTS.md"
-TEMPLATES_DIR = WORKSPACE_ROOT / "templates"          # stencils live here (CLAUDE.md §1)
+TEMPLATES_DIR = WORKSPACE_ROOT / "gravity" / "templates"   # stencils live here (CLAUDE.md §1)
 TEMPLATES = {
     "CLAUDE.md": TEMPLATES_DIR / "CLAUDE.template.md",
     "CONTEXT.md": TEMPLATES_DIR / "CONTEXT.template.md",
@@ -51,7 +51,7 @@ def validate(name):
                  "Use Workflow 2/3 (bring-in / promote) instead of init.")
     for label, tpl in TEMPLATES.items():
         if not tpl.exists():
-            fail(f"missing templates/{tpl.name} — restore it first "
+            fail(f"missing gravity/templates/{tpl.name} — restore it first "
                  f"(needed to create {label}).")
 
 

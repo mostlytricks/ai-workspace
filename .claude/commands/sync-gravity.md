@@ -10,18 +10,18 @@ You are running `/sync-gravity` from `ai-workspace/` to bring project **`$ARGUME
 1. **Resolve the project** via `.claude/scripts/resolve_project.py`. Not found → list candidates and stop.
 
 2. **Read the versions — never invent them:**
-   - **Target** = major.minor from the workspace root `VERSION` file.
+   - **Target** = major.minor from the `gravity/VERSION` file.
    - **Router stamp** = the `> gravity: vX.Y` line in the project's root `CLAUDE.md`.
    - **Card stamp** = the `gravity protocol · vX.Y` line in `.gravity/GRAVITY.md` (`.gravity/` projects only).
 
    If the project has **no router stamp at all**, stop and say so — an unstamped project hasn't adopted gravity's versioned conventions; the fix is adoption (`/adopt-gravity`, or adding a light stamp by hand), not a sync. If both stamps already equal the target, report "already current" and stop.
 
-3. **Read the delta from `CHANGELOG.md`** — every released section between the project's router stamp and the target (e.g. stamped `v1.2`, target `v1.5` → read `[1.3.0]`, `[1.4.0]`, `[1.5.0]`). Sort what you find into:
+3. **Read the delta from `gravity/CHANGELOG.md`** — every released section between the project's router stamp and the target (e.g. stamped `v1.2`, target `v1.5` → read `[1.3.0]`, `[1.4.0]`, `[1.5.0]`). Sort what you find into:
    - **Mechanical** — the card re-copy and stamp bump (step 4 does these).
    - **Judgment** — any *major*-worthy or convention-shape change the project may violate (renamed conventions, moved files, new required wiring). These become the step-6 checklist. Quote the changelog line; never paraphrase a rule from memory.
 
 4. **Apply the mechanical layer:**
-   - `.gravity/` projects: re-copy `templates/GRAVITY-PROTOCOL.template.md` → `.gravity/GRAVITY.md` (overwrite — the card is a verbatim copy by contract), delete the template's top comment block, fill the `v<X.Y>` stamp with the target version.
+   - `.gravity/` projects: re-copy `gravity/GRAVITY-PROTOCOL.md` → `.gravity/GRAVITY.md` (overwrite — the card is a verbatim copy by contract), delete the template's top comment block, fill the `v<X.Y>` stamp with the target version.
    - All projects: update the router's `> gravity: vX.Y` line to the target.
    - Flat (non-`.gravity/`) projects get **only** the stamp bump — no card, no ceremony.
 

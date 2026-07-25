@@ -14,6 +14,16 @@
 
   TWO SHAPES: arc-shaped projects use the Phase roadmap (default, below); projects that GROW by
   accreting features use the SLICE-QUEUE VARIANT further down instead. Keep one, delete the other.
+
+  THE WORK-LAYER LAW (so phase/slice/track never blur): there is exactly ONE unit of work —
+  the SLICE (the smallest shippable change that passes the gate; its intent lives in a domain
+  PLAN.*.md). Everything else in this file is an INDEX over slices, on one of three axes:
+    time      → the Phase roadmap or Slice queue ("what ships next?" — a PHASE is just a
+                slice with an ordinal; a lane is just a slice with a priority)
+    domain    → the status spine mirrored from the domain PLANs ("where is each domain?")
+    track     → the Tracks table ("how far along is each cross-domain intent?")
+  Indexes hold no work. If you're writing work items into the spine or a track row, stop —
+  that content belongs in a slice PLAN, linked from here.
 -->
 
 # <project> — Implementation plan & resume sheet

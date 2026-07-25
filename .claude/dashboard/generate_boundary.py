@@ -36,6 +36,7 @@ import webbrowser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
 from resolve_project import resolve  # noqa: E402
 from scan_project import scan_integration, trunc  # noqa: E402  (one scanner, many instruments)
 from generate_cosmos import THEMES, panel_css  # noqa: E402  (one palette, many instruments)

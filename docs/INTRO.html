@@ -221,7 +221,7 @@ footer { margin-top:70px; padding-top:18px; border-top:1px solid var(--line); co
 ├── CLAUDE.md            <span class="c"># the operating manual — auto-loads, the one router</span>
 ├── PROJECTS.md          <span class="c"># live index: every project, tier, focus, gravity adoption</span>
 ├── VERSION · CHANGELOG.md  <span class="c"># gravity itself is versioned (see §10)</span>
-├── docs/ · templates/ · .claude/   <span class="c"># read-docs · stencils · commands + scripts</span>
+├── docs/ · gravity/templates/ · .claude/   <span class="c"># read-docs · stencils · commands + scripts</span>
 ├── <span class="b">repos/</span>               <span class="c"># CANONICAL storage — real project files, one folder per project</span>
 └── <span class="a">active/</span> · <span class="a">stable/</span> · <span class="a">dormant/</span> · <span class="a">archive/</span>   <span class="c"># junction views: being worked · works · paused · over</span></pre>
   <p>The root repo tracks <strong>only the skeleton</strong> (deny-all <code>.gitignore</code>, whitelist the meta files) — each project is its own independent git repo. A <em>project</em> is the unit of attention, not the unit of git: a project usually holds one repo, but a multi-service system can be a <strong>hub project</strong> — a docs-only repo with the service clones nested inside, git-denied (§08).</p>

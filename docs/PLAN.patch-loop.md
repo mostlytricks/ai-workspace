@@ -65,7 +65,7 @@ The smallest change that proves the ritual — **run it by hand, no skill yet**:
 
 - **[NEW]** `docs/PLAN.patch-loop.md` — this file: the ritual spec + Execution block
   format (the 7 steps above are the deliverable, not commentary).
-- **[NEW]** optional `stateful paths:` line documented in `templates/SPEC.template.md`
+- **[NEW]** optional `stateful paths:` line documented in `gravity/templates/SPEC.template.md`
   (one line under Gate; absent = step 3 skipped).
 - **[PILOT]** execute the ritual manually on **knowledge-viewer's hybrid-search slice**
   (add `hybrid.ts`, wire `/api/search` + chat tool + ⌘K — already planned, half-built,

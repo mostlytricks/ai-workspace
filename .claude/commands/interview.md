@@ -49,8 +49,8 @@ For projects that grow by accreting features (analyze → agent → dashboard �
    - **Gate** — what proves the slice (command / demo / observation; "I'll eyeball it" → `[review]`).
    - **Now** — where it enters the plan: which queue lane (`now`/`next`/`later`) or phase.
 3. **Write by gate verdict:**
-   - *Domain* → the `/new-domain` flow: `.gravity/<domain>/` + starter `PLAN.md` seeded from `templates/PLAN.template.md` (filled from the answers) + **all four index wires**. MISSION row only once it's confirmed durable.
-   - *Slice* → `PLAN.<slug>.md` from `templates/PLAN.template.md` under the owning domain, + one row in the `IMPLEMENTATION_PLAN.md` spine/queue. If **no domain owns it yet** (a `.gravity/` project with no domain folders), the slice lives as a queue/phase row in `IMPLEMENTATION_PLAN.md` alone — don't mint a domain just to give it a folder.
+   - *Domain* → the `/new-domain` flow: `.gravity/<domain>/` + starter `PLAN.md` seeded from `gravity/templates/PLAN.template.md` (filled from the answers) + **all four index wires**. MISSION row only once it's confirmed durable.
+   - *Slice* → `PLAN.<slug>.md` from `gravity/templates/PLAN.template.md` under the owning domain, + one row in the `IMPLEMENTATION_PLAN.md` spine/queue. If **no domain owns it yet** (a `.gravity/` project with no domain folders), the slice lives as a queue/phase row in `IMPLEMENTATION_PLAN.md` alone — don't mint a domain just to give it a folder.
    - *Flat project (no `.gravity/`)* → a new phase or queue row in `IMPLEMENTATION_PLAN.md` (or CONTEXT.md Next Step if the project is two-doc); don't create `.gravity/` for one feature.
 
 Then continue with Step 6 (ambition gate is the domain gate here; read back; stop).

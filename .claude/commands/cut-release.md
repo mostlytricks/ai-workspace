@@ -7,7 +7,7 @@ disable-model-invocation: true
 You are running `/cut-release` from `ai-workspace/`. It performs **one release Change Order** against the correct target, in the correct order, and **stops before pushing** (the push is the user's call). The whole reason this command exists is to remove the foot-guns of a manual bump — wrong file bumped, hardcoded date, forgotten tag, releasing red code. So it is mostly a **verification procedure**: never invent a version, never tag a failing gate, never push.
 
 Parse `$ARGUMENTS`:
-- **empty** → target is **gravity itself** (the `ai-workspace` skeleton repo). Version source: root `VERSION` + tag on `ai-workspace`. Changelog: root `CHANGELOG.md`.
+- **empty** → target is **gravity itself** (the `ai-workspace` skeleton repo). Version source: `gravity/VERSION` + tag on `ai-workspace`. Changelog: `gravity/CHANGELOG.md`.
 - **`<project>`** → target is **that project**. Locate it under `active/`, `dormant/`, or `repos/` (run all git commands *inside* the project dir so they hit its real `.git`). Version source: its manifest (`package.json` `version`, or `pyproject.toml` / `Cargo.toml` / a `VERSION` file — whatever it uses). Changelog: `<project>/CHANGELOG.md`.
 
 ## Step 1 — Resolve target & current version (don't guess)

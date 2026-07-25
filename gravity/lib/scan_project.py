@@ -13,6 +13,7 @@ Callers:
     scan_spec_census(path)  — per-domain SPEC health: rule tags, gate, contract lines
     scan_scenarios(path)    — graduation facts: PLAN Scenario intent vs SPEC BC lines
     scan_plans(path)        — slice-queue facts: every PLAN.*.md (status/goal/next/age)
+    scan_tracks(path)       — direction-axis facts: the IMPLEMENTATION_PLAN.md Tracks table
     scan_walkthroughs(path) — the dated docs/walkthroughs/ log (date/title/domains)
     scan_context(path)      — CONTEXT.md now-facts
     scan(path)              — everything above in one dict (the observatory's input)
@@ -21,7 +22,7 @@ Stdlib only. Boundary: facts, never findings — judging them is the caller's jo
 (check.py owns findings).
 
 Usage (debug):
-    python .claude/scripts/scan_project.py <project-or-alias> [--pretty]
+    python gravity/lib/scan_project.py <project-or-alias> [--pretty]
 """
 from __future__ import annotations
 
@@ -439,6 +440,62 @@ def scan_plans(project: Path) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Tracks — the direction axis (workspace CLAUDE.md §6): the optional
+# `## Tracks` table in IMPLEMENTATION_PLAN.md. A track is a named cross-domain
+# intent — it holds no slices itself; it points up to a MISSION principle and
+# down to the domain PLAN slices carrying it. Facts per row: name, direction,
+# the MISSION § anchor, the carrying PLANs (with their domains + existence),
+# status glyph. Facts only — judging a dangling pointer is the caller's job.
+# ---------------------------------------------------------------------------
+TRACK_HEAD = re.compile(r"^##\s+Tracks\b.*?$(.*?)(?=^##\s|\Z)", re.M | re.S)
+TRACK_PLAN = re.compile(r"(?:\.gravity/)?([\w-]+)/(PLAN[\w.-]*\.md)")
+MISSION_REF = re.compile(r"§\s*\d+")
+
+
+def scan_tracks(project: Path) -> list[dict]:
+    plan = project / ".gravity" / "IMPLEMENTATION_PLAN.md"
+    if not plan.exists():
+        return []
+    text = re.sub(r"<!--.*?-->", "",
+                  plan.read_text(encoding="utf-8", errors="replace"), flags=re.S)
+    m = TRACK_HEAD.search(text)
+    if not m:
+        return []
+    tabs = tables_in(m.group(1))
+    if not tabs:
+        return []
+    known = {p.name for p in domain_dirs(project / ".gravity")}
+    out = []
+    for cells in tabs[0][1:]:
+        if len(cells) < 4:
+            continue
+        name = strip_md(cells[0])
+        if not name or name.startswith("<"):        # template placeholder row
+            continue
+        plans, domains = [], []
+        for dom, fname in TRACK_PLAN.findall(cells[2]):
+            rel = f".gravity/{dom}/{fname}"
+            if any(p["rel"] == rel for p in plans):
+                continue
+            plans.append({"domain": dom, "file": fname, "rel": rel,
+                          "exists": (project / rel).exists()})
+            if dom not in domains:
+                domains.append(dom)
+        mref = MISSION_REF.search(cells[1])
+        sm = re.search(r"[✓◑○]", cells[3])
+        out.append({
+            "name": name,
+            "direction": strip_md(cells[1]),
+            "mission": mref.group(0).replace(" ", "") if mref else "",
+            "plans": plans,
+            "domains": domains,
+            "unknown_domains": [d for d in domains if d not in known],
+            "status": sm.group(0) if sm else "",
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Walkthroughs — the frozen per-slice trust artifacts under docs/walkthroughs/
 # (dated, append-only; workspace CLAUDE.md §6). Facts per file: date (from the
 # filename — the one mandatory part), title, and Domain(s) from the header
@@ -621,6 +678,7 @@ def scan(project: Path) -> dict:
     facts["links"] = scan_couplings(project)
     facts["scenarios"] = scan_scenarios(project)
     facts["queue"] = scan_plans(project)
+    facts["tracks"] = scan_tracks(project)
     facts["walkthroughs"] = scan_walkthroughs(project)
     facts["context"] = scan_context(project)
     facts["generated"] = date.today().isoformat()
@@ -750,7 +808,16 @@ def main() -> None:
         except Exception:
             pass
     import argparse
-    from resolve_project import resolve
+    # alias resolution is workspace-side (manager) sugar; off-workspace, pass a path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".claude" / "scripts"))
+    try:
+        from resolve_project import resolve
+    except ImportError:  # running outside the workspace — accept a plain path
+        def resolve(arg):  # type: ignore
+            p = Path(arg)
+            if not p.is_dir():
+                sys.exit(f"not a directory (and no workspace resolver): {arg}")
+            return p.name, p
     ap = argparse.ArgumentParser(description="Scan one .gravity/ project → facts JSON, "
                                              "or a per-domain preflight packet.")
     ap.add_argument("project", help="project name or alias (resolve_project.py)")

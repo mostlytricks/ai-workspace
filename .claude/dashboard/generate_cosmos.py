@@ -42,9 +42,10 @@ import webbrowser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
 from resolve_project import resolve  # noqa: E402
 from scan_project import (  # noqa: E402  (one scanner, many instruments)
-    scan_couplings, scan_domains as scan, scan_spec_census,
+    scan_couplings, scan_domains as scan, scan_spec_census, scan_tracks,
 )
 
 STATUS_ORDER = {"◑": 0, "✓": 1, "○": 2}
@@ -215,12 +216,17 @@ def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
         coupled = ('<div class="orb">↔ coupled: '
                    + " · ".join(f"{esc(n)} ×{k}" for n, k in mine[:4])
                    + "</div>") if mine else ""
+        carrying = [tr["name"] for tr in data.get("tracks", [])
+                    if d["name"] in tr["domains"]]
+        on_track = ('<div class="orb">⟡ carrying: '
+                    + " · ".join(esc(n) for n in carrying)
+                    + "</div>") if carrying else ""
         cards.append(
             f'<div class="card" id="card-{i}">'
             f'<div class="card-h"><span class="dot" style="background:{t["status"][d["status"]]}"></span>'
             f'<code>{esc(d["name"])}</code><span class="st">{d["status"]} {STATUS_LABEL[d["status"]]}</span></div>'
             f'<div class="why">{why}</div>{ng}{spine}'
-            f'<div class="chips">{"".join(docs)}</div>{health}{coupled}'
+            f'<div class="chips">{"".join(docs)}</div>{health}{coupled}{on_track}'
             f'<div class="orb">orbital period {d["period"]}s · activity {d["work"]} · touched {touched}</div>'
             f'<div class="path">.gravity/{esc(d["name"])}/</div></div>')
 
@@ -382,6 +388,11 @@ def render_3d(data: dict, t: dict) -> str:
         {"a": idx[l["a"]], "b": idx[l["b"]], "w": l["refs"]}
         for l in data.get("links", []) if l["a"] in idx and l["b"] in idx],
         ensure_ascii=False)
+    tracks = data.get("tracks", [])
+    tracks_payload = json.dumps([
+        {"name": tr["name"], "status": tr["status"] or "◑",
+         "doms": [idx[x] for x in tr["domains"] if x in idx]}
+        for tr in tracks], ensure_ascii=False)
     theme_js = json.dumps({
         "line": t["line"], "ink": t["ink"], "dim": t["dim"], "bg": t["bg"],
         "bg2": t["bg2"], "bgstar": t["bgstar"], "ring": t["ring"],
@@ -395,7 +406,9 @@ def render_3d(data: dict, t: dict) -> str:
                           "holds a planet — click it (or the star) for its readout.")
     legend += (f'<span>ring solid = walls share</span>'
                f'<span>⌒ arc = doc coupling</span>'
-               f'<span>trail = touched &lt;7d</span>'
+               + (f'<span style="color:{t["sat"]}">⟡ dashed arc = track (direction)</span>'
+                  if tracks else '')
+               + f'<span>trail = touched &lt;7d</span>'
                f'<span style="color:{t["guard"]}">pulse = unfenced ◑</span>'
                f'<span>drag = orbit camera · wheel = zoom</span>')
     esc = html_mod.escape
@@ -416,14 +429,17 @@ def render_3d(data: dict, t: dict) -> str:
 </style>
 <div id="view"><canvas id="c"></canvas>
 <div id="hud"><label><input type="checkbox" id="cbArcs" checked>couplings</label>
+{'<label><input type="checkbox" id="cbTracks" checked>tracks</label>' if tracks else ''}
 <label><input type="checkbox" id="cbTails" checked>trails</label></div>
 <div id="legend">{legend}</div></div>
 {panel}
 <script>
 const DOMS = {payload};
 const LINKS = {links_payload};
+const TRACKS = {tracks_payload};
 const T = {theme_js};
 const cbArcs = document.getElementById('cbArcs');
+const cbTracks = document.getElementById('cbTracks');
 const cbTails = document.getElementById('cbTails');
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const view = document.getElementById('view');
@@ -570,6 +586,37 @@ function frame(tms) {{
     ctx.globalAlpha = 1;
   }}
 
+  // track arcs — the direction axis: a dashed chain over the domains carrying
+  // one cross-domain intent, higher than coupling arcs, labeled at the apex
+  if (cbTracks && cbTracks.checked) for (const TR of TRACKS) {{
+    if (TR.doms.length < 2) continue;
+    const hot = TR.doms.includes(hover);
+    const col = TR.status === '✓' ? T.status['✓'] : T.sat;
+    ctx.setLineDash([7, 5]);
+    ctx.strokeStyle = hot ? T.ink : col;
+    ctx.lineWidth = hot ? 2 : 1.5;
+    let apex = null;
+    for (let k = 0; k + 1 < TR.doms.length; k++) {{
+      const a = DOMS[TR.doms[k]], b = DOMS[TR.doms[k + 1]];
+      const A = project(a.r * Math.cos(a.ang), 0, a.r * Math.sin(a.ang));
+      const B = project(b.r * Math.cos(b.ang), 0, b.r * Math.sin(b.ang));
+      const M = project((a.r * Math.cos(a.ang) + b.r * Math.cos(b.ang)) / 2,
+                        -170,
+                        (a.r * Math.sin(a.ang) + b.r * Math.sin(b.ang)) / 2);
+      ctx.globalAlpha = hot ? .9 : .45;
+      ctx.beginPath(); ctx.moveTo(A.sx, A.sy);
+      ctx.quadraticCurveTo(M.sx, M.sy, B.sx, B.sy); ctx.stroke();
+      if (k === (TR.doms.length - 2) >> 1) apex = M;
+    }}
+    ctx.setLineDash([]);
+    if (apex) {{
+      ctx.fillStyle = hot ? T.ink : col; ctx.globalAlpha = hot ? 1 : .7;
+      ctx.font = '11px "Segoe UI",sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('⟡ ' + TR.name, apex.sx, apex.sy - 4);
+    }}
+    ctx.globalAlpha = 1;
+  }}
+
   for (const it of drawn) {{
     if (it.sun) {{
       const R = 52 * it.p.s * 1.35, p = it.p;
@@ -654,6 +701,7 @@ def main() -> None:
     data = scan(path)
     data["specs"] = scan_spec_census(path)      # spec-health rings + card readouts
     data["links"] = scan_couplings(path)        # coupling arcs (3d) + card readouts
+    data["tracks"] = scan_tracks(path)          # track arcs (3d) + card readouts
     theme = THEMES[args.theme]
     outdir = Path(__file__).resolve().parent / "cosmos"
     outdir.mkdir(exist_ok=True)

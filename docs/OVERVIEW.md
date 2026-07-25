@@ -30,7 +30,7 @@ Everything in the system derives from that: the docs are the persistence layer, 
 ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the portable skeleton)
 ├── CLAUDE.md            # agent operating manual — auto-loads; word-budget walled (MANUAL_BLOAT)
 ├── docs/                # human read-docs (this file, HANDBOOK, INTRO, MISSION, intake sheets)
-├── templates/           # 16 stencils — copied into projects, never auto-loaded
+├── gravity/templates/           # 16 stencils — copied into projects, never auto-loaded
 ├── .claude/commands/    # 20 slash commands (lazy: loaded only on invocation)
 ├── .claude/scenarios/   # the verification harness (check.py + golden fixtures)
 ├── repos/               # canonical project storage — each its own independent git repo

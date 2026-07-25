@@ -8,7 +8,7 @@ Always open the agent at this root, never one level deeper. When a project subdi
 
 ## 1. Workspace Map
 
-Gravity eats its own dogfood: the root holds only the auto-loader + shim + live indexes; the **stencils** live in `templates/` and the **read-docs** in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
+Two layers, one workspace: the **manager** (this manual — tiers, junctions, index) and the **gravity protocol** (everything a project adopts), which lives whole in `gravity/`; read-docs stay in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
 
 ```text
 ai-workspace/
@@ -17,8 +17,6 @@ ai-workspace/
 ├── README.md                       # Human entry point.
 ├── PROJECTS.md                     # Live index of all projects across tiers. LOCAL-ONLY (git-ignored — carries private project info).
 ├── PROJECTS.sample.md              # Sanitized template for PROJECTS.md — the tracked skeleton copy (`cp PROJECTS.sample.md PROJECTS.md` on a fresh workspace).
-├── VERSION                         # Gravity system version (SemVer) — paired with a git tag vX.Y.Z (§2).
-├── CHANGELOG.md                    # How gravity's own rules/templates/commands evolved (major = a rule projects depend on breaks).
 ├── .gitignore                      # Deny-all/whitelist: tracks only the portable skeleton (§2).
 │
 ├── docs/                           # Human/browser READ-DOCS (rarely change):
@@ -28,23 +26,11 @@ ai-workspace/
 │   ├── MISSION.html                #   The workspace's own north star — the durable why behind these rules.
 │   └── DESIGN.docs.md              #   Shared theme for browser-read project HTML docs (distinct from DESIGN.md — §6).
 │
-├── templates/                      # Per-project / per-domain STENCILS (copied, never auto-loaded):
-│   ├── CLAUDE.template.md          #   Per-project stable-identity stencil.
-│   ├── AGENTS.template.md          #   Per-project Codex-compatible shim; points to CLAUDE.md.
-│   ├── CONTEXT.template.md         #   Per-project session-handoff stencil.
-│   ├── MISSION.template.html       #   Per-project "why" stencil (optional four-doc pipeline, §6).
-│   ├── IMPLEMENTATION_PLAN.template.md  # Per-project "what/next" stencil (optional four-doc pipeline, §6). Two shapes: phase roadmap (arc projects) or slice queue (growing projects); optional Tracks section = the cross-domain direction axis.
-│   ├── PLAN.template.md            #   Per-domain / per-slice "what/next" stencil — Goal + given/when/then Scenario + Slice + Verification; seeded by /new-domain and /interview (§6).
-│   ├── ARCHITECTURE.template.html  #   Per-project "how it's built" stencil (optional fifth doc, §6). Also seeds ARCHITECTURE.<facet>.html deep-dives.
-│   ├── SPEC.template.md            #   Per-domain agent-loadable spec stencil — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules); paired with an ARCHITECTURE facet (optional; §6). Carries a first-class INTEGRATION VARIANT (Boundary Map + Change Order) for the cross-service `integration` domain (§5).
-│   ├── DB-EVIDENCE.template.md     #   Brownfield DB evidence pack: checklist + manifest (metadata CSVs a DBA exports offline) → .gravity/integration/structural/db/MANIFEST.md; consumed by /excavate (§5).
-│   ├── GRAVITY.template.md         #   Root-CLAUDE.md router block (Doc Map + read-first table + domain gate) for projects adopting .gravity/ (optional; §6).
-│   ├── GRAVITY-PROTOCOL.template.md #  Project-embedded protocol card → copied to .gravity/GRAVITY.md when .gravity/ is created, so the repo is self-describing off-workspace (§6).
-│   ├── WALKTHROUGH.template.md     #   Per-change "what got done + proof" stencil (optional, append-only; §6).
-│   ├── INTAKE.template.md          #   Per-batch bug/issue intake sheet — verbatim reports + required-facts checklist → docs/intake/<date>.md; seeded by /intake, routes out to slice PLANs (§6).
-│   ├── GIVEN-MANIFEST.template.md  #   Provenance sheet for the given layer — received domain knowledge under .gravity/given/, routed from .gravity/inbox/ by /given (§6).
-│   ├── DESIGN.template.md          #   Per-project running-app UI design-system stencil (optional; §6).
-│   └── RUNBOOK.template.md         #   Per-project operations stencil — deploy · envs · health · rollback (optional; §6, the "2am test").
+├── gravity/                        # THE PROTOCOL DISTRIBUTION — everything a project adopts, versioned apart from this manager:
+│   ├── VERSION · CHANGELOG.md      #   gravity's SemVer (paired git tag vX.Y.Z) + how its rules evolved; projects stamp against THIS version (§2).
+│   ├── GRAVITY-PROTOCOL.md         #   the protocol card → copied verbatim to <project>/.gravity/GRAVITY.md at adoption (§6).
+│   ├── templates/                  #   the per-project / per-domain STENCILS (copied, never auto-loaded) — CLAUDE/AGENTS/CONTEXT, the four-doc pipeline (MISSION/IMPLEMENTATION_PLAN/ARCHITECTURE), per-domain PLAN/SPEC (with the §5 integration variant), GRAVITY router block, WALKTHROUGH/INTAKE/GIVEN-MANIFEST/DB-EVIDENCE, DESIGN/RUNBOOK. Each stencil self-describes in its header; the catalog lives in `gravity/README.md`.
+│   └── lib/                        #   the portable walls: scan_project.py (the one project scanner) + run_gate.py — they travel with the protocol.
 │
 ├── .claude/commands/               # Workspace-level slash commands.
 ├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
@@ -72,9 +58,9 @@ Never create files at the workspace root other than the meta files listed above.
 
 ## 2. Git Boundaries
 
-- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the `*.template.*` stencils, `.claude/` commands+scripts, the root docs, `VERSION`, `CHANGELOG.md`) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `stable/`, `dormant/`, or `archive/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
+- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the whole `gravity/` distribution, `.claude/` commands+scripts, the root docs) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `stable/`, `dormant/`, or `archive/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
 - **Each project is its own independent repo** under `repos/<project>/`, with its own remote. Project version control never mixes with the skeleton repo above.
-- **Gravity itself is versioned** (SemVer): the system version lives in the root `VERSION` file + a git tag `vX.Y.Z`, with changes recorded in the root `CHANGELOG.md` (see it for the major/minor/patch rule — *major = a rule projects depend on breaks*). A project records the gravity version it adopted via the `> gravity: vX.Y` line in its root `CLAUDE.md` router (seeded from `GRAVITY.template.md`), so stale adoptions are detectable.
+- **The protocol is versioned apart from this manager** (SemVer): gravity's version lives in `gravity/VERSION` + a git tag `vX.Y.Z`, with changes recorded in `gravity/CHANGELOG.md` (see it for the major/minor/patch rule — *major = a rule projects depend on breaks*). Manager-only changes (tiers, dashboard, workspace commands) don't bump it. A project records the gravity version it adopted via the `> gravity: vX.Y` line in its root `CLAUDE.md` router (seeded from `GRAVITY.template.md`), so stale adoptions are detectable.
 - Junctions are transparent to `git` — commands run from inside a tier junction operate on the real `.git` in `repos/<project>/`.
 
 ---
@@ -143,11 +129,11 @@ CONTEXT.md answers "where is this *now* and what's next" — nothing more. The d
 - **git history is the changelog.** `git log -p CONTEXT.md` recovers every past version of this file verbatim. Pruning CONTEXT.md is therefore **non-destructive** — old state isn't lost, it's in git. For the agent-pipeline projects, `CHANGELOG.md` / `registry.jsonl` are the durable record too.
 
 Refresh rules (apply on every update):
-- **Completed** — last 1–2 sessions only. Drop older bullets; they're in `git log`. It's a window, not an archive.
+- **Completed** — last 1–2 sessions only. Drop older bullets; they're in `git log`.
 - **Current State** — overwrite to describe present reality. Don't append deltas on top of stale claims.
 - **Next Step** — exactly one item, replaced each time.
 - **Prune trigger:** if Completed exceeds ~6 bullets or the file exceeds ~80 lines, trim before you finish. `/triage` flags files that cross these thresholds.
-- **Never clear to zero.** A project moving to `archive/` freezes its CONTEXT.md as the final-state record (per *Skip both* above).
+- **Never clear to zero.** A project moving to `archive/` freezes its CONTEXT.md as the final-state record.
 
 **Optional: the full four-doc pipeline (ambitious `active/` projects only).**
 
@@ -202,9 +188,9 @@ Inside, docs are grouped **by subject domain, not by doc-type**. The top level h
     <domain>/   ARCHITECTURE.html · SPEC.md · PLAN.*.md        # one folder per subject
 ```
 
-**The repo is self-describing — the protocol card (`.gravity/GRAVITY.md`).** Each project is its own independent repo (§2), so an agent that opens or clones a project *without* this workspace never sees this manual — it would find `.gravity/` full of SPECs and PLANs with no explanation of what they are. The fix: whenever `.gravity/` is created (`/adopt-gravity`, `/excavate`), copy `templates/GRAVITY-PROTOCOL.template.md` → `.gravity/GRAVITY.md` — the compact **project-side** protocol (doc kinds + rates, navigation discipline, SPEC anatomy, the never-do list), stamped `gravity protocol · vX.Y` from the root `VERSION`. The card embeds only what a project-opened agent needs; **workspace rules (tiers, junctions, `PROJECTS.md`) are never embedded** — one concern, one home, applied to gravity itself. It is a **verbatim copy, never hand-edited per project**; upgrading gravity means re-copying it. The router block (from `GRAVITY.template.md`) points at it, and `check.py consistency` (hence `/triage`) WARNs `PROTOCOL_MISSING` / `PROTOCOL_STALE` when the card is absent, unstamped, or older than the workspace `VERSION`.
+**The repo is self-describing — the protocol card (`.gravity/GRAVITY.md`).** Each project is its own independent repo (§2), so an agent that opens or clones a project *without* this workspace never sees this manual — it would find `.gravity/` full of SPECs and PLANs with no explanation of what they are. The fix: whenever `.gravity/` is created (`/adopt-gravity`, `/excavate`), copy `gravity/GRAVITY-PROTOCOL.md` → `.gravity/GRAVITY.md` — the compact **project-side** protocol (doc kinds + rates, navigation discipline, SPEC anatomy, the never-do list), stamped `gravity protocol · vX.Y` from `gravity/VERSION`. The card embeds only what a project-opened agent needs; **workspace rules (tiers, junctions, `PROJECTS.md`) are never embedded** — one concern, one home, applied to gravity itself. It is a **verbatim copy, never hand-edited per project**; upgrading gravity means re-copying it. The router block (from `GRAVITY.template.md`) points at it, and `check.py consistency` (hence `/triage`) WARNs `PROTOCOL_MISSING` / `PROTOCOL_STALE` when the card is absent, unstamped, or older than `gravity/VERSION`.
 
-**The directory *is* the domain registry — there is no registry file** (one would only duplicate the folder list, or collide with MISSION/PLAN/CLAUDE). The "set of domains" instead lives split across **four rate-of-change owners**: *existence* → the directory itself; *routing* → root `CLAUDE.md` (its **Doc Map** + a **change → read-first** table); *why / the principle* → `MISSION.html` (one row per domain — "the system in N domains"); *status / the arc* → `IMPLEMENTATION_PLAN.md` (a per-domain `✓/◑/○` spine, optionally crossed by **Tracks** — named cross-domain directions, each pointing up to its MISSION principle and down to the domain PLAN slices carrying it, holding no slices itself, ≤3 active; a track retires when its residue is enforcement-tagged SPEC rules). The per-domain **why stays singular** in MISSION — never fragment it into per-folder `WHY.md` files; each domain `ARCHITECTURE.html` points *back* to its MISSION row instead of re-deriving its purpose.
+**The directory *is* the domain registry — there is no registry file** (one would only duplicate the folder list, or collide with MISSION/PLAN/CLAUDE). The "set of domains" instead lives split across **four rate-of-change owners**: *existence* → the directory itself; *routing* → root `CLAUDE.md` (its **Doc Map** + a **change → read-first** table); *why / the principle* → `MISSION.html` (one row per domain — "the system in N domains"); *status / the arc* → `IMPLEMENTATION_PLAN.md` (a per-domain `✓/◑/○` spine, optionally crossed by **Tracks** — the direction axis: named cross-domain intents indexing the domain PLAN slices that carry them, each tied to a MISSION principle, ≤3 active, retired into SPEC rules. Work-layer law: the **slice** is the only unit of work — phases/queue, spine, and tracks are its time/domain/direction *indexes*; full statement in `IMPLEMENTATION_PLAN.template.md`). The per-domain **why stays singular** in MISSION — never fragment it into per-folder `WHY.md` files; each domain `ARCHITECTURE.html` points *back* to its MISSION row instead of re-deriving its purpose.
 
 Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITECTURE.html` owns the full human rationale**; the paired **`SPEC.md` is the spec an agent loads** and links *up* to its ARCHITECTURE rather than restating it; add a `SPEC.md` **only for domains an agent actually changes** (read-only domains stay HTML-only). A SPEC is a **change contract**, two halves at once: *generative* — a **Minimal Shape** + a 3-step **Generate loop** an agent instantiates a correct unit *from*; and *limiting* — a **Rules** checklist where **every rule carries an enforcement tag** (`[lint]` / `[type]` / `[test:name]` / `[review]` / `[—]`) naming the wall that catches a violation, so generation is bounded and the contract never lies about which rules are real walls vs reviewer judgment. Behavioral domains (endpoints, parsers, retrieval) add a **Behavioral Contract** of `given/when/then` invariants, each bound to its test. Keep the rate-of-change boundary so SPEC doesn't swallow PLAN: **SPEC holds what's true of every valid unit forever; PLAN holds the intent of this change; WALKTHROUGH holds its proof.** Behavior matures along that boundary: a feature's use scenario enters as `given/when/then` in its PLAN's **Scenario** block (elicited by `/interview <project> <feature>`), and is promoted into the SPEC's Behavioral Contract only once a named test asserts it — intent graduates to contract by earning a wall, never by rewording. **Bugs enter the same door, inverted:** a bug is a *currently-false* scenario — the repro, stated in the slice PLAN as the behavior the system doesn't yet exhibit (`/patch-slice` requires this before any edit) — and its fix must leave the named regression test that graduates it; bug fixes are the fastest source of honest Behavioral Contract lines. Enforce specs with a linter where the rules are checkable (`knowledge-viewer`'s `npm run lint:docs` is the reference implementation — its `doc/SPEC.md` is the worked example of the tagged form).
 
@@ -229,28 +215,28 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 
 - **`PROJECTS.md`** is the index: one row per project — name, stack, last-touched, tier-appropriate one-liner (focus · reactivation trigger · resume blocker). Update on any tier transition or significant status change. **Local-only (git-ignored)** — it names private projects; the skeleton ships only the sanitized `PROJECTS.sample.md` (copy it on a fresh workspace).
 - **`.claude/scenarios/`** is gravity's golden-scenario harness — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
-- **Everything else is a command.** The procedure lives in `.claude/commands/<name>.md` (the one home — loaded on invocation, never resident); human workflows and the full cheat sheet in `docs/HANDBOOK.md`. One line each:
+- **Everything else is a command.** The procedure lives in `.claude/commands/<name>.md` (the one home — loaded on invocation, never resident); human workflows and the full cheat sheet in `docs/HANDBOOK.md`. One line each — ⊙ marks **protocol-side** commands (they operate on a project's gravity docs and belong with `gravity/`); unmarked ones are **manager-side** (they need tiers, junctions, `PROJECTS.md`):
 
 | Command | What · when |
 |---|---|
 | `/init-project <name>` | Scaffold a new project end-to-end: repo folder, junction, stencils, `git init`, index row. |
 | `/ship <name>` | active → stable when a release shipped: evidence card, Next Step → reactivation trigger, junction + index move. |
 | `/retire <name>` | End of life: read-only risk card, then **archive** (reversible) or **delete** (permanent). |
-| `/adopt-gravity <name>` | Retrofit `.gravity/` into a doc-heavy project: relocate docs by domain, seed router + protocol card. |
-| `/sync-gravity <name>` | Upgrade to the current gravity: re-copy the card, bump the stamp; judgment deltas **reported, never auto-migrated**. |
-| `/excavate <name>` | Brownfield survey → cited integration Boundary Map; unknowns stay `OPEN:`, seams are never guessed. |
-| `/new-domain <name> <domain>` | Mint one domain: is-it-a-domain gate, folder + starter PLAN, all four indexes wired. |
-| `/new-spec <name> <domain>` | Author a domain SPEC: Minimal Shape + Rules tagged **only from evidence**; under-claim to `[review]`. |
-| `/interview <name> [<feature>]` | Elicit what exists only in the user's head into the owner-docs, strawman-first; with `<feature>`, the feature-intake ritual (is-it-a-domain gate + given/when/then scenario). |
-| `/intake <name>` | Triage a bug-report batch: dated verbatim sheet, six facts per item (**no repro, no slice**), root causes → slice PLANs + queue rows. |
-| `/given <name>` | Route `.gravity/inbox/` into the given layer: one routing table (domain · fidelity · privacy), provenance manifests, inbox ends empty. |
-| `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify → bounded fixes → proven rollback. Never merges or pushes. |
-| `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
+| ⊙ `/adopt-gravity <name>` | Retrofit `.gravity/` into a doc-heavy project: relocate docs by domain, seed router + protocol card. |
+| ⊙ `/sync-gravity <name>` | Upgrade to the current gravity: re-copy the card, bump the stamp; judgment deltas **reported, never auto-migrated**. |
+| ⊙ `/excavate <name>` | Brownfield survey → cited integration Boundary Map; unknowns stay `OPEN:`, seams are never guessed. |
+| ⊙ `/new-domain <name> <domain>` | Mint one domain: is-it-a-domain gate, folder + starter PLAN, all four indexes wired. |
+| ⊙ `/new-spec <name> <domain>` | Author a domain SPEC: Minimal Shape + Rules tagged **only from evidence**; under-claim to `[review]`. |
+| ⊙ `/interview <name> [<feature>]` | Elicit what exists only in the user's head into the owner-docs, strawman-first; with `<feature>`, the feature-intake ritual (is-it-a-domain gate + given/when/then scenario). |
+| ⊙ `/intake <name>` | Triage a bug-report batch: dated verbatim sheet, six facts per item (**no repro, no slice**), root causes → slice PLANs + queue rows. |
+| ⊙ `/given <name>` | Route `.gravity/inbox/` into the given layer: one routing table (domain · fidelity · privacy), provenance manifests, inbox ends empty. |
+| ⊙ `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify → bounded fixes → proven rollback. Never merges or pushes. |
+| ⊙ `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · browser one-tap. |
-| `/observatory <name> [theme]` | One project, one page: Overview+drift, Queue, Domains, Seams, Spec Health, Graduation, Timeline, Orbit 3D — a wrong page means doc drift. |
-| `/preflight <name> <domain>` | A domain's pre-change packet: read-first order, coupled SPECs, runnable gate, warnings — then read what it lists. |
-| `/mission <name>` | Re-orient on one project: what it's for, where it stands, what to ask next. Read-only. |
-| `/open-mission [name]` · `/open-architecture [name] [facet]` | Open the authored HTML docs in the browser; locate + launch, never regenerate. |
+| ⊙ `/observatory <name> [theme]` | One project, one page: Overview+drift+tracks, Queue, Seams, Spec Health, Graduation, Timeline, Orbit 3D — a wrong page means doc drift. |
+| ⊙ `/preflight <name> <domain>` | A domain's pre-change packet: read-first order, coupled SPECs, runnable gate, warnings — then read what it lists. |
+| ⊙ `/mission <name>` | Re-orient on one project: what it's for, where it stands, what to ask next. Read-only. |
+| ⊙ `/open-mission [name]` · `/open-architecture [name] [facet]` | Open the authored HTML docs in the browser; locate + launch, never regenerate. |
 
 - **`docs/HANDBOOK.md`** — workflows, the full command cheat sheet, glossary. Not auto-loaded; agents read it when asked.

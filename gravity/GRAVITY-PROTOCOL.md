@@ -30,15 +30,16 @@ This project organizes its documentation with **gravity**. Two files auto-load f
 | root `CLAUDE.md` | **how** — identity, stack, run/test, conventions, routing | on refactors |
 | `.gravity/<domain>/given/` + `MANIFEST.md` | **received** — knowledge handed in from outside (quarry, never contract; disputes resolve against `raw/`) | when material arrives via `.gravity/inbox/` |
 | `.gravity/ARCHITECTURE.html` | **how it's built** — system overview | on structural change |
-| `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status | per phase/slice |
+| `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status (+ optional **Tracks**, the direction axis) | per phase/slice |
 | root `CONTEXT.md` | **now** — current state + the single next step | every session |
 | `.gravity/<domain>/SPEC.md` | the **change contract** for this domain (agent-loadable) | when rules change |
 | `.gravity/<domain>/ARCHITECTURE.html` | the domain's human deep-dive / full rationale | on structural change |
 | `.gravity/<domain>/PLAN.*.md` | the **intent of one change** — goal, scenario, slice, verification | per slice |
 
-Two disciplines bind them:
+Three disciplines bind them:
 - **One concern, one home.** Every fact has exactly one owner-doc; any other doc *links* to the owner instead of restating it. A fact written twice eventually drifts into two different facts.
 - **Touch the doc that matches the change's rate.** *now* → `CONTEXT.md` · *what/next* → the domain's `PLAN.*.md` · *rules* → `SPEC.md` · *how-it's-built* → `ARCHITECTURE.html` · *why* → `MISSION.html`. Never write *now* into MISSION or *why* into CONTEXT.
+- **One unit of work — the slice** (the smallest shippable change that passes the gate; its intent lives in a domain `PLAN.*.md`). Phases/queue (time), the status spine (domain), and Tracks (direction) are *indexes over slices* and hold no work themselves — a phase is just a slice with an ordinal.
 
 ## How to work here (the navigation discipline)
 

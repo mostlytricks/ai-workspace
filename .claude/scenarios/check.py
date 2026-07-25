@@ -46,10 +46,10 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-# One scanner, many callers: coupling facts come from scripts/scan_project.py
+# One scanner, many callers: coupling facts come from gravity/lib/scan_project.py
 # (the same source the observatory and /preflight read). If the scanner is
 # missing/broken the coupling check stays silent — under-claiming, never noise.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
 try:
     from scan_project import scan_couplings
 except Exception:                                   # pragma: no cover
@@ -203,20 +203,21 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
             "no .gravity/IMPLEMENTATION_PLAN.md — status spine unchecked (two-doc/brownfield project?)"))
 
     # PROTOCOL — the embedded protocol card (.gravity/GRAVITY.md, copied from
-    # templates/GRAVITY-PROTOCOL.template.md) makes the repo self-describing
+    # gravity/GRAVITY-PROTOCOL.md) makes the repo self-describing
     # when opened without the workspace. Absent, unstamped, or older than the
-    # workspace VERSION is drift, not breakage -> WARN, and the fix is always
-    # a re-copy (the card is never hand-edited).
+    # protocol VERSION (gravity/VERSION) is drift, not breakage -> WARN, and
+    # the fix is always a re-copy (the card is never hand-edited).
     card = _read(gravity / "GRAVITY.md")
     if not card:
         findings.append(Finding(
             WARN, "PROTOCOL_MISSING", "", "",
             "no .gravity/GRAVITY.md protocol card — the repo isn't self-describing "
-            "off-workspace; copy templates/GRAVITY-PROTOCOL.template.md and stamp it"))
+            "off-workspace; copy gravity/GRAVITY-PROTOCOL.md and stamp it"))
     else:
         stamp = re.search(r"gravity protocol[^\n]*?v(\d+)\.(\d+)", card, re.IGNORECASE)
         ws_ver = re.match(r"(\d+)\.(\d+)",
-                          _read(Path(__file__).resolve().parents[2] / "VERSION").strip())
+                          _read(Path(__file__).resolve().parents[2]
+                                / "gravity" / "VERSION").strip())
         if not stamp:
             findings.append(Finding(
                 WARN, "PROTOCOL_STALE", "", "",

@@ -12,8 +12,6 @@
 !README.md
 !AGENTS.md
 !CLAUDE.md
-!CHANGELOG.md
-!VERSION
 
 # The live project index PROJECTS.md is LOCAL-ONLY — it carries private project
 # names, status, and blockers, so it is deliberately NOT whitelisted (the `*`
@@ -26,10 +24,12 @@
 !docs/
 !docs/**
 
-# --- per-project stencils (templates/) ---
-# All *.template.* — copied into new projects by the commands/scripts.
-!templates/
-!templates/**
+# --- the gravity protocol distribution (gravity/) ---
+# The protocol's own VERSION + CHANGELOG, the protocol card, the per-project
+# stencils (templates/), and the portable lib (scan_project, run_gate).
+!gravity/
+!gravity/**
+gravity/**/__pycache__/
 
 # --- workspace tooling (commands, scripts, dashboard generator) ---
 !.claude/

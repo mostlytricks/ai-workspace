@@ -22,7 +22,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 
 4. **Index drift section = the checker's FAILs + index WARNs**, one line each, verbatim enough to act on. `ADOPTION_STALE`/`ADOPTION_MISSING_ROW` fixes are one command: `python .claude/scripts/scan_workspace.py --adoption-table` prints the correct table to paste into PROJECTS.md.
 
-5. **Missing Codex shim:** flag any project whose scan `adoption.shim` is false but `adoption.docsys` isn't null — it won't be discoverable by agents that look for `AGENTS.md`. Fix: `cp templates/AGENTS.template.md <project>/AGENTS.md`.
+5. **Missing Codex shim:** flag any project whose scan `adoption.shim` is false but `adoption.docsys` isn't null — it won't be discoverable by agents that look for `AGENTS.md`. Fix: `cp gravity/templates/AGENTS.template.md <project>/AGENTS.md`.
 
 6. *(merged into steps 1–5 — the scanner/checker own everything mechanical.)*
 
@@ -36,7 +36,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
      ```bash
      python .claude/scenarios/check.py consistency --project repos/<name>
      ```
-     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `templates/GRAVITY-PROTOCOL.template.md`, stamp from `VERSION` — the card is never hand-edited); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
+     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `gravity/GRAVITY-PROTOCOL.md`, stamp from `gravity/VERSION` — the card is never hand-edited); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
    - **SPEC honesty rot** (only for projects with `SPEC.md` files) — a renamed test or deleted npm script silently turns a wall into a lie. Run:
      ```bash
      python .claude/scenarios/check.py spec --project repos/<name>
@@ -70,7 +70,7 @@ Projects on disk with no CONTEXT.md. Either initialize them or move to archive/.
 ## Index drift
 PROJECTS.md disagrees with disk. Reconcile:
 - <description of each mismatch>
-- 🧩 <name> | NO AGENTS.md — Codex shim missing; `cp templates/AGENTS.template.md <project>/AGENTS.md`
+- 🧩 <name> | NO AGENTS.md — Codex shim missing; `cp gravity/templates/AGENTS.template.md <project>/AGENTS.md`
 
 ## Doc-pipeline drift
 Only for projects on the four-doc pipeline. Omit if none.
@@ -79,7 +79,7 @@ Only for projects on the four-doc pipeline. Omit if none.
 - 📄 <name> | no MISSION.html on an ambitious project — consider adopting the pipeline
 - 🔁 <name> | DOC COLLISION — "<fact>" restated in MISSION + CLAUDE.md; make the non-owner a reference
 - 🧭 <name> | .gravity REGISTRY DRIFT — domain "<domain>" unwired (missing Doc-Map/MISSION/status row), or a row points at a gone folder
-- 📡 <name> | PROTOCOL CARD — .gravity/GRAVITY.md missing/unstamped/stale (v<X.Y> vs workspace v<X.Z>) — re-copy templates/GRAVITY-PROTOCOL.template.md
+- 📡 <name> | PROTOCOL CARD — .gravity/GRAVITY.md missing/unstamped/stale (v<X.Y> vs workspace v<X.Z>) — re-copy gravity/GRAVITY-PROTOCOL.md
 - 🔬 <name> | SPEC HONESTY — <domain>/SPEC.md <finding> (dead Gate/tag or template leftover); untagged/gate-less SPECs noted in one line
 
 ## Recommended actions

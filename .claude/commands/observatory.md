@@ -4,20 +4,19 @@ argument-hint: <project-or-alias> [theme]
 allowed-tools: Read, Glob, Grep, Bash(python .claude/dashboard/generate_observatory.py:*)
 ---
 
-You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` project as **one page with four tabs**, all fed by a single scan (`scripts/scan_project.py` — one scanner, many callers), so the views can never disagree with each other:
+You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` project as **one page with seven tabs**, all fed by a single scan (`gravity/lib/scan_project.py` — one scanner, many callers), so the views can never disagree with each other:
 
 | Tab | Contents | Renderer (module) |
 |---|---|---|
-| **Overview** | goal (MISSION/PLAN) · the now (CONTEXT: last touched, next step) · the **drift card** (live `check.py` consistency + spec-honesty findings, imported never reimplemented; "checkers unavailable" renders as a warning, never as clean) · the spine table (per-domain status/SPEC/ARCH/PLANs/why) · clickable authored-doc links | native (`generate_observatory.py`) |
-| **Queue** | every `PLAN.*.md` across the domains as one work table — status glyph + note, Goal snippet, Next line, last-touched — building first, shipped dimmed last. A PLAN without a `Status:` line is flagged (it can't be mirrored into the spine). | native |
-| **Domains** | the cosmos 2D star system: MISSION at the core, domains orbiting at activity speed, SPEC rings, PLAN satellites — a wrong sky means index drift | `generate_cosmos.render_2d` |
+| **Overview** | goal (MISSION/PLAN) · the now (CONTEXT: last touched, next step) · the **drift card** (live `check.py` consistency + spec-honesty findings, imported never reimplemented; "checkers unavailable" renders as a warning, never as clean) · the spine table (per-domain status/SPEC/ARCH/PLANs/why) · the **tracks card** (the direction axis, when the IMPLEMENTATION_PLAN has a Tracks table — name, direction, MISSION § pointer, carrying-domain chips; a missing § pointer or a carrying PLAN absent from disk renders loud) · clickable authored-doc links | native (`generate_observatory.py`) |
+| **Queue** | every `PLAN.*.md` across the domains as one work table — status glyph + note, Goal snippet, Next line, last-touched — building first, shipped dimmed last. A PLAN without a `Status:` line is flagged (it can't be mirrored into the spine). Slices carried by a track wear its ⟡ chip. | native |
 | **Seams** | the boundary seam graph: Boundary Map rows as flowing edges (packets = direction), evidence citations per seam, `OPEN:` rows dashed guard-red, unparseable rows listed loud — or an honest empty state pointing to `/new-spec <p> integration` / `/excavate` when no integration SPEC exists | `generate_boundary.render` |
 | **Spec Health** | per-domain contract honesty: walls (`[lint]/[type]/[test:…]`) vs judgment (`[review]`) vs guidance (`[—]`), gate presence, Behavioral Contract lines bound to tests, template `FILL` leftovers. Freeform (pre-v2) SPECs get a **tag census** and are labeled `freeform` — the census never invents discrete rules. | native |
 | **Graduation** | intent → contract, per domain: PLAN **Scenario** bullets paired with SPEC **Behavioral Contract** lines (token-overlap heuristic — the page says so). Shows ✔ graduated (test-bound), ○ still intent, and the two dishonesty smells loud: a scenario **reworded into the BC without a test**, and **unbound BC lines**. A shipped PLAN whose scenarios never graduated is flagged (its wall may live in a gate — check before judging). | native |
 | **Timeline** | `docs/walkthroughs/` as a reverse-chron proof strip — date · domain chips (from the `Domain(s):` header, filename fallback) · title, each linking to its file. Honest empty state pointing at `WALKTHROUGH.template.md` when the log doesn't exist. | native |
-| **Orbit 3D** | the analytical 3D system: health rings (solid arc = walls share), **coupling arcs** between domains from doc cross-references, comet trails on recently-touched domains, guard-red pulse on unfenced ◑ domains; HUD toggles for arcs/trails | `generate_cosmos.render_3d` |
+| **Orbit 3D** | the analytical 3D system: health rings (solid arc = walls share), **coupling arcs** between domains from doc cross-references, **track arcs** (⟡ dashed, labeled chains over the domains carrying one cross-domain direction — green once the track is ✓), comet trails on recently-touched domains, guard-red pulse on unfenced ◑ domains; HUD toggles for arcs/tracks/trails | `generate_cosmos.render_3d` |
 
-(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command.)
+(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command. The 2D Domains tab was retired 2026-07-25 — the 3D view superseded it; `render_2d` survives only as the cosmos debug CLI.)
 
 ## Run it
 
@@ -44,6 +43,7 @@ Glance at the script's summary line and the facts you already have; note anythin
 - **Shipped-but-never-graduated scenarios** (Graduation tab) — a ✓ PLAN whose given/when/then never earned a `[test:…]` line; either the wall lives in a gate (fine — say where) or the regression test was skipped.
 - **Drift findings on Overview** — the card is `/triage` for this one project; FAILs mean a domain is unwired from an index. Relay them; the fix is always in the docs.
 - **Status-less PLANs piling up** (Queue tab) — intent stubs that can't be mirrored into the spine; either give them a `Status: ○ planned` line or fold them into a neighbor.
+- **A sick tracks card** — a track with no MISSION § pointer is scope creep with a label (drop it or earn the MISSION row); a carrying PLAN missing on disk is a dangling index; more than 3 active tracks isn't direction, it's drift.
 - **A stale CONTEXT next-step** against a busy spine — session-ritual drift; suggest `/triage`.
 
 Keep it short — the page is the report.

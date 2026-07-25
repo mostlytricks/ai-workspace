@@ -10,7 +10,7 @@ The honesty discipline is the same one everywhere in gravity, pointed at a legac
 ## Step 0 — Locate & inventory (read before writing anything)
 
 1. **Resolve the project** via `.claude/scripts/resolve_project.py` (tier junctions and external-path junctions both work). Not found → list candidates and stop.
-2. **Check what docs exist**: root `CLAUDE.md` / `CONTEXT.md` / any `CONTRACT.md` / `GLOBAL_RULES.md` / `.gravity/`. Existing content is evidence — read it, never overwrite it. Also check for a **DB evidence pack** at `.gravity/integration/structural/db/` (see `templates/DB-EVIDENCE.template.md`) — its MANIFEST says what's `present` vs `OPEN:`.
+2. **Check what docs exist**: root `CLAUDE.md` / `CONTEXT.md` / any `CONTRACT.md` / `GLOBAL_RULES.md` / `.gravity/`. Existing content is evidence — read it, never overwrite it. Also check for a **DB evidence pack** at `.gravity/integration/structural/db/` (see `gravity/templates/DB-EVIDENCE.template.md`) — its MANIFEST says what's `present` vs `OPEN:`.
 3. **Detect the shape — monorepo or hub.** If the project is a **hub** (a docs-only repo whose `services/` folder holds independent service clones, each with its own `.git` — HANDBOOK "Many services, many repos"), the scan surface is `services/*/`; Boundary-Map citations use the `services/<name>/…` relative paths so they stay stable across machines. Never `git mv`/commit inside the service clones — the hub repo owns only the docs and evidence.
 4. **Inventory the runnable parts**: build manifests (`pom.xml`, `build.gradle`, `package.json`, `Dockerfile`, `docker-compose.*`) → one row per runnable service (name, stack, likely port). This table is the skeleton everything else hangs on.
 
@@ -42,15 +42,15 @@ Whatever joins cleanly becomes a Boundary-Map row. Whatever doesn't becomes a **
 
 Show the user the service inventory, the proposed Boundary Map, and the file list you intend to create. **Wait for confirmation** — this is someone's working system. Then write:
 
-1. **Two-doc minimum if missing**: root `CLAUDE.md` (services table, ports, run commands — only what Step 0/1 evidenced) + `CONTEXT.md` (why gravity landed here; Next Step). Copy from `templates/`; fill only evidenced fields, leave the rest as the stencil's `<FILL>`.
-2. **The protocol card** — creating `.gravity/` for the first time means embedding the project-side protocol so the repo is self-describing off-workspace: `cp templates/GRAVITY-PROTOCOL.template.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with major.minor from the workspace root `VERSION` file (never invent a version; the card is a verbatim copy, never tailored).
+1. **Two-doc minimum if missing**: root `CLAUDE.md` (services table, ports, run commands — only what Step 0/1 evidenced) + `CONTEXT.md` (why gravity landed here; Next Step). Copy from `gravity/templates/`; fill only evidenced fields, leave the rest as the stencil's `<FILL>`.
+2. **The protocol card** — creating `.gravity/` for the first time means embedding the project-side protocol so the repo is self-describing off-workspace: `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with major.minor from the `gravity/VERSION` file (never invent a version; the card is a verbatim copy, never tailored).
 3. **`.gravity/integration/SPEC.md`** from `SPEC.template.md`'s **integration variant**:
    - **Boundary Map** — one row per confirmed seam, each citing its source file.
    - **Ports / base URLs** table from the manifests.
    - **Change Order** — drafted from the discovered dependency direction (typically DB → mapper/entity → DTO → controller → client → component), explicitly marked *draft — confirm against how this team actually ships*.
    - Rules tagged honestly: almost everything starts `[review]` — there is no lint wall yet; **never** tag `[test:x]` unless the test exists.
 4. **`.gravity/integration/structural/`** — the regenerable dumps: `endpoints.md`, `db-map.md`, `frontend-calls.md`, `service-links.md`. Header on each: *auto-extracted by /excavate on <date> — regenerable, never hand-edit; re-run /excavate after structural change.*
-5. **`structural/db/MANIFEST.md`** — if no DB evidence pack exists, seed the manifest from `templates/DB-EVIDENCE.template.md` (all rows `OPEN:`) so the user leaves with the exact shopping list to hand a DBA instead of a bare `OPEN:` line. If a pack exists, update its status rows to match what you actually consumed.
+5. **`structural/db/MANIFEST.md`** — if no DB evidence pack exists, seed the manifest from `gravity/templates/DB-EVIDENCE.template.md` (all rows `OPEN:`) so the user leaves with the exact shopping list to hand a DBA instead of a bare `OPEN:` line. If a pack exists, update its status rows to match what you actually consumed.
 
 ## Step 4 — Findings & OPEN items (the honest remainder)
 
