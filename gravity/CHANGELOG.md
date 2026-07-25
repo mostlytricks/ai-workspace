@@ -19,6 +19,15 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [3.2.2] - 2026-07-26
+
+### Fixed
+- **Orbit 3D's HUD toggles respond to the mouse again** (couplings / tracks / trails, top-left). The HUD sits inside `#view`, whose `pointerdown` handler unconditionally called `setPointerCapture` to drive camera drag; capture retargets the following `pointerup` to `#view`, so the `click` resolved on `#view` and the checkbox never toggled — only the keyboard (space), which bypasses pointer capture, worked. `pointerdown` now returns early for events inside `#hud`, letting the controls own their own clicks.
+
+### Changed
+- **A cosmic layer in Orbit 3D — nebulae, a magnitude-varied star field, and a depth vignette**, tuned per theme. The star field was 260 identical dots in one flat colour; it is now 420 stars with varied magnitude and tint, a third of them crowded into a Milky-Way band, the brightest few carrying diffraction spikes, plus three parallaxing nebula clouds and an edge vignette drawn *before* the system so the sky gains depth without dimming the domains. Deterministic by star index, so a regenerated page renders the same sky. **Nothing was added to `THEMES` and no palette was retuned**: the five themes are one family shared with the dashboard and the browser-read HTML docs under a single `dash-theme` key (DESIGN.dashboard.md), so the sky *derives* its tints from tokens each theme already declares, and no other surface moves. Light themes (daylight, sandstone) keep the documented paper-chart treatment — ink-dark stars, a faint wash, no glow, no spikes: an engraved celestial atlas rather than a washed-out deep space a pale canvas cannot be.
+- **Light themes get a muted canvas ground in Orbit 3D** (`GROUND_MUTE`). Paper white is right for a document you read and glaring under a star field, so the *canvas only* now sits on the theme's `bg` pulled 80% toward its own `line` token — daylight `#F7F9FC`→`#dee3ee`, sandstone `#FBF6EF`→`#e7dac7` — with the vignette deepening toward a mid `line`/`dim` blend, since a pale theme's own background is too light to read as an edge at all. Derived rather than hardcoded, so a retuned palette carries its sky with it; dark themes are provably untouched (`ground == bg`). Scoped deliberately to the canvas: the panel, the dashboard and every `MISSION.html` / `ARCHITECTURE.html` keep their bright readable paper, because that palette is one shared family under a single `dash-theme` key.
+
 ## [3.2.1] - 2026-07-26
 
 ### Fixed
@@ -284,7 +293,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.2.1...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.2.2...HEAD
+[3.2.2]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.2.2
 [3.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.2.1
 [3.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.2.0
 [3.1.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.1.1
