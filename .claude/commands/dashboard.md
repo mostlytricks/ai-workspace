@@ -61,6 +61,8 @@ Rules for the output:
 
 6. **Do not modify any source files.** This command is read-only over the workspace. The *one* allowed write is the regenerated HTML artifact in step 7 (derived output, not source). If the user follows up asking to fix specific drift, then act.
 
+   This includes the per-project observatories: the dashboard's `⊙ observatory` chips **link and label** (fresh / stale / not-rendered) but never generate. Refreshing them is `/open-dashboard`'s job — the "just show me" door already expects a refresh, and this one promises a read-only report.
+
 7. **Regenerate the HTML dashboard.** After printing the terminal view, run the generator so the visual dashboard reflects the same `PROJECTS.md` state:
 
    ```bash

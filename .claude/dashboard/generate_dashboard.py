@@ -145,10 +145,66 @@ STAMP_RE = re.compile(r"gravity:\s*v(\d+\.\d+(?:\.\d+)?)", re.IGNORECASE)
 CARD_RE = re.compile(r"gravity protocol[^\n]*?v(\d+\.\d+)", re.IGNORECASE)
 
 
+def repo_name(display: str) -> str:
+    """The `repos/` directory a PROJECTS.md row refers to.
+
+    A row may annotate its name in prose — `nova _(formerly …)_`,
+    `forge-world _(alias `forge`)_` — and that annotation is not part of the
+    directory. Looking the raw cell up on disk silently returned "no such
+    project", which cost four of thirteen gravity projects *every* adoption
+    chip until the observatory link made the gap visible.
+    """
+    return re.split(r"\s+_?\(", display, maxsplit=1)[0].strip()
+
+
+def observatory_state(base: Path) -> dict:
+    """Live state of a project's rendered observatory page — the fleet door's
+    link into the project door.
+
+    Kepler (this manager) may depend on gravity (the protocol), never the
+    reverse: the dashboard links *into* a project's observatory, and the
+    observatory never links back — a path to `.claude/dashboard/` exists only
+    on this machine and would break in any clone.
+
+    Three honest states, same live-from-disk discipline as the adoption chips:
+      fresh  — the page is newer than every doc it renders
+      stale  — a doc changed after the page was rendered. Surfaced rather than
+               silently linked, because "a wrong page means doc drift" is the
+               observatory's own doctrine.
+      None   — never rendered (the page is generated and self-ignoring, so its
+               absence is normal, not an error)
+
+    `lib/` and `observatory/` are excluded from the comparison: the lib is
+    re-installed fleet-wide on every protocol bump and would otherwise mark
+    every page stale at once — which would say nothing about the docs.
+    """
+    blank = {"state": None, "href": None}
+    page = base / ".gravity" / "observatory" / "index.html"
+    if not page.is_file():
+        return blank
+    try:
+        rendered = page.stat().st_mtime
+    except OSError:
+        return blank
+    newest = 0.0
+    for doc in (base / ".gravity").rglob("*"):
+        if doc.suffix.lower() not in (".md", ".html"):
+            continue
+        rel = doc.relative_to(base / ".gravity").parts
+        if rel and rel[0] in ("observatory", "lib"):
+            continue
+        try:
+            newest = max(newest, doc.stat().st_mtime)
+        except OSError:
+            continue
+    return {"state": "stale" if newest > rendered else "fresh",
+            "href": f"../../repos/{base.name}/.gravity/observatory/index.html"}
+
+
 def gravity_adoption(name: str) -> dict:
-    base = WORKSPACE_ROOT / "repos" / name
+    base = WORKSPACE_ROOT / "repos" / repo_name(name)
     info = {"stamp": None, "docsys": None, "release": False, "shim": False,
-            "card": None}
+            "card": None, "obs": {"state": None, "href": None}}
     claude = base / "CLAUDE.md"
     if not claude.exists():
         return info  # external-path or non-gravity project → no chips
@@ -169,10 +225,11 @@ def gravity_adoption(name: str) -> dict:
             card_txt = ""
         c = CARD_RE.search(card_txt)
         info["card"] = c.group(1) if c else None
+        info["obs"] = observatory_state(base)
     return info
 
 
-def adoption_chips(name: str) -> str:
+def adoption_chips(name: str, tier: str = "") -> str:
     a = gravity_adoption(name)
     if a["docsys"] is None:
         return ""  # nothing to show for external-path / non-gravity projects
@@ -189,6 +246,26 @@ def adoption_chips(name: str) -> str:
             chips.append(f'<span class="gv on">card v{esc(a["card"])}</span>')
         else:
             chips.append('<span class="gv warn">no-card</span>')
+        # The one link off this page: fleet door -> project door. Relative, so
+        # the dashboard stays portable inside the workspace.
+        #
+        # Archived projects are skipped entirely: archive/ is read-only (§1),
+        # so a page there can never be refreshed, and offering "/observatory
+        # <name>" would invite an edit the tier forbids. An existing page is
+        # still reachable by opening the file — it just isn't advertised here.
+        obs, n = a["obs"], esc(repo_name(name))   # the tooltip names the command
+        if tier == "archive":
+            pass
+        elif obs["state"] == "fresh":
+            chips.append(f'<a class="gv acc obs" href="{obs["href"]}" '
+                         f'title="open {n}&#39;s observatory">&#8857; observatory</a>')
+        elif obs["state"] == "stale":
+            chips.append(f'<a class="gv warn obs" href="{obs["href"]}" '
+                         f'title="rendered before the latest doc change — '
+                         f'/observatory {n} to refresh">&#8857; observatory ·</a>')
+        else:
+            chips.append(f'<span class="gv dim" title="not rendered — '
+                         f'/observatory {n}">&#8857; observatory</span>')
     else:
         chips.append('<span class="gv dim">flat</span>')
     if a["release"]:
@@ -374,7 +451,7 @@ def render_cards(tiers: dict[str, list[dict]], today: date) -> str:
                 f'<div class="cardhead">{marker}<span class="pname">{esc(p["name"])}</span>'
                 f'<span class="ago">{ago}</span></div>'
                 f'<div class="stack">{stack}</div>'
-                f'{adoption_chips(p["name"])}'
+                f'{adoption_chips(p["name"], tier=name)}'
                 f'<div class="focus">{esc(p["focus"])}</div></div>'
             )
         body = "".join(cards) if cards else '<div class="empty">— empty</div>'
@@ -660,6 +737,10 @@ TEMPLATE = """<!DOCTYPE html>
   .gv.acc  { color:#4FACFE; border-color:rgba(79,172,254,.40); }  /* .gravity faceted */
   .gv.dim  { color:var(--muted); }                                 /* flat · codex present (neutral) */
   .gv.warn { color:#FBBF24; border-color:rgba(251,191,36,.40); }  /* unstamped · no-codex (a gap) */
+  /* the observatory chip is the only link on a card — the fleet door into a
+     project's own page. Dimmed-and-unlinked when never rendered. */
+  a.gv.obs { text-decoration:none; cursor:pointer; transition:filter .15s, border-color .15s; }
+  a.gv.obs:hover { border-color:currentColor; filter:brightness(1.3); }
 
   .cap { margin-top:11px; font-size:11px; color:var(--muted); font-family:var(--mono); line-height:1.7; }
   .cap .dot { font-size:9px; vertical-align:1px; }
@@ -753,6 +834,9 @@ TEMPLATE = """<!DOCTYPE html>
     <span class="gv dim">flat</span> two-doc ·
     <span class="gv on">rel</span> changelog ·
     <span class="gv dim">codex</span> AGENTS shim ·
+    <span class="gv acc">&#8857; observatory</span> opens the project's own page /
+    <span class="gv warn">&#8857; observatory ·</span> rendered before the latest doc change /
+    <span class="gv dim">&#8857; observatory</span> not rendered yet ·
     <span class="gv warn">unstamped</span> / <span class="gv warn">no-codex</span> = a gap to close</div>
 
   <footer>Generated from PROJECTS.md by .claude/dashboard/generate_dashboard.py · adoption chips read live from repos/&lt;name&gt;/ · design: DESIGN.dashboard.md · Chart.js + fonts vendored locally · rerun to refresh.</footer>
