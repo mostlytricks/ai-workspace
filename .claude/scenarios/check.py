@@ -43,6 +43,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -51,13 +52,20 @@ from pathlib import Path
 # missing/broken the coupling check stays silent — under-claiming, never noise.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
 try:
-    from scan_project import scan_couplings
+    from scan_project import scan_couplings, scan_plans
 except Exception:                                   # pragma: no cover
     scan_couplings = None
+    scan_plans = None
 
 # Doc cross-references between two domains at/above this count are "strong"
 # coupling — enough that a shared contract should at least name the pair.
 COUPLING_THRESHOLD = 5
+
+# The comet clock (workspace CLAUDE.md §6): deferred work must resurface by
+# age, never by memory. A `○ planned` slice PLAN, or a dated one-line deferral
+# row (`… (deferred YYYY-MM-DD)`) in IMPLEMENTATION_PLAN.md, older than this
+# draws SLICE_STALE — the fix is pick it up, re-date it, or drop it.
+STALE_SLICE_DAYS = 30
 
 # Top-level .gravity/ entries that are cross-cutting docs, NOT subject domains.
 CROSS_CUTTING = {
@@ -97,6 +105,7 @@ class Finding:
     severity: str   # FAIL | WARN
     code: str       # UNDERWIRED | ORPHAN_ROUTE | MISSING_FILE | INDEX_ABSENT | STRUCTURE
                     # | PROTOCOL_MISSING | PROTOCOL_STALE | COUPLING_UNCONTRACTED
+                    # | SLICE_STALE
     domain: str     # the slug it concerns ("" if structural)
     region: str     # which index/region ("" if n/a)
     message: str
@@ -298,6 +307,33 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
                 "but neither integration/SPEC.md nor CONTRACT.md names the pair — "
                 "check whether a real seam is undocumented",
             ))
+
+    # 4. SLICE_STALE — the comet rule (workspace CLAUDE.md §6): deferred work
+    #    is noticed by age, never by memory. Two doors: a `○ planned` slice
+    #    PLAN untouched past the threshold (file mtime — under-claims on a
+    #    fresh clone, where checkout resets mtimes), and a dated deferral row
+    #    (`deferred YYYY-MM-DD`) in IMPLEMENTATION_PLAN.md never picked up.
+    #    WARN: the fix is pick it up, re-date it, or drop it — never silence.
+    if scan_plans is not None:
+        for p in scan_plans(project):
+            if p["status"] == "○" and p["age_days"] > STALE_SLICE_DAYS:
+                findings.append(Finding(
+                    WARN, "SLICE_STALE", p["domain"], "plan",
+                    f"{p['rel']} is ○ planned and untouched for "
+                    f"{int(p['age_days'])}d (comet threshold {STALE_SLICE_DAYS}d) "
+                    "— pick it up, re-date it, or drop it"))
+    for m in re.finditer(r"deferred (\d{4}-\d{2}-\d{2})", plan):
+        try:
+            born = time.mktime(time.strptime(m.group(1), "%Y-%m-%d"))
+        except ValueError:
+            continue
+        age = int((time.time() - born) / 86400)
+        if age > STALE_SLICE_DAYS:
+            findings.append(Finding(
+                WARN, "SLICE_STALE", "", "plan",
+                f"IMPLEMENTATION_PLAN.md carries a deferral row dated "
+                f"{m.group(1)} ({age}d ago; comet threshold {STALE_SLICE_DAYS}d) "
+                "— pick it up, re-date it, or drop it"))
 
     return findings
 
@@ -1295,6 +1331,27 @@ def cmd_selftest(args) -> int:
                 ok = False
                 print("selftest: EXPECTED COUPLING_UNCONTRACTED for the seeded "
                       f"{a}+{b} cross-references, but the checker stayed silent.")
+
+    # --- comet half: an aged ○ slice must draw SLICE_STALE. ---
+    if scan_plans is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "comet"
+            shutil.copytree(fixture, bad)
+            dom = sorted(discover_domains(bad / ".gravity"))[0]
+            stale = bad / ".gravity" / dom / "PLAN.stale-chore.md"
+            stale.write_text("# PLAN — stale chore\n\nStatus: ○ planned\n",
+                             encoding="utf-8")
+            old_ts = time.time() - (STALE_SLICE_DAYS + 10) * 86400
+            os.utime(stale, (old_ts, old_ts))
+            caught = [f for f in check_gravity_consistency(bad)
+                      if f.code == "SLICE_STALE" and f.domain == dom]
+            if caught:
+                print(f"selftest: {STALE_SLICE_DAYS + 10}d-old ○ slice correctly "
+                      "caught -> SLICE_STALE (the comet rule).")
+            else:
+                ok = False
+                print("selftest: EXPECTED SLICE_STALE for the aged ○ slice, "
+                      "but the checker stayed silent.")
 
     # --- spec-honesty half: an honest SPEC passes; each lie is caught. ---
     with tempfile.TemporaryDirectory() as tmp:

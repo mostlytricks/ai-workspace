@@ -19,6 +19,12 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Added
+- **Chores and the comet rule — deferral leaves a trace, `SLICE_STALE` makes it resurface** (`check.py` `check_gravity_consistency` + a selftest half; the pain: a chore handled immediately needs no doc, but a *deferred* one vanishes and "comes back like a comet in a few weeks" with nothing noticing). The ruling mirrors bugs: **chores are never a domain** — handled now → no doc at all; deferred → **one dated `○` queue row** (`<chore> (deferred YYYY-MM-DD)` — an unwritten deferral doesn't exist), minting its slice PLAN only at pickup; **recurring → graduate to a wall** (a tagged SPEC rule, a gate step, or a RUNBOOK line), never to a folder. The checker WARNs `SLICE_STALE` on `○ planned` slice PLANs untouched past 30 days (file mtime — under-claims on fresh clones) and on dated deferral rows never picked up, so deferred work resurfaces **by age, never by memory**; it lands automatically in `/triage` and the observatory drift card (both import the same checker). Codified in `IMPLEMENTATION_PLAN.template.md` (queue rules), the protocol card (navigation discipline #5), root `CLAUDE.md` §6, the HANDBOOK glossary (*Chore*), and `scenarios/README.md`.
+
+### Changed
+- **The two-axis domain doctrine — diagnose capabilities first** (the is-it-a-domain gate said *what* earns a folder but was silent on *which axis* to look along, so agents on real projects defaulted to the visible one — the repo/folder structure — and minted one domain per service (`b/e`, `f/e`, `api-server-2`), plateauing the analysis at what the directory listing already said). Now codified: **vertical (business/capability) domains** — the units of purpose a user scenario names — are the default diagnosis; **horizontal (structural) domains** (`data`, `security`, `ops`, …) earn folders only where a runtime owns real rules worth fencing; and one-folder-per-service is the named degenerate case — "it's a separate repo/deployable" is not a principle, and that topology already lives in `integration`'s Boundary Map. Landed in the protocol card (navigation discipline #4), `ROUTER.template.md`'s "Adding a domain" gate, `/new-domain` step 1 (the axis check), `/excavate` step 5 (capability-first candidate proposals), root `CLAUDE.md` §6, and the HANDBOOK glossary (*Domain*).
+
 ## [3.0.1] - 2026-07-25
 
 ### Removed

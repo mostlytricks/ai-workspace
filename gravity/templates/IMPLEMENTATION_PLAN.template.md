@@ -111,6 +111,12 @@ Rolling lanes instead of numbered phases. Rules:
   detail survives in git history + its `WALKTHROUGH.md`.
 - New slices enter via `/interview <project> <feature>` (the intake ritual: the
   is-it-a-domain gate + the given/when/then Scenario).
+- **Chores defer as one-line rows, not slice PLANs**: `| later | <chore> (deferred
+  YYYY-MM-DD) | — | ○ |`. An unwritten deferral doesn't exist; the date is the
+  **comet clock** — `check.py consistency` WARNs `SLICE_STALE` on deferred rows and
+  `○` slice PLANs older than 30 days (pick it up, re-date it, or drop it). A chore
+  mints its slice PLAN only at pickup; one that keeps returning graduates to a
+  wall (a tagged SPEC rule, a gate step, or a RUNBOOK line), never to a domain.
 
 | Lane | Slice | Domain PLAN | Status |
 |---|---|---|---|
