@@ -19,7 +19,10 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
-## [3.2.0] - 2026-07-25
+## [3.2.1] - 2026-07-26
+
+### Fixed
+- **Orbit 3D obeys Kepler's third law — orbital period is now set by distance alone** (`generate_cosmos.prepare`). Speed used to encode a composite "activity" index (`3×PLANs + doc mass`, ×1.6 when ◑, ×recency), which was wrong twice over. It was **redundant**: every input already owned a dedicated channel — mass → planet size, PLANs → satellites, status → radius + colour, recency → comet trail — so motion, the one channel that costs seconds of watching to read, carried nothing new. And it **inverted**: the eye reads *tangential* speed (`r/period`), not angular period, so in knowledge-viewer the ○ planned `security` (activity 19.7, outermost) visibly crossed the canvas faster than the ◑ `agent-console` that is 3.5× hotter, and orbits crossed (`dictionary` at r=486 lapped `search` at r=444) — P² ∝ a³ broken in a workspace named *Kepler*. Now `period = 22s × (r/150)^1.5`: status sets the distance, the distance alone sets the speed, so the active inner band genuinely runs fastest and screen speed falls monotonically outward (kv: 22s → 145s across 10 domains, close to the old 27–208s feel). The activity index is unchanged and still **printed as a number** in each domain's card, where it is actually legible. Legend now reads "inner orbits faster (Kepler)".
 
 ### Added
 - **The lib travels with the project — a gravity repo now renders and checks *itself*, off-workspace** (`gravity/lib/` + `.claude/scripts/install_lib.py`; the pain, found by asking where `/observatory` output lands: the protocol card made a cloned repo self-*describing*, but every instrument that reads `.gravity/` lived in the workspace, so a clone carried all the facts and no way to see them — precisely the machine that matters, the GitHub-less workplace, was the one that couldn't render). `install_lib.py <project>` copies the whole lib into `<project>/.gravity/lib/` with its own `VERSION` stamp, and `/adopt-gravity` + `/sync-gravity` now do it as part of the mechanical layer (same verbatim contract as the card: re-copy to upgrade, **never hand-edit an installed module**). Installed, the instruments need **no arguments at all** — the lib's own location names its project: `python .gravity/lib/generate_observatory.py`, `python .gravity/lib/check_project.py`, `python .gravity/lib/run_gate.py <domain>`. Proven on a bare copy of knowledge-viewer's docs with no workspace anywhere above it: 10 domains, 5 seams, drift card live, stdlib only. New `check_project` findings **`LIB_MISSING`** / **`LIB_STALE`** mirror `PROTOCOL_MISSING`/`PROTOCOL_STALE`, with the same under-claiming rule — `LIB_STALE` is judged only when a *newer* distribution does the judging, because a bare clone genuinely cannot know a newer version exists.
@@ -281,7 +284,9 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.2.1
+[3.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.2.0
 [3.1.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.1.1
 [3.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.1.0
 [3.0.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.0.1

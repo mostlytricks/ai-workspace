@@ -9,7 +9,7 @@ The conceptual map of one project, complementing the tabular dashboard:
     Ring   = SPEC.md (the walls)         Moon = ARCHITECTURE.html (human how)
     Satellites = PLAN.*.md (intent in transit)
     Orbit distance = status (◑ active inner · ✓ stable mid · ○ planned outer)
-    Orbit speed = activity (PLAN count · doc mass · status · file recency)
+    Orbit period = distance, by Kepler's third law (the inner band runs fastest)
 
 Everything is scanned live from the same four registry owners /triage checks:
 the .gravity/ folder list, the IMPLEMENTATION_PLAN.md status spine, and
@@ -124,21 +124,34 @@ THEMES: dict[str, dict] = {
 # Scanner — lives in gravity/lib/scan_project.py (scan_domains), shared with
 # the boundary and observatory instruments so the docs are parsed one way.
 # ---------------------------------------------------------------------------
+R0, P0 = 150, 22        # the innermost orbit — radius in px, period in seconds
+
+
 def prepare(data: dict) -> list[dict]:
     """Sort by status (active in, planned out) and compute the orbit physics."""
     doms = sorted(data["domains"],
                   key=lambda d: (STATUS_ORDER[d["status"]], d["name"]))
     for i, d in enumerate(doms):
         mass = len(d["files"])
-        # activity drives speed: more work on the domain = faster orbit
+        # `work` is the composite heat index. It is PRINTED as a number in the
+        # card, never rendered as speed: each of its inputs already owns a
+        # visual channel (mass -> size, PLANs -> satellites, status -> radius
+        # + color, recency -> comet trail), so encoding it again in motion said
+        # nothing new and actively misled — the eye reads *tangential* speed
+        # (r/period), which made a far-out ○ domain look hotter than the
+        # innermost ◑ one.
         work = 3 * len(d["plans"]) + mass
         if d["status"] == "◑":
             work *= 1.6                      # actively-worked domains run hot
         work *= 1 + max(0.0, (21 - d["age_days"]) / 21)  # touched lately = hotter
+        r = R0 + i * 42
         d.update(
-            r=150 + i * 42, ang0=(i * 137.508 + 210) % 360,
-            size=9 + min(mass, 8) * 1.6, mass=mass,
-            work=round(work, 1), period=round(max(16, 260 / (1 + work / 8))),
+            r=r, ang0=(i * 137.508 + 210) % 360,
+            size=9 + min(mass, 8) * 1.6, mass=mass, work=round(work, 1),
+            # Kepler's third law, P² ∝ a³ — so orbits never cross and the inner
+            # (active) band genuinely runs fastest. Status sets the distance;
+            # the distance alone sets the speed.
+            period=round(P0 * (r / R0) ** 1.5),
         )
     return doms
 
@@ -250,7 +263,7 @@ def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
     counts = {s: sum(1 for d in doms if d["status"] == s) for s in "◑✓○"}
     legend = (f'<span>☀ mission</span><span>● domain (size = doc mass)</span>'
               f'<span>⊚ ring = SPEC</span><span>☾ moon = ARCHITECTURE</span>'
-              f'<span>· sats = PLANs</span><span>speed = activity</span>'
+              f'<span>· sats = PLANs</span><span>inner orbits faster (Kepler)</span>'
               f'<span style="color:{t["status"]["◑"]}">◑ active {counts["◑"]}</span>'
               f'<span style="color:{t["status"]["✓"]}">✓ stable {counts["✓"]}</span>'
               f'<span style="color:{t["status"]["○"]}">○ planned {counts["○"]}</span>')
