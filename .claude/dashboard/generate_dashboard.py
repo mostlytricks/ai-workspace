@@ -10,7 +10,7 @@ Why this shape:
     @font-face'd by relative path — the page renders fully with no network/CDN.
   - No Python deps (stdlib only): no venv, no pip (respects workspace CLAUDE.md).
 
-Design: the visual system is specified in DESIGN.dashboard.md (gravity · mission control:
+Design: the visual system is specified in DESIGN.dashboard.md (kepler · mission control:
 premium glassmorphism over a twinkling starfield, an orbital map of the tiers, luminous
 glow gradients). This is the dashboard's OWN identity and is deliberately distinct from
 the muted-teal flat theme used for reading docs (DESIGN.docs.md).
@@ -403,7 +403,7 @@ TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>gravity · mission control</title>
+<title>kepler · mission control</title>
 <script src="vendor/chart.umd.min.js"></script>
 <style>
   /* --- vendored fonts (offline; relative to this file) --- */
@@ -700,7 +700,7 @@ TEMPLATE = """<!DOCTYPE html>
   <canvas id="stars"></canvas>
   <div id="tip"></div>
   <header>
-    <h1>☀ gravity · mission control</h1>
+    <h1>☀ kepler · mission control</h1>
     <span class="gen">__TOTAL__ projects · generated <b>__GENERATED__</b></span>
     <div class="themebar" id="themebar">
       <button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button>

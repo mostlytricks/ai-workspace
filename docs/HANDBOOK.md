@@ -1,6 +1,6 @@
-# AI Workspace — Handbook
+# Kepler — the AI-workspace handbook
 
-Human-facing guide for working in `ai-workspace/`. The agent's operating rules live in `CLAUDE.md` (loaded into every agent session); this file is for **you** — open it when you need a walkthrough, a slash-command lookup, or to clarify terminology.
+Human-facing guide for working in `ai-workspace/` — **Kepler** is the workspace manager (tiers, junctions, index, dashboard); **gravity** is the doc protocol projects adopt (`gravity/`). The agent's operating rules live in `CLAUDE.md` (loaded into every agent session); this file is for **you** — open it when you need a walkthrough, a slash-command lookup, or to clarify terminology.
 
 ---
 

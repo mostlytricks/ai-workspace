@@ -1,6 +1,6 @@
-# AI Workspace — Agent Operating Manual
+# Kepler — the workspace manager (agent operating manual)
 
-Root contract for any coding agent working inside `ai-workspace/`. **Rules and invariants only** — step-by-step workflows for humans live in `docs/HANDBOOK.md`.
+Root contract for any coding agent working inside `ai-workspace/`. **Rules and invariants only** — step-by-step workflows for humans live in `docs/HANDBOOK.md`. The system is two named products: **Kepler**, this manager (the laws of motion for the project fleet — tiers, junctions, index, dashboard; this machine only), and **gravity**, the protocol projects adopt (portable; lives whole in `gravity/`).
 
 Always open the agent at this root, never one level deeper. When a project subdirectory has its own `CLAUDE.md` or `CONTEXT.md`, that local file wins on conflict.
 
@@ -8,7 +8,7 @@ Always open the agent at this root, never one level deeper. When a project subdi
 
 ## 1. Workspace Map
 
-Two layers, one workspace: the **manager** (this manual — tiers, junctions, index) and the **gravity protocol** (everything a project adopts), which lives whole in `gravity/`; read-docs stay in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
+Two layers, one workspace: **Kepler** (this manual — tiers, junctions, index) and the **gravity protocol** (everything a project adopts), which lives whole in `gravity/`; read-docs stay in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
 
 ```text
 ai-workspace/

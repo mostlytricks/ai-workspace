@@ -1,6 +1,8 @@
-# AI Workspace Management
+# Kepler — AI Workspace Management
 
 A personal operating system for running many AI/coding projects from one root —
+two named layers: **Kepler**, the workspace manager (tiers · junctions · index · dashboard),
+and **gravity**, the portable doc protocol projects adopt (it lives whole in `gravity/`) —
 without the usual mess of stray `.venv`s, accidental umbrella repos, and "wait,
 what was I doing here?" context loss.
 
