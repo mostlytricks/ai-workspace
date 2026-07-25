@@ -11,7 +11,7 @@ You are running `/sync-gravity` from `ai-workspace/` to bring project **`$ARGUME
 
 2. **Read the versions — never invent them:**
    - **Target** = major.minor from the `gravity/VERSION` file.
-   - **Router stamp** = the `> gravity: vX.Y` line in the project's root `CLAUDE.md`.
+   - **Router stamp** = the `> gravity: vX.Y` line in the project's root `CLAUDE.md` (v3: inside the fenced `<!-- gravity:router -->` block; pre-v3: a bare blockquote).
    - **Card stamp** = the `gravity protocol · vX.Y` line in `.gravity/GRAVITY.md` (`.gravity/` projects only).
 
    If the project has **no router stamp at all**, stop and say so — an unstamped project hasn't adopted gravity's versioned conventions; the fix is adoption (`/adopt-gravity`, or adding a light stamp by hand), not a sync. If both stamps already equal the target, report "already current" and stop.
@@ -22,7 +22,8 @@ You are running `/sync-gravity` from `ai-workspace/` to bring project **`$ARGUME
 
 4. **Apply the mechanical layer:**
    - `.gravity/` projects: re-copy `gravity/GRAVITY-PROTOCOL.md` → `.gravity/GRAVITY.md` (overwrite — the card is a verbatim copy by contract), delete the template's top comment block, fill the `v<X.Y>` stamp with the target version.
-   - All projects: update the router's `> gravity: vX.Y` line to the target.
+   - **Fenced (v3) projects:** rewrite the content **between the fence markers** in every root harness file that carries the block (`CLAUDE.md`, `AGENTS.md`, others) from `gravity/templates/GRAVITY.template.md` with the target version — identical in every file, never touching anything outside the fences.
+   - **Pre-v3 projects (no fences):** bump the bare `> gravity: vX.Y` stamp only. The **v2→v3 router migration** (move the Doc Map / read-first table / Adding-a-domain sections out of root `CLAUDE.md` into `.gravity/ROUTER.md`, then replace them with the fenced block — see `/adopt-gravity` step 5) is a **judgment item**: offer it in the step-6 checklist with the concrete before→after, and perform it only on the user's yes.
    - Flat (non-`.gravity/`) projects get **only** the stamp bump — no card, no ceremony.
 
 5. **Verify.** For `.gravity/` projects run `python .claude/scenarios/check.py consistency --project <path>` and confirm no `PROTOCOL_MISSING`/`PROTOCOL_STALE` remains (other findings: report, don't fix here). Then reconcile the project's row in the `PROJECTS.md` **Gravity adoption** table (stamp + card columns).

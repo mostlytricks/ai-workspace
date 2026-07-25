@@ -12,11 +12,11 @@ The argument is a project name (matches a folder under `active/`, `stable/`, `do
 
 1. **Locate the project.** Find `<name>` under `active/`, `stable/`, `dormant/`, or `repos/` (junctions read through transparently). If it's not found, say so and list the closest matches.
 
-2. **Locate the docs.** `CLAUDE.md` + `CONTEXT.md` always live at the project root. For a project on the **`.gravity/` doc system** (CLAUDE.md §6 — `.gravity/` directory present), the rest live under `.gravity/`: `.gravity/MISSION.html`, `.gravity/IMPLEMENTATION_PLAN.md`, `.gravity/ARCHITECTURE.html`, and per-domain docs in `.gravity/<domain>/`. For a flat project they're at the root. Read the root `CLAUDE.md` **Doc Map** first if present — it tells you exactly where each doc is.
+2. **Locate the docs.** `CLAUDE.md` + `CONTEXT.md` always live at the project root. For a project on the **`.gravity/` doc system** (CLAUDE.md §6 — `.gravity/` directory present), the rest live under `.gravity/`: `.gravity/MISSION.html`, `.gravity/IMPLEMENTATION_PLAN.md`, `.gravity/ARCHITECTURE.html`, and per-domain docs in `.gravity/<domain>/`. For a flat project they're at the root. Read the **Doc Map** first if present (`.gravity/ROUTER.md`; pre-v3 it sits in root `CLAUDE.md`) — it tells you exactly where each doc is.
 
 3. **Read its four docs, in this order** (skip what's missing, note what's absent):
    - `MISSION.html` → the durable why. Pull the `.lede` line, the mission statement, principles, and especially the **Current Non-Goals**. For `.gravity/` projects also note the **per-domain "system in N domains"** rows (each domain's principle + non-goal guard).
-   - `CLAUDE.md` → identity, stack, constraints, entry points; for `.gravity/` projects it's the **router** (Doc Map + read-first table).
+   - `CLAUDE.md` → identity, stack, constraints, entry points; for `.gravity/` projects the router lives at `.gravity/ROUTER.md` (root files carry only gravity's fenced pointer block).
    - `IMPLEMENTATION_PLAN.md` (or `.html`) → current phase, locked decisions, the gate, any **Open Questions**, and (for `.gravity/` projects) the **per-domain `✓/◑/○` status spine**.
    - `CONTEXT.md` → current state + the immediate next step + `Last touched`.
    - `ARCHITECTURE.html` (only if present — the optional fifth doc) → the load-bearing seam's mechanics, component boundaries, and data contracts.

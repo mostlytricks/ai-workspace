@@ -32,7 +32,7 @@ A report is *useful* when it carries six facts: **Reporter·date · Observed · 
 ## Step 2 — Triage trio (per item that survived Step 1)
 
 1. **Real?** Reproduce it now if the repro is runnable in this session (fixtures, synthetic input); otherwise mark how it will be verified and by whom. A report that reproduces differently than described gets its *Observed* corrected **with a note** — never silently.
-2. **Whose domain?** Route with the project's router table (root `CLAUDE.md`, "what to read before a change") — the same navigation as any change. Spans domains → the `integration`/seam domain owns it. No `.gravity/` → the fix routes to the flat docs; the ritual still applies.
+2. **Whose domain?** Route with the project's router table (`.gravity/ROUTER.md` "what to read before a change"; pre-v3: root `CLAUDE.md`) — the same navigation as any change. Spans domains → the `integration`/seam domain owns it. No `.gravity/` → the fix routes to the flat docs; the ritual still applies.
 3. **What kind?**
    - **bug** — behavior the docs/SPEC already claim is violated → slice PLAN via the bug-intake rule (Step 3).
    - **feature** — the user wants something never promised → hand off to `/interview <project> <feature>` (the is-it-a-domain gate); record the handoff in the `→` line.

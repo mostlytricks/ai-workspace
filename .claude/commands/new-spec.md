@@ -56,8 +56,8 @@ Fill `gravity/templates/SPEC.template.md`: **Gate** line, **Core Definition** (1
 
 ## Step 5 — Wire the indexes & prove it
 
-- **Doc Map** (root `CLAUDE.md`) → add `SPEC.md` to the `<domain>/` line.
-- **Router table** (root `CLAUDE.md`) → set the domain's read-first cell to `.gravity/<domain>/SPEC.md` (was `—`).
+- **Doc Map** (`.gravity/ROUTER.md`; pre-v3: root `CLAUDE.md`) → add `SPEC.md` to the `<domain>/` line.
+- **Router table** (`.gravity/ROUTER.md`; pre-v3: root `CLAUDE.md`) → set the domain's read-first cell to `.gravity/<domain>/SPEC.md` (was `—`).
 - **Run the gate** you wrote in the `Gate:` line (start the server first if it needs one) and paste the result — if it can't run, say why. A SPEC whose own gate you never ran is unproven.
 - If the project has no `.gravity/`, write the flat `SPEC.<domain>.md` at the project root instead and skip the Doc-Map wiring.
 

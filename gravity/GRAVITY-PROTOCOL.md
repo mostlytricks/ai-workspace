@@ -1,5 +1,5 @@
 <!--
-GRAVITY-PROTOCOL.template.md — the embedded protocol card. Copied to
+gravity/GRAVITY-PROTOCOL.md — the embedded protocol card. Copied to
 `.gravity/GRAVITY.md` whenever a project's `.gravity/` is created
 (/adopt-gravity, /excavate). It makes the project repo SELF-DESCRIBING:
 each project is its own independent git repo, so an agent that clones or
@@ -7,7 +7,7 @@ opens it *without* the ai-workspace never sees the workspace manual — this
 card carries the project-side protocol with the repo.
 
 At copy time, fill ONLY the version stamp below (major.minor from the
-workspace root `VERSION` file). Never edit anything else per project — the
+workspace `gravity/VERSION` file). Never edit anything else per project — the
 card is a verbatim copy; on a gravity upgrade, refresh it by re-copying.
 `check.py consistency` (and `/triage`) flags a missing or stale card.
 
@@ -16,18 +16,19 @@ rules (tiers, junctions, repos/ storage, PROJECTS.md) stay in the workspace
 CLAUDE.md and are never embedded here.
 -->
 
-> **gravity protocol · v<X.Y>** — copied from `ai-workspace/templates/GRAVITY-PROTOCOL.template.md`; never hand-edit. On a gravity upgrade, re-copy from the workspace (`/triage` flags a stale card).
+> **gravity protocol · v<X.Y>** — copied from the workspace `gravity/GRAVITY-PROTOCOL.md`; never hand-edit. On a gravity upgrade, re-copy from the workspace (`/triage` flags a stale card).
 
 # The gravity protocol (project-side)
 
-This project organizes its documentation with **gravity**. Two files auto-load from the project root — `CLAUDE.md` (identity, *how*) and `CONTEXT.md` (*now*) — and everything else lives under `.gravity/`, grouped **by subject domain**, not by doc-type. The root `CLAUDE.md` is the **one and only router**: navigate from its **Doc Map**, never guess paths.
+This project organizes its documentation with **gravity**. Two files auto-load from the project root — `CLAUDE.md` (identity, *how*) and `CONTEXT.md` (*now*) — and everything else lives under `.gravity/`, grouped **by subject domain**, not by doc-type. Gravity owns only the **fenced `<!-- gravity:router -->` block** in the root harness files (`CLAUDE.md`, `AGENTS.md`, …) — everything else there is the project's. The full map is **`.gravity/ROUTER.md`**: navigate from its **Doc Map**, never guess paths. *(Pre-v3 projects carry the Doc Map in root `CLAUDE.md` instead — same sections, older home.)*
 
 ## The doc kinds and their rates of change
 
 | Doc | Question it answers | Changes |
 |---|---|---|
 | `.gravity/MISSION.html` | **why** — north star, principles, non-goals | rarely |
-| root `CLAUDE.md` | **how** — identity, stack, run/test, conventions, routing | on refactors |
+| root `CLAUDE.md` | **how** — identity, stack, run/test, conventions (+ gravity's fenced pointer block) | on refactors |
+| `.gravity/ROUTER.md` | **routing** — the Doc Map + what to read before changing what + the is-it-a-domain gate | when domains change |
 | `.gravity/<domain>/given/` + `MANIFEST.md` | **received** — knowledge handed in from outside (quarry, never contract; disputes resolve against `raw/`) | when material arrives via `.gravity/inbox/` |
 | `.gravity/ARCHITECTURE.html` | **how it's built** — system overview | on structural change |
 | `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status (+ optional **Tracks**, the direction axis) | per phase/slice |
@@ -46,7 +47,7 @@ Three disciplines bind them:
 1. **Session start:** read root `CONTEXT.md`. **Session end:** update its Completed / Current State / Next Step (Completed = last 1–2 sessions only; exactly one Next Step; git history is the changelog, so prune freely).
 2. **Before changing a domain:** load `.gravity/<domain>/SPEC.md` — the compact contract. Open the paired `ARCHITECTURE.html` only when you need the full rationale.
 3. **Before changing a boundary** (API shape, generated/client types, auth/session behavior, ports/base URLs, shared env, queues/events, webhooks, cross-service data access): load `.gravity/integration/SPEC.md` **first** (or `CONTRACT.md` on smaller projects), then every affected domain SPEC — and follow its **Change Order**.
-4. **Adding a feature:** run the *is-it-a-domain?* gate in root `CLAUDE.md` ("Adding a domain"). The default verdict is a **`PLAN.<slug>.md` slice under an existing domain**. Mint a new `.gravity/<domain>/` folder only when the feature has its own gravity — and then **wire all four indexes** so it's never orphaned: the `CLAUDE.md` Doc Map, the `CLAUDE.md` router table (once it has a SPEC), the `MISSION.html` domain row, and the `IMPLEMENTATION_PLAN.md` status spine.
+4. **Adding a feature:** run the *is-it-a-domain?* gate in `.gravity/ROUTER.md` ("Adding a domain"). The default verdict is a **`PLAN.<slug>.md` slice under an existing domain**. Mint a new `.gravity/<domain>/` folder only when the feature has its own gravity — and then **wire all four indexes** so it's never orphaned: the `ROUTER.md` Doc Map, the `ROUTER.md` router table (once it has a SPEC), the `MISSION.html` domain row, and the `IMPLEMENTATION_PLAN.md` status spine.
 
 ## Reading (and honoring) a SPEC.md
 
@@ -61,7 +62,8 @@ Behavioral domains add a **Behavioral Contract** of `given/when/then` invariants
 ## What never to do
 
 - Don't create doc files at the project root — the root holds only `CLAUDE.md`, `CONTEXT.md`, `README.md` (plus code/config).
-- Don't put a `CLAUDE.md` inside `.gravity/` — it would not auto-load; the root `CLAUDE.md` stays the only router.
+- Don't put a `CLAUDE.md` inside `.gravity/` — it would not auto-load; root files carry only gravity's fenced pointer.
+- Don't edit inside the fenced `<!-- gravity:router -->` block by hand — it's machine-managed; and don't write gravity content outside it into a harness file.
 - Don't restate a fact another doc owns — link to it.
 - Don't invent docs to fill the layout — docs are recognized only when present; a domain with just a `PLAN.md` is fine.
 - Don't leave an unknown plausibly filled — write it as a visible `OPEN:` line.

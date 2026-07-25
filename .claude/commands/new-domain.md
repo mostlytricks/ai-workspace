@@ -29,8 +29,8 @@ The point of this command is the **gate** ("is this even a domain?") and the **i
 2. **Create the folder, minimal.** Make `.gravity/<domain>/` and a starter `.gravity/<domain>/PLAN.md` — usually the *only* file on day one (docs are recognized only when present). Seed `PLAN.md` from **`gravity/templates/PLAN.template.md`** (Goal · Scenario as `given/when/then` · Slice · Verification · Next), filled with the domain's intent, an `○ planned` status, and the first concrete next step — delete stencil sections that don't apply. If the intent is still fuzzy (you'd be guessing the Goal/Scenario), recommend **`/interview <project> <feature>`** first — it elicits exactly these fields and runs this same gate. Add `SPEC.md` / `ARCHITECTURE.html` only if the user says they're needed now. Exception: for an `integration` domain, prefer creating `SPEC.md` immediately (via `/new-spec`, which uses the template's **INTEGRATION VARIANT** — Boundary Map + Change Order) when the user is asking the agent to prepare cross-boundary coding rules; otherwise `CONTRACT.md` is enough.
 
 3. **Wire all four registry indexes** (this is the part that's easy to forget — do every one):
-   - **Doc Map** in the root `CLAUDE.md` → add the `<domain>/ …` line.
-   - **Router table** in the root `CLAUDE.md` → add a "If you're changing <domain> → read `.gravity/<domain>/SPEC.md`" row *(only once a `SPEC.md` exists; until then list it with a "—")*.
+   - **Doc Map** in `.gravity/ROUTER.md` (pre-v3: root `CLAUDE.md`) → add the `<domain>/ …` line.
+   - **Router table** in `.gravity/ROUTER.md` (pre-v3: root `CLAUDE.md`) → add a "If you're changing <domain> → read `.gravity/<domain>/SPEC.md`" row *(only once a `SPEC.md` exists; until then list it with a "—")*.
    - **`MISSION.html`** "the system in N domains" → add the row: why · the principle that wins arguments · the non-goal guard. *(Only once it's a confirmed durable domain. If MISSION has no such section yet, add it.)*
    - **`IMPLEMENTATION_PLAN.md`** status spine → add the `○` row pointing at the new `PLAN.md`.
 

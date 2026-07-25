@@ -9,7 +9,7 @@ registry indexes, and does every index row point at a real folder?**
 
 The four registry owners (workspace CLAUDE.md §6):
   1. existence  -> the `.gravity/<domain>/` folder itself
-  2. routing    -> root CLAUDE.md  (Doc Map block + the router table)
+  2. routing    -> .gravity/ROUTER.md (Doc Map + router table; pre-v3: root CLAUDE.md)
   3. why        -> .gravity/MISSION.html  ("the system in N domains" row)
   4. status     -> .gravity/IMPLEMENTATION_PLAN.md  (the per-domain status spine)
 
@@ -76,8 +76,9 @@ NON_DOMAIN_DIRS = {"inbox", "given"}
 
 # The four index regions a domain must appear in, by id -> human label.
 REGIONS = {
-    "doc_map": "CLAUDE.md Doc Map",
-    "router": "CLAUDE.md router table (it has a SPEC.md, so it needs a read-first row)",
+    "doc_map": "Doc Map (.gravity/ROUTER.md, or root CLAUDE.md pre-v3)",
+    "router": "router table (it has a SPEC.md, so it needs a read-first row — "
+              ".gravity/ROUTER.md, or root CLAUDE.md pre-v3)",
     "mission": "MISSION.html domain row",
     "plan": "IMPLEMENTATION_PLAN.md status spine",
 }
@@ -182,8 +183,13 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
     mission = _read(mission_path)
     plan = _read(plan_path)
 
-    doc_map = _section(claude, "Doc Map") or claude   # tolerate an unsplit CLAUDE.md
-    router = _section(claude, "What to read before a change") or claude
+    # v3 thin router: Doc Map + read-first table live in .gravity/ROUTER.md and the
+    # root harness files carry only the fenced pointer; pre-v3 projects still carry
+    # both sections in root CLAUDE.md — read whichever exists (never both-required).
+    router_doc = _read(gravity / "ROUTER.md")
+    route_src = router_doc or claude
+    doc_map = _section(route_src, "Doc Map") or route_src   # tolerate an unsplit file
+    router = _section(route_src, "What to read before a change") or route_src
     # Status spine = the heading mentioning BOTH "status" and "domain"
     # (e.g. "Domain status spine" / "Per-domain status"); never "Status right now".
     spine = _section_by(plan, lambda h: "status" in h and "domain" in h) or plan
@@ -260,11 +266,12 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
 
     # 2. ORPHAN_ROUTE — a `.gravity/<slug>/` reference with no such folder.
     #    WARN, not FAIL: templates legitimately ship example rows (e.g. integration).
-    for slug in sorted(set(re.findall(r"\.gravity/([a-z0-9][a-z0-9-]*)/", claude))):
+    for slug in sorted(set(re.findall(r"\.gravity/([a-z0-9][a-z0-9-]*)/",
+                                      claude + "\n" + router_doc))):
         if slug not in domains and slug not in CROSS_CUTTING:
             findings.append(Finding(
                 WARN, "ORPHAN_ROUTE", slug, "router",
-                f"CLAUDE.md references .gravity/{slug}/ but no such folder exists",
+                f"the router references .gravity/{slug}/ but no such folder exists",
             ))
 
     # 3. COUPLING_UNCONTRACTED — two domains lean on each other's docs heavily

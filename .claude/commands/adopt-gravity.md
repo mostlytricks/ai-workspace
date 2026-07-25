@@ -1,5 +1,5 @@
 ---
-description: Retrofit the .gravity/ doc system into an existing project — relocate the heavy docs out of the root into domain folders, and seed the root CLAUDE.md router.
+description: Retrofit the .gravity/ doc system into an existing project — relocate the heavy docs out of the root into domain folders, seed .gravity/ROUTER.md, and fence the thin router block into the root harness files.
 argument-hint: <project-name>
 ---
 
@@ -33,10 +33,13 @@ You are running `/adopt-gravity` from `ai-workspace/` to move project `$ARGUMENT
    - `README.md` / `CONTEXT.md` pointers into the moved docs.
    Report what you changed; flag anything outside the repo you can't fix (external skills, IDE files).
 
-5. **Seed the router + embed the protocol card.** Copy the three sections from `gravity/templates/GRAVITY.template.md` into the project's **root `CLAUDE.md`** (replacing any existing flat "Docs:" pointer / Document-Authoring section): the **Doc Map**, the **read-first router table**, and the **Adding a domain** gate. Fill the Doc Map tree and the router table from the actual domains you just created. Then embed the protocol card: `cp <workspace-root>/gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with **major.minor from the `gravity/VERSION` file** (never invent a version). The card is a verbatim copy — do not rewrite it from memory or tailor it per project; it's what makes the repo self-describing when opened without the workspace. Also drop the **Codex shim** if absent: `[ -f AGENTS.md ] || cp <workspace-root>/gravity/templates/AGENTS.template.md AGENTS.md` — so the project is discoverable by agents that look for `AGENTS.md` and reach the same router. Never overwrite an existing `AGENTS.md`.
+5. **Seed the router + fence the harness files + embed the protocol card.** Gravity's entire footprint in root files is a 4-line fenced block — everything else in them belongs to the project:
+   - **`.gravity/ROUTER.md`** — copy `gravity/templates/ROUTER.template.md` and fill the **Doc Map** tree and the **read-first router table** from the actual domains you just created (the **Adding a domain** gate ships in the template).
+   - **The fenced block** — copy the block from `gravity/templates/GRAVITY.template.md` (fill `v<X.Y>` with major.minor from `gravity/VERSION` — never invent it) and insert it **identically** into every root harness file the project uses: `CLAUDE.md` and `AGENTS.md` always (create `AGENTS.md` from `gravity/templates/AGENTS.template.md` if absent — never overwrite an existing one; just insert the block); `GEMINI.md` / `.cursorrules` / others only if they already exist. Insert **right below the file's title line** (or at the very top if none). If the file already carries an old-style gravity router (a `> gravity: vX.Y` stamp, a Doc Map, a "What to read before a change" table, an "Adding a domain" section), **move that content into `.gravity/ROUTER.md`** (merging with the template) and replace it with the fenced block — that's the v2→v3 migration. **Never modify anything outside the fences.**
+   - **The protocol card** — `cp <workspace-root>/gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp from `gravity/VERSION`. The card is a verbatim copy — do not rewrite it from memory or tailor it per project; it's what makes the repo self-describing when opened without the workspace.
 
 6. **Establish the four registry owners** (CLAUDE.md §6 — the directory is the registry, there's no registry file):
-   - **routing** → the root `CLAUDE.md` Doc Map + router table (done in step 5);
+   - **routing** → `.gravity/ROUTER.md` Doc Map + router table (done in step 5);
    - **why** → add a "the system in N domains" section to `.gravity/MISSION.html` with one row per domain (why · the principle · the non-goal). If no `MISSION.html` exists, note it as a follow-up rather than inventing one.
    - **status** → add a per-domain `✓/◑/○` status spine to `.gravity/IMPLEMENTATION_PLAN.md`.
    - **existence** → the directory itself (done).
@@ -44,7 +47,7 @@ You are running `/adopt-gravity` from `ai-workspace/` to move project `$ARGUMENT
 
 7. **Verify.** Run the project's doc linter / build if one exists (e.g. `npm run lint:docs`) to confirm nothing broke. Report the result honestly.
 
-8. **Update `CONTEXT.md`** — a Completed bullet for the restructure, pointing at the new Doc Map.
+8. **Update `CONTEXT.md`** — a Completed bullet for the restructure, pointing at `.gravity/ROUTER.md`.
 
 ## What NOT to do
 

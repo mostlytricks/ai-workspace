@@ -32,7 +32,8 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 | `PLAN.template.md` | Per-domain / per-slice intent — Goal + given/when/then Scenario + Slice + Verification; seeded by `/new-domain` and `/interview`. |
 | `ARCHITECTURE.template.html` | "How it's built" overview (optional fifth doc); also seeds per-domain deep-dives. |
 | `SPEC.template.md` | The per-domain **change contract** — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules). Carries the first-class INTEGRATION VARIANT (Boundary Map + Change Order) for the cross-service `integration` domain. |
-| `GRAVITY.template.md` | The root-CLAUDE.md router block (Doc Map + read-first table + domain gate) for projects adopting `.gravity/`. |
+| `GRAVITY.template.md` | The **thin fenced router block** — the only thing gravity writes into root harness files (CLAUDE.md, AGENTS.md, …); machine-managed between `<!-- gravity:router -->` fences. |
+| `ROUTER.template.md` | The full in-`.gravity/` router → `.gravity/ROUTER.md`: Doc Map + read-first table + the is-it-a-domain gate. |
 | `WALKTHROUGH.template.md` | Per-change "what got done + proof" record (append-only, dated). |
 | `INTAKE.template.md` | Per-batch bug/issue intake sheet — verbatim reports + required-facts checklist → `docs/intake/<date>.md`; seeded by `/intake`. |
 | `GIVEN-MANIFEST.template.md` | Provenance sheet for the given layer — received domain knowledge routed from `.gravity/inbox/` by `/given`. |
