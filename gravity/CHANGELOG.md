@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-07-25
+
 ### Removed
 - **`render_2d` deleted from `generate_cosmos.py`** (follow-up to v3.0.0's Domains-tab retirement, on the user's "do we still need it?" — the honest answer was no: its only caller was its own debug CLI). The module itself stays load-bearing — it owns the five-palette `THEMES` family (imported by the observatory, boundary renderer, and dashboard) and `render_3d` (the Orbit 3D tab); the debug CLI is now 3D-only (`--mode` flag dropped, output always `<name>.3d.html`). Stale generated `cosmos/*.html` outputs deleted; git history keeps the 2D renderer.
 
@@ -250,7 +252,9 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v2.12.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.0.1
+[3.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.0.0
 [2.12.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.12.0
 [2.11.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.11.0
 [2.10.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.10.0
