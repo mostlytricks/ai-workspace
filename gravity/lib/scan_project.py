@@ -93,9 +93,12 @@ def rule_kind(tag: str) -> str:
             else "judgment" if tag == "review" else "guidance")
 
 
-# Evidence doors (workspace CLAUDE.md §6) — top-level .gravity/ dirs that are
-# never subject domains; check.py holds the same set for its index checks.
-NON_DOMAIN_DIRS = {"inbox", "given"}
+# Top-level .gravity/ dirs that are never subject domains; check_project.py
+# holds the same set for its index checks. Two kinds:
+#   evidence doors  (workspace CLAUDE.md §6) — the drop zone and the given layer
+#   machinery       — the installed protocol lib and its generated output, which
+#                     are tooling living in .gravity/, not subjects to document
+NON_DOMAIN_DIRS = {"inbox", "given", "lib", "observatory"}
 
 
 def domain_dirs(g: Path) -> list[Path]:
@@ -808,24 +811,16 @@ def main() -> None:
         except Exception:
             pass
     import argparse
-    # alias resolution is workspace-side (manager) sugar; off-workspace, pass a path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".claude" / "scripts"))
-    try:
-        from resolve_project import resolve
-    except ImportError:  # running outside the workspace — accept a plain path
-        def resolve(arg):  # type: ignore
-            p = Path(arg)
-            if not p.is_dir():
-                sys.exit(f"not a directory (and no workspace resolver): {arg}")
-            return p.name, p
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from project_arg import resolve_target
     ap = argparse.ArgumentParser(description="Scan one .gravity/ project → facts JSON, "
                                              "or a per-domain preflight packet.")
-    ap.add_argument("project", help="project name or alias (resolve_project.py)")
+    ap.add_argument("project", nargs="?", help="project path, or a name/alias when run from the workspace (default: the project this lib belongs to)")
     ap.add_argument("--pretty", action="store_true", help="indent the JSON")
     ap.add_argument("--preflight", metavar="DOMAIN",
                     help="print the pre-change packet for one domain instead of JSON")
     args = ap.parse_args()
-    _, path = resolve(args.project)
+    _, path = resolve_target(args.project)
     if args.preflight:
         print(preflight(path, args.preflight))
     else:

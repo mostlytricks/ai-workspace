@@ -46,11 +46,21 @@ python .claude/scenarios/check.py scenario \
     --scenario .claude/scenarios/<command> --actual <post-run-project>
 ```
 
+## Where the checks live
+
+The checker is **split by scope**. `gravity/lib/check_project.py` holds everything that judges one
+project from its own docs (`consistency`, `spec`, `intake`, `given`) — it travels with the protocol
+into `<project>/.gravity/lib/`, so a clone with no workspace runs the same checks against itself
+(`python .gravity/lib/check_project.py`). This file's `check.py` re-exports all of it and adds what
+is workspace-scoped and therefore never embedded in a project: `workspace` (tiers, junctions,
+`PROJECTS.md`), the fixtures, and the `selftest` harness. Every existing import site
+(`from check import check_gravity_consistency`) still works.
+
 ## How parsing works (and its limits)
 
 `check.py` uses **heuristic slug-match**: a domain is "wired" into an index region if its kebab-case slug appears in that region (the Doc Map code block, the router table, the MISSION rows, the PLAN status spine). Fixtures are author-controlled, so this is robust enough. If real projects start tripping it (a slug that's also a common English word, say), harden with machine-readable anchors in the templates — not before.
 
-Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`). `consistency` also emits **`COUPLING_UNCONTRACTED`** (WARN): two domains whose docs cross-reference each other ≥5 times (path-shaped mentions, from `scan_project.scan_couplings` — one scanner, many callers) while neither `integration/SPEC.md` nor `CONTRACT.md` names the pair — a strong doc seam no contract owns; the fix is naming the pair in the contract, or an honest "no seam here" judgment. And **`SLICE_STALE`** (WARN), the comet rule: a `○ planned` slice PLAN untouched past 30 days (file mtime — under-claims on fresh clones), or a dated deferral row (`… (deferred YYYY-MM-DD)`) in `IMPLEMENTATION_PLAN.md` never picked up. Deferred work must resurface by age, never by memory; the fix is pick it up, re-date it, or drop it — silence is the one wrong move.
+Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`). `consistency` also emits **`COUPLING_UNCONTRACTED`** (WARN): two domains whose docs cross-reference each other ≥5 times (path-shaped mentions, from `scan_project.scan_couplings` — one scanner, many callers) while neither `integration/SPEC.md` nor `CONTRACT.md` names the pair — a strong doc seam no contract owns; the fix is naming the pair in the contract, or an honest "no seam here" judgment. And **`SLICE_STALE`** (WARN), the comet rule: a `○ planned` slice PLAN untouched past 30 days (file mtime — under-claims on fresh clones), or a dated deferral row (`… (deferred YYYY-MM-DD)`) in `IMPLEMENTATION_PLAN.md` never picked up. Deferred work must resurface by age, never by memory; the fix is pick it up, re-date it, or drop it — silence is the one wrong move. Finally **`LIB_MISSING`** / **`LIB_STALE`** (WARN), the twin of `PROTOCOL_MISSING`/`PROTOCOL_STALE`: a project with no `.gravity/lib/`, or one older than the distribution, can't render or check itself off-workspace — the fix is always a re-install (`python .claude/scripts/install_lib.py <project>`), never a hand-edit. `LIB_STALE` is judged only when a *newer* distribution is doing the judging: run from a project's own installed lib the two versions are equal and it stays silent, because a bare clone genuinely cannot know a newer version exists.
 
 **A domain can only be unwired from an index that exists.** A two-doc brownfield project (CLAUDE.md §5 brownfield inversion: `.gravity/integration/` with no MISSION/PLAN yet) is a sanctioned state — the checker skips the absent index files and emits one `INDEX_ABSENT` WARN each instead of FAILing every domain.
 

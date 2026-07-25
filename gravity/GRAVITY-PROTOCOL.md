@@ -60,6 +60,20 @@ Behavioral domains add a **Behavioral Contract** of `given/when/then` invariants
 
 **Honesty rule:** never tag a rule with a wall you haven't verified exists. When unsure, under-claim to `[review]`. Run the Gate before declaring a change done; report the result faithfully.
 
+## Seeing the system (the observatory)
+
+This repo carries its own instruments in **`.gravity/lib/`** — stdlib-only Python, copied verbatim from the gravity distribution and versioned by `.gravity/lib/VERSION`. The card above makes the repo self-*describing*; the lib makes it self-*rendering*, so none of this needs the workspace it came from:
+
+```bash
+python .gravity/lib/generate_observatory.py     # the whole system as one page
+python .gravity/lib/check_project.py            # the structural checks, on this project
+python .gravity/lib/run_gate.py <domain>        # the domain's gate, by its own exit code
+```
+
+The page lands at **`.gravity/observatory/index.html`** — seven tabs over one scan of these docs (Overview + drift · Queue · Seams · Spec Health · Graduation · Timeline · Orbit 3D). It is **generated, never authored**: the folder ignores itself, and *a wrong page means the docs are wrong* — fix the docs and re-render, never the HTML.
+
+`lib/`, `observatory/`, `inbox/` and `given/` are the four `.gravity/` directories that are **not** subject domains — they're machinery and evidence doors, so they carry no SPEC and are never wired into the indexes.
+
 ## What never to do
 
 - Don't create doc files at the project root — the root holds only `CLAUDE.md`, `CONTEXT.md`, `README.md` (plus code/config).
@@ -68,4 +82,5 @@ Behavioral domains add a **Behavioral Contract** of `given/when/then` invariants
 - Don't restate a fact another doc owns — link to it.
 - Don't invent docs to fill the layout — docs are recognized only when present; a domain with just a `PLAN.md` is fine.
 - Don't leave an unknown plausibly filled — write it as a visible `OPEN:` line.
-- Don't hand-edit this card — it's a versioned copy; re-copy from the workspace to upgrade.
+- Don't hand-edit this card, or anything in `.gravity/lib/` — both are versioned verbatim copies; re-copy from the workspace to upgrade. A local patch to an installed module is drift the next upgrade silently overwrites.
+- Don't commit `.gravity/observatory/` output, and don't hand-edit it — it's regenerated from the docs.

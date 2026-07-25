@@ -39,10 +39,21 @@ sets the first-load default).
 Everything is scanned live from the docs. A wrong page means wrong docs.
 
 Usage:
-    python .claude/dashboard/generate_observatory.py <project-or-alias>
+    python gravity/lib/generate_observatory.py [<project-path-or-alias>]
+
+From inside a project that carries .gravity/lib/ (installed by
+.claude/scripts/install_lib.py), no argument is needed — the lib's own
+location names the project it belongs to, so a clone that has never seen
+the workspace renders itself:
+
+    python .gravity/lib/generate_observatory.py
         [--theme aurora|daylight|sandstone|forest|slate] [--open]
 
-Output: .claude/dashboard/observatory/<project>.html (gitignored — regenerate).
+Output: <project>/.gravity/observatory/index.html — inside the project, so
+anyone who opens the repo can see it. The folder carries a .gitignore of `*`
+(it ignores itself): the page is generated, and a committed page is one that
+can go stale in git. Doc links are relative for the same reason — an absolute
+file:// URI would pin the page to the machine that rendered it.
 """
 from __future__ import annotations
 
@@ -53,19 +64,31 @@ import sys
 import webbrowser
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scenarios"))
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
-from resolve_project import resolve  # noqa: E402
+# Siblings in this same lib/ — whether it sits in the gravity distribution or
+# installed at <project>/.gravity/lib/. No workspace path is ever assumed.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_arg import observatory_dir, resolve_target  # noqa: E402
 from scan_project import scan, trunc  # noqa: E402
 from generate_cosmos import THEMES, STATUS_LABEL, render_3d  # noqa: E402
 from generate_boundary import render as render_boundary  # noqa: E402
-try:  # findings stay check.py's concern — imported, never reimplemented here
-    from check import check_gravity_consistency, check_spec_honesty  # noqa: E402
+try:  # findings stay the checker's concern — imported, never reimplemented here
+    from check_project import check_gravity_consistency, check_spec_honesty  # noqa: E402
 except Exception:  # pragma: no cover — checker unavailable ≠ checker clean
     check_gravity_consistency = check_spec_honesty = None
 
 esc = html_mod.escape
+
+# The page is written to <project>/.gravity/observatory/index.html, so a link to
+# an authored doc climbs two levels back to the project root. Relative, never
+# file:// — an absolute URI pins the page to the machine that rendered it, and
+# this page now ships inside the project.
+DOC_PREFIX = "../../"
+
+
+def doc_href(rel) -> str:
+    """A project-root-relative path as an href from the rendered page."""
+    return DOC_PREFIX + str(rel).replace("\\", "/")
+
 STATUS_CLASS = {"◑": "st-a", "✓": "st-s", "○": "st-p"}
 
 
@@ -75,8 +98,7 @@ def drift_card(findings) -> str:
     if findings is None:
         return ('<div class="ocard warn"><div class="ohead">drift — checkers unavailable</div>'
                 '<div class="okv">check.py could not be imported; run '
-                '<span class="mono">python .claude/scenarios/check.py consistency --project '
-                '&lt;name&gt;</span> yourself — unavailable is not clean.</div></div>')
+                '<span class="mono">python .gravity/lib/check_project.py</span> yourself — unavailable is not clean.</div></div>')
     if not findings:
         return ('<div class="ocard"><div class="ohead">drift — consistency + spec honesty</div>'
                 '<div class="okv okc">0 findings — indexes wired, protocol card current, '
@@ -145,9 +167,8 @@ def overview_html(facts: dict, project_path: Path, findings) -> str:
                        ("ARCHITECTURE.html", ".gravity/ARCHITECTURE.html"),
                        ("IMPLEMENTATION_PLAN.md", ".gravity/IMPLEMENTATION_PLAN.md"),
                        ("CLAUDE.md", "CLAUDE.md"), ("CONTEXT.md", "CONTEXT.md")):
-        p = project_path / rel
-        if p.exists():
-            links.append(f'<a href="{p.as_uri()}" target="_blank">{label}</a>')
+        if (project_path / rel).exists():
+            links.append(f'<a href="{doc_href(rel)}" target="_blank">{label}</a>')
 
     return f"""<div class="pad">
   <div class="goal">{esc(facts["goal"]) or "<em>no goal: line in IMPLEMENTATION_PLAN.md</em>"}</div>
@@ -249,7 +270,7 @@ def queue_html(facts: dict, project_path: Path) -> str:
     n_none = sum(1 for p in q if not p["status"])
     rows = []
     for p in sorted(q, key=lambda x: (QUEUE_ORDER[x["status"]], x["age_days"])):
-        href = (project_path / p["rel"]).as_uri()
+        href = doc_href(p["rel"])
         if p["status"]:
             st = (f'<span class="dot {STATUS_CLASS[p["status"]]}"></span>'
                   f'{p["status"]} {STATUS_LABEL[p["status"]]}')
@@ -298,7 +319,7 @@ def timeline_html(facts: dict, project_path: Path) -> str:
         if month != last_month:
             rows.append(f'<div class="tmonth">{month}</div>')
             last_month = month
-        href = (project_path / "docs" / "walkthroughs" / w["file"]).as_uri()
+        href = doc_href(f'docs/walkthroughs/{w["file"]}')
         chips = "".join(f'<span class="tchip">{esc(d)}</span>' for d in w["domains"]) \
                 or '<span class="tchip none">no domain header</span>'
         rows.append(f'<div class="trow"><span class="tdate mono">{w["date"]}</span>'
@@ -616,13 +637,13 @@ def main() -> None:
         except Exception:
             pass
     ap = argparse.ArgumentParser(description="One project, one page — the unified gravity view.")
-    ap.add_argument("project", help="project name or alias (resolve_project.py)")
+    ap.add_argument("project", nargs="?", help="project path, or a name/alias when run from the workspace (default: the project this lib belongs to)")
     ap.add_argument("--theme", choices=sorted(THEMES), default="aurora",
                     help="first-load default; the page has live theme buttons")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     args = ap.parse_args()
 
-    name, path = resolve(args.project)  # exits with candidates if ambiguous
+    name, path = resolve_target(args.project)
     facts = scan(path)
     findings = None
     if check_gravity_consistency is not None:
@@ -631,9 +652,8 @@ def main() -> None:
                         + check_spec_honesty(path))
         except SystemExit:
             findings = None
-    outdir = Path(__file__).resolve().parent / "observatory"
-    outdir.mkdir(exist_ok=True)
-    out = outdir / f"{name}.html"
+    outdir = observatory_dir(path)
+    out = outdir / "index.html"
     out.write_text(render_page(facts, args.theme, path, findings), encoding="utf-8")
 
     integ = facts["integration"]

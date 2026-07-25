@@ -26,11 +26,11 @@ INTERNAL: the user-facing door is /observatory (generate_observatory.py embeds
 render_3d as the Orbit 3D tab). This CLI remains for debugging the view alone.
 
 Usage:
-    python .claude/dashboard/generate_cosmos.py <project-or-alias>
+    python gravity/lib/generate_cosmos.py [<project-path-or-alias>]
         [--theme aurora|daylight|sandstone|forest|slate] [--open]
-    python .claude/dashboard/generate_cosmos.py --list-themes
+    python gravity/lib/generate_cosmos.py --list-themes
 
-Output: .claude/dashboard/cosmos/<project>.3d.html (gitignored — regenerate).
+Output: <project>/.gravity/observatory/<project>.3d.html (self-ignoring — regenerate).
 """
 from __future__ import annotations
 
@@ -42,9 +42,10 @@ import sys
 import webbrowser
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
-from resolve_project import resolve  # noqa: E402
+# Siblings in this same lib/ — whether it sits in the gravity distribution or
+# installed at <project>/.gravity/lib/. No workspace path is ever assumed.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_arg import observatory_dir, resolve_target  # noqa: E402
 from scan_project import (  # noqa: E402  (one scanner, many instruments)
     scan_couplings, scan_domains as scan, scan_spec_census, scan_tracks,
 )
@@ -577,7 +578,7 @@ function show(id) {{
 # ---------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="Render a project's .gravity/ as a star system.")
-    ap.add_argument("project", nargs="?", help="project name or alias (resolve_project.py)")
+    ap.add_argument("project", nargs="?", help="project path, or a name/alias when run from the workspace (default: the project this lib belongs to)")
     ap.add_argument("--theme", choices=sorted(THEMES), default="aurora")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     ap.add_argument("--list-themes", action="store_true")
@@ -587,19 +588,13 @@ def main() -> None:
         for name, t in THEMES.items():
             print(f"{name:8} star {t['star'][1]} · active {t['status']['◑']} · bg {t['bg']}")
         return
-    if not args.project:
-        ap.error("project required (or --list-themes)")
-
-    name, path = resolve(args.project)  # exits with candidates if ambiguous
+    name, path = resolve_target(args.project)
     data = scan(path)
     data["specs"] = scan_spec_census(path)      # spec-health rings + card readouts
     data["links"] = scan_couplings(path)        # coupling arcs (3d) + card readouts
     data["tracks"] = scan_tracks(path)          # track arcs (3d) + card readouts
     theme = THEMES[args.theme]
-    outdir = Path(__file__).resolve().parent / "cosmos"
-    outdir.mkdir(exist_ok=True)
-
-    out = outdir / f"{name}.3d.html"
+    out = observatory_dir(path) / f"{name}.3d.html"
     out.write_text(render_3d(data, theme), encoding="utf-8")
     print(f"cosmos[{args.theme}]: {len(data['domains'])} domains -> {out}")
     if args.open:

@@ -41,12 +41,32 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 | `DESIGN.template.md` | Running-app UI design-system contract (UI projects only). |
 | `RUNBOOK.template.md` | Operations doc — deploy · envs · health · rollback (the "2am test"; deploying projects only). |
 
-## The portable walls (`lib/`)
+## The portable instruments (`lib/`)
+
+Everything here is **stdlib-only and path-relative by rule**, because it doesn't stay here:
+`python .claude/scripts/install_lib.py <project>` copies this whole directory into
+`<project>/.gravity/lib/` with a `VERSION` stamp. The protocol card makes a repo
+self-*describing*; the lib makes it self-*rendering* — a clone that has never seen this
+workspace can scan, check and render itself.
 
 - `scan_project.py` — the one scanner for a project's gravity docs (domains, spine, SPEC census,
   scenarios, queue, tracks, walkthroughs, context, preflight packets). Facts only, stdlib only;
   every instrument and checker reads through it so the docs are parsed exactly one way.
+- `check_project.py` — the project-scoped structural checks (`consistency`, `spec`, `intake`,
+  `given`) plus a CLI. The workspace-scoped half (tiers, `PROJECTS.md`, the golden-scenario
+  harness) stays in `.claude/scenarios/check.py`, which re-exports this one.
+- `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/observatory/`.
+  `generate_cosmos.py` (Orbit 3D + the five-palette `THEMES` family) and `generate_boundary.py`
+  (the seam graph) are its renderer modules; each keeps a debug CLI.
+- `project_arg.py` — which project (path first, workspace alias only as sugar) and where output
+  goes (the self-ignoring `observatory/` folder).
 - `run_gate.py` — runs a domain SPEC's extracted gate inside the project and propagates its exit
   code (exit 2 = an honest "no gate to run" refusal, never a pass).
 
-Both run off-workspace with a project path (workspace alias resolution is manager-side sugar).
+Every one of them takes a project **path**; the workspace's alias resolution
+(`.claude/scripts/resolve_project.py`) is manager-side sugar reached only when present. Installed
+in a project, they need no argument at all — the lib's own location names its project.
+
+**Never hand-edit an installed copy.** It's verbatim, like the card: fix it here and re-install
+(`/sync-gravity`). `check_project` WARNs `LIB_MISSING` / `LIB_STALE` when a project has no lib or
+an older one than the distribution.

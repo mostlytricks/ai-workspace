@@ -20,10 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-# resolve_project is workspace-side (manager) tooling — reach for it beside the
-# workspace commands; scan_project sits next to this file in gravity/lib.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".claude" / "scripts"))
-from resolve_project import resolve  # noqa: E402
+from project_arg import resolve_target  # noqa: E402
 from scan_project import scan_spec_census  # noqa: E402
 
 
@@ -33,10 +30,13 @@ def main() -> None:
             stream.reconfigure(encoding="utf-8")
         except Exception:
             pass
-    if len(sys.argv) != 3:
-        sys.exit("usage: run_gate.py <project-or-alias> <domain>")
-    name, path = resolve(sys.argv[1])
-    domain = sys.argv[2]
+    if len(sys.argv) == 2:                  # installed in a project: domain only
+        token, domain = None, sys.argv[1]
+    elif len(sys.argv) == 3:
+        token, domain = sys.argv[1], sys.argv[2]
+    else:
+        sys.exit("usage: run_gate.py [<project-path-or-alias>] <domain>")
+    name, path = resolve_target(token)
 
     census = {c["domain"]: c for c in scan_spec_census(path)}
     c = census.get(domain)

@@ -39,12 +39,12 @@ gravity/**/__pycache__/
 # must never ship with the skeleton (Claude Code convention: *.local = untracked).
 .claude/settings.local.json
 
-# Generated, local-only dashboard output. The generator scripts stay tracked
+# Generated, local-only dashboard output. The generator stays tracked
 # (whitelisted above via .claude/**); the regenerated HTML is not.
+# Per-project instrument output moved into the projects themselves
+# (<project>/.gravity/observatory/, which ignores itself) — the tiers are
+# already denied by the `*` rule, so nothing is needed here for it.
 .claude/dashboard/dashboard.html
-.claude/dashboard/cosmos/
-.claude/dashboard/boundary/
-.claude/dashboard/observatory/
 
 # Python bytecode from the helper scripts — never part of the tracked skeleton.
 .claude/**/__pycache__/

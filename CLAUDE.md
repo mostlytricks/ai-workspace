@@ -30,7 +30,7 @@ ai-workspace/
 │   ├── VERSION · CHANGELOG.md      #   gravity's SemVer (paired git tag vX.Y.Z) + how its rules evolved; projects stamp against THIS version (§2).
 │   ├── GRAVITY-PROTOCOL.md         #   the protocol card → copied verbatim to <project>/.gravity/GRAVITY.md at adoption (§6).
 │   ├── templates/                  #   the per-project / per-domain STENCILS (copied, never auto-loaded) — CLAUDE/AGENTS/CONTEXT, the four-doc pipeline (MISSION/IMPLEMENTATION_PLAN/ARCHITECTURE), per-domain PLAN/SPEC (with the §5 integration variant), GRAVITY fenced router block + ROUTER, WALKTHROUGH/INTAKE/GIVEN-MANIFEST/DB-EVIDENCE, DESIGN/RUNBOOK. Each stencil self-describes in its header; the catalog lives in `gravity/README.md`.
-│   └── lib/                        #   the portable walls: scan_project.py (the one project scanner) + run_gate.py — they travel with the protocol.
+│   └── lib/                        #   the portable INSTRUMENTS — stdlib-only, installed verbatim into each project's `.gravity/lib/` (`install_lib.py`) so a clone renders and checks itself off-workspace; catalog in `gravity/README.md`.
 │
 ├── .claude/commands/               # Workspace-level slash commands.
 ├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
@@ -215,7 +215,7 @@ Same ownership rule as everywhere (one concern, one home): the **facet `ARCHITEC
 ## 7. Cross-Project Tooling
 
 - **`PROJECTS.md`** is the index: one row per project — name, stack, last-touched, tier-appropriate one-liner (focus · reactivation trigger · resume blocker). Update on any tier transition or significant status change. **Local-only (git-ignored)** — it names private projects; the skeleton ships only the sanitized `PROJECTS.sample.md` (copy it on a fresh workspace).
-- **`.claude/scenarios/`** is gravity's golden-scenario harness — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
+- **`.claude/scenarios/`** is gravity's golden-scenario harness (project-scoped checks live in `gravity/lib/check_project.py`, re-exported here) — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
 - **Everything else is a command.** The procedure lives in `.claude/commands/<name>.md` (the one home — loaded on invocation, never resident); human workflows and the full cheat sheet in `docs/HANDBOOK.md`. One line each — ⊙ marks **protocol-side** commands (they operate on a project's gravity docs and belong with `gravity/`); unmarked ones are **manager-side** (they need tiers, junctions, `PROJECTS.md`):
 
 | Command | What · when |

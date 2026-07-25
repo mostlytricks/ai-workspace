@@ -1,7 +1,7 @@
 ---
 description: One project, one page — the unified per-project view. Tabs compose the cosmos (domains), the boundary seam graph, and the Spec Health instrument over a single live scan; Overview carries the goal, the now, the spine, and doc links.
 argument-hint: <project-or-alias> [theme]
-allowed-tools: Read, Glob, Grep, Bash(python .claude/dashboard/generate_observatory.py:*)
+allowed-tools: Read, Glob, Grep, Bash(python gravity/lib/generate_observatory.py:*), Bash(python .claude/scripts/install_lib.py:*)
 ---
 
 You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` project as **one page with seven tabs**, all fed by a single scan (`gravity/lib/scan_project.py` — one scanner, many callers), so the views can never disagree with each other:
@@ -16,14 +16,14 @@ You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` 
 | **Timeline** | `docs/walkthroughs/` as a reverse-chron proof strip — date · domain chips (from the `Domain(s):` header, filename fallback) · title, each linking to its file. Honest empty state pointing at `WALKTHROUGH.template.md` when the log doesn't exist. | native |
 | **Orbit 3D** | the analytical 3D system: health rings (solid arc = walls share), **coupling arcs** between domains from doc cross-references, **track arcs** (⟡ dashed, labeled chains over the domains carrying one cross-domain direction — green once the track is ✓), comet trails on recently-touched domains, guard-red pulse on unfenced ◑ domains; HUD toggles for arcs/tracks/trails | `generate_cosmos.render_3d` |
 
-(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command. The 2D Domains tab was retired 2026-07-25 — the 3D view superseded it — and the `render_2d` code was removed the same day; git history keeps it.)
+(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI writing beside the page (`<name>.3d.html` / `<name>.seams.html`), but the user-facing door is this command. The 2D Domains tab was retired 2026-07-25 — the 3D view superseded it — and the `render_2d` code was removed the same day; git history keeps it.)
 
 ## Run it
 
 Parse `$ARGUMENTS` as `<project> [theme]` — theme is one of `aurora` (default) / `daylight` / `sandstone` / `forest` / `slate` — the workspace-wide dashboard family (`DESIGN.dashboard.md`). Then:
 
 ```bash
-python .claude/dashboard/generate_observatory.py <project> --theme <theme> --open
+python gravity/lib/generate_observatory.py <project> --theme <theme> --open
 ```
 
 - The project token goes through `resolve_project.py`; if ambiguous the script prints candidates and exits — relay them, don't guess.
@@ -31,7 +31,8 @@ python .claude/dashboard/generate_observatory.py <project> --theme <theme> --ope
 - **Tabs are deep-linkable** — `<page>.html#queue`, `#grad`, etc.; docs and packets can link straight to one instrument of one project.
 - **Theming is live in the page** — the header's five swatch buttons switch the chrome *and* the embedded instruments in place (every palette is pre-rendered into the file; the choice persists in `localStorage` as `dash-theme` — shared with the workspace dashboard and the MISSION/ARCHITECTURE doc pages, so one pick follows you everywhere). The two light themes render instruments as a paper chart (dark ink on a pale canvas). `--theme` only sets the first-load default, so don't regenerate just to change color.
 - Requires a `.gravity/` directory (the scan stops with a pointer to `/adopt-gravity` otherwise). A missing integration SPEC is fine — the Seams tab shows the pointer instead.
-- Output lands in `.claude/dashboard/observatory/<name>.html` (gitignored, regenerate-at-will); `--open` launches the browser.
+- **Output lands inside the project** — `<project>/.gravity/observatory/index.html`; `--open` launches the browser. The folder carries a `.gitignore` of `*` so it ignores itself: the page is visible to anyone who opens the repo but never becomes a tracked artifact that can go stale in git. Doc links are relative, so the page is not pinned to the machine that rendered it.
+- **The renderer is protocol-side** (`gravity/lib/`), so a project carrying `.gravity/lib/` renders itself with no workspace at all: `python .gravity/lib/generate_observatory.py` — no arguments, the lib's own location names its project. If a project has no `.gravity/lib/` yet, `check.py` says so (`LIB_MISSING`); install it with `python .claude/scripts/install_lib.py <project>`.
 
 ## Reading it (mention what's notable, briefly)
 
@@ -53,4 +54,5 @@ Keep it short — the page is the report.
 - Don't hand-edit the generated HTML — every fact is scanned; fix the docs and rerun.
 - Don't add data files or a registry — the project's docs *are* the data.
 - Don't "fix" a freeform SPEC's census by rewording this command — retrofit the SPEC to the v2 template (`/new-spec`) if you want structured rule counts.
-- Don't commit `observatory/` output (gitignored) — only the generator and this command are skeleton.
+- Don't commit `.gravity/observatory/` output — the folder ignores itself by design; a committed page is a page that can be stale in git, and this one's own footer says a wrong page means doc drift.
+- Don't hand-edit an installed `.gravity/lib/` — it's a verbatim copy of the distribution. Fix `gravity/lib/` and re-install (`/sync-gravity`).

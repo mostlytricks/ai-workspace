@@ -21,10 +21,10 @@ INTERNAL: the user-facing door is /observatory (generate_observatory.py embeds
 this renderer as the Seams tab). This CLI remains for debugging the one view.
 
 Usage:
-    python .claude/dashboard/generate_boundary.py <project-or-alias>
+    python gravity/lib/generate_boundary.py [<project-path-or-alias>]
         [--theme aurora|daylight|sandstone|forest|slate] [--open]
 
-Output: .claude/dashboard/boundary/<project>.html (gitignored — regenerate).
+Output: <project>/.gravity/observatory/<project>.seams.html (self-ignoring — regenerate).
 """
 from __future__ import annotations
 
@@ -35,9 +35,10 @@ import sys
 import webbrowser
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
-from resolve_project import resolve  # noqa: E402
+# Siblings in this same lib/ — whether it sits in the gravity distribution or
+# installed at <project>/.gravity/lib/. No workspace path is ever assumed.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_arg import observatory_dir, resolve_target  # noqa: E402
 from scan_project import scan_integration, trunc  # noqa: E402  (one scanner, many instruments)
 from generate_cosmos import THEMES, panel_css  # noqa: E402  (one palette, many instruments)
 
@@ -351,16 +352,14 @@ def main() -> None:
             pass
     ap = argparse.ArgumentParser(
         description="Render a project's integration Boundary Map as a seam graph.")
-    ap.add_argument("project", help="project name or alias (resolve_project.py)")
+    ap.add_argument("project", nargs="?", help="project path, or a name/alias when run from the workspace (default: the project this lib belongs to)")
     ap.add_argument("--theme", choices=sorted(THEMES), default="aurora")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     args = ap.parse_args()
 
-    name, path = resolve(args.project)  # exits with candidates if ambiguous
+    name, path = resolve_target(args.project)
     data = scan(path)
-    outdir = Path(__file__).resolve().parent / "boundary"
-    outdir.mkdir(exist_ok=True)
-    out = outdir / f"{name}.html"
+    out = observatory_dir(path) / f"{name}.seams.html"
     out.write_text(render(data, THEMES[args.theme]), encoding="utf-8")
 
     n_open = sum(1 for e in data["seams"] if e["open"])
