@@ -19,6 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Removed
+- **`render_2d` deleted from `generate_cosmos.py`** (follow-up to v3.0.0's Domains-tab retirement, on the user's "do we still need it?" — the honest answer was no: its only caller was its own debug CLI). The module itself stays load-bearing — it owns the five-palette `THEMES` family (imported by the observatory, boundary renderer, and dashboard) and `render_3d` (the Orbit 3D tab); the debug CLI is now 3D-only (`--mode` flag dropped, output always `<name>.3d.html`). Stale generated `cosmos/*.html` outputs deleted; git history keeps the 2D renderer.
+
 ## [3.0.0] - 2026-07-25
 
 ### Changed

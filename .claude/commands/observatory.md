@@ -16,7 +16,7 @@ You are running `/observatory` from `ai-workspace/`. It renders one `.gravity/` 
 | **Timeline** | `docs/walkthroughs/` as a reverse-chron proof strip — date · domain chips (from the `Domain(s):` header, filename fallback) · title, each linking to its file. Honest empty state pointing at `WALKTHROUGH.template.md` when the log doesn't exist. | native |
 | **Orbit 3D** | the analytical 3D system: health rings (solid arc = walls share), **coupling arcs** between domains from doc cross-references, **track arcs** (⟡ dashed, labeled chains over the domains carrying one cross-domain direction — green once the track is ✓), comet trails on recently-touched domains, guard-red pulse on unfenced ◑ domains; HUD toggles for arcs/tracks/trails | `generate_cosmos.render_3d` |
 
-(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command. The 2D Domains tab was retired 2026-07-25 — the 3D view superseded it; `render_2d` survives only as the cosmos debug CLI.)
+(The former `/cosmos` and `/boundary` commands were folded in here. Their generator scripts remain as the renderer modules above — each keeps a debug CLI, but the user-facing door is this command. The 2D Domains tab was retired 2026-07-25 — the 3D view superseded it — and the `render_2d` code was removed the same day; git history keeps it.)
 
 ## Run it
 

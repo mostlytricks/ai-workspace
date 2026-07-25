@@ -16,20 +16,21 @@ the .gravity/ folder list, the IMPLEMENTATION_PLAN.md status spine, and
 MISSION.html's per-domain rows. No hand-kept data; if the cosmos looks wrong,
 the indexes are wrong (run /triage).
 
-Two renderers, one scanner: --mode 2d (SVG+CSS, the readable instrument) and
---mode 3d (hand-rolled canvas perspective — coupling arcs, health rings,
-unfenced-domain pulses, comet trails). Both are single self-contained local
-HTML files — no libraries, no CDN, no build step.
+One renderer, one scanner: the 3D canvas system (hand-rolled perspective —
+coupling arcs, track arcs, health rings, unfenced-domain pulses, comet
+trails), embedded by the observatory as the Orbit 3D tab. Single
+self-contained local HTML — no libraries, no CDN, no build step. (The 2D
+SVG renderer was removed 2026-07-25 with the Domains tab; git history keeps it.)
 
 INTERNAL: the user-facing door is /observatory (generate_observatory.py embeds
-both renderers as tabs). This CLI remains for debugging a single view.
+render_3d as the Orbit 3D tab). This CLI remains for debugging the view alone.
 
 Usage:
     python .claude/dashboard/generate_cosmos.py <project-or-alias>
-        [--mode 2d|3d|both] [--theme aurora|daylight|sandstone|forest|slate] [--open]
+        [--theme aurora|daylight|sandstone|forest|slate] [--open]
     python .claude/dashboard/generate_cosmos.py --list-themes
 
-Output: .claude/dashboard/cosmos/<project>[.3d].html (gitignored — regenerate).
+Output: .claude/dashboard/cosmos/<project>.3d.html (gitignored — regenerate).
 """
 from __future__ import annotations
 
@@ -119,8 +120,8 @@ THEMES: dict[str, dict] = {
 
 
 # ---------------------------------------------------------------------------
-# Scanner — lives in scripts/scan_project.py (scan_domains), shared with the
-# boundary and observatory instruments so the docs are parsed exactly one way.
+# Scanner — lives in gravity/lib/scan_project.py (scan_domains), shared with
+# the boundary and observatory instruments so the docs are parsed one way.
 # ---------------------------------------------------------------------------
 def prepare(data: dict) -> list[dict]:
     """Sort by status (active in, planned out) and compute the orbit physics."""
@@ -142,7 +143,7 @@ def prepare(data: dict) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Shared HTML pieces (panel + cards are identical in both renderers)
+# Shared HTML pieces (panel + cards, used by the 3D renderer)
 # ---------------------------------------------------------------------------
 def panel_css(t: dict) -> str:
     return f"""
@@ -253,113 +254,6 @@ def cards_html(doms: list[dict], data: dict, t: dict) -> tuple[str, str]:
               f'<span style="color:{t["status"]["✓"]}">✓ stable {counts["✓"]}</span>'
               f'<span style="color:{t["status"]["○"]}">○ planned {counts["○"]}</span>')
     return panel, legend
-
-
-# ---------------------------------------------------------------------------
-# 2D renderer — SVG + CSS animation (the readable instrument)
-# ---------------------------------------------------------------------------
-def render_2d(data: dict, t: dict) -> str:
-    doms = prepare(data)
-    orbits, planets = [], []
-    for i, d in enumerate(doms):
-        r, ang, pr = d["r"], d["ang0"], d["size"]
-        color = t["status"][d["status"]]
-        dash = ' stroke-dasharray="4 7"' if d["status"] == "○" else ""
-        orbits.append(f'<circle cx="0" cy="0" r="{r}" class="orbit"{dash}/>')
-
-        body = [f'<circle r="{pr}" fill="url(#g{STATUS_ORDER[d["status"]]})" '
-                f'stroke="{color}" stroke-width="1.2" class="body"/>']
-        if d["spec"]:
-            body.append(f'<ellipse rx="{pr*1.9}" ry="{pr*0.55}" class="ring" '
-                        f'transform="rotate(-24)"/>')
-        if d["arch"]:
-            body.append(f'<circle cx="{pr+9}" cy="{-pr-4}" r="3.2" class="moon"/>')
-        for k in range(len(d["plans"])):
-            sa = math.radians(140 + k * 26)
-            sx, sy = (pr + 8) * math.cos(sa), (pr + 8) * math.sin(sa)
-            body.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="1.8" class="sat"/>')
-        body.append(f'<text y="{pr+15}" class="lbl">{d["name"]}</text>')
-        pulse = ' data-pulse="1"' if d["status"] == "◑" else ""
-
-        delay = -(ang / 360) * d["period"]
-        anim = f"animation-duration:{d['period']}s;animation-delay:{delay:.1f}s"
-        planets.append(
-            f'<g class="carrier" style="{anim}">'
-            f'<g class="planet" transform="translate({r},0)" data-i="{i}"{pulse}>'
-            f'<g class="counter" style="{anim}">{"".join(body)}</g></g></g>')
-
-    stars = "".join(
-        f'<circle cx="{(i*263)%1100-550}" cy="{(i*389)%1100-550}" '
-        f'r="{0.6+(i%3)*0.5}" class="bgstar" '
-        f'style="animation-delay:{(i%7)*0.9}s"/>' for i in range(90))
-    grads = "".join(
-        f'<radialGradient id="g{STATUS_ORDER[s]}">'
-        f'<stop offset="0%" stop-color="{t["grad"][s][0]}"/>'
-        f'<stop offset="100%" stop-color="{t["grad"][s][1]}"/></radialGradient>'
-        for s in "◑✓○")
-    svg = (
-        f'<svg id="cosmos" viewBox="-550 -550 1100 1100"><defs>'
-        f'<radialGradient id="gsun"><stop offset="0%" stop-color="{t["star"][0]}"/>'
-        f'<stop offset="45%" stop-color="{t["star"][1]}"/>'
-        f'<stop offset="100%" stop-color="{t["star"][2]}"/></radialGradient>{grads}</defs>'
-        f'{stars}{"".join(orbits)}'
-        f'<g id="sun"><circle r="52" fill="url(#gsun)"/><circle r="52" class="corona"/>'
-        f'<text y="4" class="sun-lbl">MISSION</text></g>'
-        f'{"".join(planets)}</svg>')
-
-    panel, legend = cards_html(doms, data, t)
-    panel = panel.replace("HINT_TEXT", "Busier domains orbit faster. Hovering a "
-                          "planet holds it still — click it (or the star) for its readout.")
-    esc = html_mod.escape
-    return f"""<!doctype html><html lang="en"><meta charset="utf-8">
-<title>{esc(data["project"])} — gravity cosmos</title>
-<style>{panel_css(t)}
-  body {{ margin:0; display:flex; height:100vh; overflow:hidden; color:var(--ink);
-    background:radial-gradient(1200px 800px at 35% 45%, {t["bg2"]} 0%, var(--bg) 60%);
-    font:14px/1.5 "Segoe UI",system-ui,sans-serif }}
-  #view {{ flex:1; position:relative }}
-  #cosmos {{ width:100%; height:100% }}
-  .carrier.hold, .carrier.hold .counter {{ animation-play-state:paused }}
-  .bgstar {{ fill:{t["bgstar"]}; opacity:.35; animation:twinkle 5s ease-in-out infinite }}
-  @keyframes twinkle {{ 50% {{ opacity:.08 }} }}
-  .orbit {{ fill:none; stroke:var(--line); stroke-width:1 }}
-  .carrier {{ animation:orbit linear infinite; transform-origin:0 0 }}
-  .counter {{ animation:orbit linear infinite reverse; transform-origin:0 0 }}
-  @keyframes orbit {{ to {{ transform:rotate(360deg) }} }}
-  .planet {{ cursor:pointer }}
-  .planet .body {{ transition:filter .2s }}
-  .planet:hover .body {{ filter:brightness(1.5) drop-shadow(0 0 14px currentColor) }}
-  .planet[data-pulse] .body {{ animation:pulse 3.2s ease-in-out infinite }}
-  @keyframes pulse {{ 50% {{ filter:drop-shadow(0 0 10px {t["status"]["◑"]}) }} }}
-  .ring {{ fill:none; stroke:{t["ring"]}; stroke-width:1.1; opacity:.65 }}
-  .moon {{ fill:{t["moon"]} }}
-  .sat  {{ fill:{t["sat"]}; opacity:.9 }}
-  .lbl {{ fill:var(--dim); font-size:12px; text-anchor:middle; letter-spacing:.4px }}
-  .planet:hover .lbl {{ fill:var(--ink) }}
-  .corona {{ fill:none; stroke:{t["star_glow"]}; stroke-width:2; opacity:.35;
-    animation:corona 4s ease-in-out infinite }}
-  @keyframes corona {{ 50% {{ transform:scale(1.18); opacity:.08 }} }}
-  #sun {{ cursor:pointer }}
-  .sun-lbl {{ fill:{t["star_label"]}; font-size:11px; font-weight:700;
-    text-anchor:middle; letter-spacing:1.5px }}
-</style>
-<div id="view">{svg}<div id="legend">{legend}</div></div>
-{panel}
-<script>
-  const show = id => {{
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('on'));
-    document.getElementById('hint').style.display = 'none';
-    document.getElementById(id).classList.add('on');
-  }};
-  document.querySelectorAll('.planet').forEach(p => {{
-    p.addEventListener('click', () => show('card-' + p.dataset.i));
-    const carrier = p.closest('.carrier');
-    p.addEventListener('mouseenter', () => carrier.classList.add('hold'));
-    p.addEventListener('mouseleave', () => carrier.classList.remove('hold'));
-  }});
-  document.getElementById('sun').addEventListener('click', () => show('card-sun'));
-</script>
-</html>"""
 
 
 # ---------------------------------------------------------------------------
@@ -684,7 +578,6 @@ function show(id) {{
 def main() -> None:
     ap = argparse.ArgumentParser(description="Render a project's .gravity/ as a star system.")
     ap.add_argument("project", nargs="?", help="project name or alias (resolve_project.py)")
-    ap.add_argument("--mode", choices=("2d", "3d", "both"), default="2d")
     ap.add_argument("--theme", choices=sorted(THEMES), default="aurora")
     ap.add_argument("--open", action="store_true", help="open the result in the browser")
     ap.add_argument("--list-themes", action="store_true")
@@ -706,21 +599,11 @@ def main() -> None:
     outdir = Path(__file__).resolve().parent / "cosmos"
     outdir.mkdir(exist_ok=True)
 
-    outputs = []
-    if args.mode in ("2d", "both"):
-        out = outdir / f"{name}.html"
-        out.write_text(render_2d(data, theme), encoding="utf-8")
-        outputs.append(out)
-    if args.mode in ("3d", "both"):
-        out = outdir / f"{name}.3d.html"
-        out.write_text(render_3d(data, theme), encoding="utf-8")
-        outputs.append(out)
-
-    for out in outputs:
-        print(f"cosmos[{args.theme}]: {len(data['domains'])} domains -> {out}")
+    out = outdir / f"{name}.3d.html"
+    out.write_text(render_3d(data, theme), encoding="utf-8")
+    print(f"cosmos[{args.theme}]: {len(data['domains'])} domains -> {out}")
     if args.open:
-        for out in outputs:
-            webbrowser.open(out.as_uri())
+        webbrowser.open(out.as_uri())
 
 
 if __name__ == "__main__":
