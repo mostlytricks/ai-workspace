@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-07-25
+
 ### Added
 - **Chores and the comet rule — deferral leaves a trace, `SLICE_STALE` makes it resurface** (`check.py` `check_gravity_consistency` + a selftest half; the pain: a chore handled immediately needs no doc, but a *deferred* one vanishes and "comes back like a comet in a few weeks" with nothing noticing). The ruling mirrors bugs: **chores are never a domain** — handled now → no doc at all; deferred → **one dated `○` queue row** (`<chore> (deferred YYYY-MM-DD)` — an unwritten deferral doesn't exist), minting its slice PLAN only at pickup; **recurring → graduate to a wall** (a tagged SPEC rule, a gate step, or a RUNBOOK line), never to a folder. The checker WARNs `SLICE_STALE` on `○ planned` slice PLANs untouched past 30 days (file mtime — under-claims on fresh clones) and on dated deferral rows never picked up, so deferred work resurfaces **by age, never by memory**; it lands automatically in `/triage` and the observatory drift card (both import the same checker). Codified in `IMPLEMENTATION_PLAN.template.md` (queue rules), the protocol card (navigation discipline #5), root `CLAUDE.md` §6, the HANDBOOK glossary (*Chore*), and `scenarios/README.md`.
 
@@ -258,7 +260,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.1.0
 [3.0.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.0.1
 [3.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v3.0.0
 [2.12.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v2.12.0
