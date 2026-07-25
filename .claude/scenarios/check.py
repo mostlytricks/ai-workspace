@@ -309,19 +309,43 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
             ))
 
     # 4. SLICE_STALE — the comet rule (workspace CLAUDE.md §6): deferred work
-    #    is noticed by age, never by memory. Two doors: a `○ planned` slice
-    #    PLAN untouched past the threshold (file mtime — under-claims on a
-    #    fresh clone, where checkout resets mtimes), and a dated deferral row
-    #    (`deferred YYYY-MM-DD`) in IMPLEMENTATION_PLAN.md never picked up.
+    #    is noticed by age, never by memory. Two age sources, and an EXPLICIT
+    #    `deferred YYYY-MM-DD` always wins over file mtime — that written date
+    #    is the whole reason to record a deferral: it is edit-immune, so
+    #    re-labelling a parked slice (or a fresh clone resetting mtimes) can't
+    #    silently restart the clock. Doors: a `○ planned` slice PLAN (its own
+    #    status-note date if it carries one, else mtime), and a dated deferral
+    #    row in IMPLEMENTATION_PLAN.md never picked up (chores with no PLAN yet).
     #    WARN: the fix is pick it up, re-date it, or drop it — never silence.
+    def _deferred_age(text: str) -> int | None:
+        m = re.search(r"deferred (\d{4}-\d{2}-\d{2})", text)
+        if not m:
+            return None
+        try:
+            born = time.mktime(time.strptime(m.group(1), "%Y-%m-%d"))
+        except ValueError:
+            return None
+        return int((time.time() - born) / 86400)
+
     if scan_plans is not None:
         for p in scan_plans(project):
-            if p["status"] == "○" and p["age_days"] > STALE_SLICE_DAYS:
+            if p["status"] != "○":
+                continue
+            dated = _deferred_age(p["note"])           # edit-immune, authoritative
+            if dated is not None:
+                if dated > STALE_SLICE_DAYS:
+                    findings.append(Finding(
+                        WARN, "SLICE_STALE", p["domain"], "plan",
+                        f"{p['rel']} is ○ planned, deferred {dated}d ago "
+                        f"(comet threshold {STALE_SLICE_DAYS}d) "
+                        "— pick it up, re-date it, or drop it"))
+            elif p["age_days"] > STALE_SLICE_DAYS:      # fallback: file untouched
                 findings.append(Finding(
                     WARN, "SLICE_STALE", p["domain"], "plan",
                     f"{p['rel']} is ○ planned and untouched for "
                     f"{int(p['age_days'])}d (comet threshold {STALE_SLICE_DAYS}d) "
                     "— pick it up, re-date it, or drop it"))
+    # chore rows that never became a PLAN — dated deferrals in the plan spine.
     for m in re.finditer(r"deferred (\d{4}-\d{2}-\d{2})", plan):
         try:
             born = time.mktime(time.strptime(m.group(1), "%Y-%m-%d"))
@@ -1332,12 +1356,13 @@ def cmd_selftest(args) -> int:
                 print("selftest: EXPECTED COUPLING_UNCONTRACTED for the seeded "
                       f"{a}+{b} cross-references, but the checker stayed silent.")
 
-    # --- comet half: an aged ○ slice must draw SLICE_STALE. ---
+    # --- comet half: an aged ○ slice must draw SLICE_STALE, by BOTH doors. ---
     if scan_plans is not None:
         with tempfile.TemporaryDirectory() as tmp:
             bad = Path(tmp) / "comet"
             shutil.copytree(fixture, bad)
             dom = sorted(discover_domains(bad / ".gravity"))[0]
+            # Door 1 — mtime fallback: a ○ slice with no written date, old file.
             stale = bad / ".gravity" / dom / "PLAN.stale-chore.md"
             stale.write_text("# PLAN — stale chore\n\nStatus: ○ planned\n",
                              encoding="utf-8")
@@ -1347,11 +1372,31 @@ def cmd_selftest(args) -> int:
                       if f.code == "SLICE_STALE" and f.domain == dom]
             if caught:
                 print(f"selftest: {STALE_SLICE_DAYS + 10}d-old ○ slice correctly "
-                      "caught -> SLICE_STALE (the comet rule).")
+                      "caught -> SLICE_STALE (mtime door).")
             else:
                 ok = False
                 print("selftest: EXPECTED SLICE_STALE for the aged ○ slice, "
                       "but the checker stayed silent.")
+            # Door 2 — edit-immune written date: a FRESH file (mtime=now) whose
+            # status note carries an old `deferred DATE` must still fire, proving
+            # re-labelling can't reset the clock.
+            stamp = time.strftime("%Y-%m-%d", time.localtime(
+                time.time() - (STALE_SLICE_DAYS + 40) * 86400))
+            dated = bad / ".gravity" / dom / "PLAN.parked-fresh.md"
+            dated.write_text(
+                f"# PLAN — parked fresh\n\n"
+                f"Status: ○ planned — parked; deferred {stamp}\n",
+                encoding="utf-8")   # mtime = now, so only the written date can catch it
+            caught2 = [f for f in check_gravity_consistency(bad)
+                       if f.code == "SLICE_STALE" and "deferred" in f.message
+                       and dated.name in f.message]
+            if caught2:
+                print("selftest: freshly-written ○ slice with an old `deferred` "
+                      "date correctly caught -> SLICE_STALE (edit-immune door).")
+            else:
+                ok = False
+                print("selftest: EXPECTED SLICE_STALE via the written `deferred` "
+                      "date on a fresh file, but the checker stayed silent.")
 
     # --- spec-honesty half: an honest SPEC passes; each lie is caught. ---
     with tempfile.TemporaryDirectory() as tmp:

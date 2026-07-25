@@ -19,6 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Fixed
+- **`SLICE_STALE` now honors a written `deferred YYYY-MM-DD` on a slice PLAN — the comet clock is edit-immune where it matters** (found dogfooding v3.1.0 on knowledge-viewer: triaging 15 statusless PLANs into honest glyphs marked the genuinely-parked ones `○ … deferred <date>`, but the checker only read explicit dates from `IMPLEMENTATION_PLAN.md` and fell back to *file mtime* for PLANs — so the act of labelling a parked slice reset its mtime and hid it from the very rule meant to catch it). Now a `○ planned` slice PLAN whose status note carries a `deferred YYYY-MM-DD` is aged by **that written date** (authoritative, edit-immune), falling back to mtime only when no date is written; the `IMPLEMENTATION_PLAN.md` dated-row door (chores with no PLAN yet) is unchanged. Selftest proves both doors — an old-mtime ○ slice and a *freshly-written* ○ slice carrying an old date both fire. First live catch: kv's `doc/graph-design` (37d) and `topic/improvement` + `topic/issue-management` (34d) — the latter two being the risk-surface track's only carriers, so the comet + tracks card together expose a nominally-active track that has actually stalled.
+
 ## [3.1.0] - 2026-07-25
 
 ### Added
