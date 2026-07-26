@@ -80,6 +80,20 @@ A SPEC.md's enforcement tags are a promise: `[lint]` means a linter really fails
 
 Parsing tolerances: `_read` never crashes on a non-UTF8/unreadable file (replace + move on), and a `[test:<file>::<fn>]` pytest node id is alive when the named file exists and mentions the function (the full id string never appears verbatim anywhere).
 
+## The architecture-anchor check (`check.py arch`)
+
+`ARCHITECTURE.html` is the one **authored** diagram surface. The observatory next to it is generated, git-ignored and regenerated on every scan; an architecture page is committed and maintained by hand, so nothing regenerates it when the code moves underneath. This check gives the diagram something mechanical to hold onto: the grid cells and flow/trace nodes in `ARCHITECTURE.template.html` / `ARCHITECTURE.domain.template.html` each carry `data-path="<file>"`, and every one of those files must still exist.
+
+| Finding | Severity | Meaning |
+|---|---|---|
+| `ARCH_PATH_DEAD` | WARN | a `data-path` anchor names a file/dir that no longer exists — the diagram outlived the file |
+
+**Why WARN, not FAIL.** A dead Gate breaks the change loop; a dead diagram path only misleads a reader. Putting every doc page on the critical path of every refactor is how a checker earns reflexive ignoring.
+
+**Under-claiming, three ways.** The anchor is **opt-in** — a page with no `data-path` is silent, never nagged into migrating, so the six pre-existing domain pages stay clean until someone converts them. Unresolvable values are **skipped, not guessed**: globs (`chat/providers/*`), unfilled stencil markers, and prose (`provider base URL from .env`) all produce nothing. And a token's `:123` line suffix is dropped before the existence test, so line drift never fires it.
+
+**What it deliberately cannot do.** It catches a *moved or deleted file*. It cannot tell you a cell is now wrong, an arrow reversed, or a fifth branch was added and never drawn. The templates stamp `authored · last reviewed <date>` precisely so the page states which half is machine-checked and which half needs a human — a page that implies the whole diagram is verified is worse than one that admits it isn't. The CLI holds the same line: a project whose anchors are all unfilled stencils reports *"no resolvable anchors — nothing verifiable"*, never a bare OK.
+
 It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`) — the at-a-glance view of how much of each contract is real walls vs reviewer judgment. HTML comments are stripped before scanning: the enforcement legend legitimately spells out the tag grammar (`[test:name]` etc.) inside a comment, and commented-out template blocks are not active contract. `/triage` runs this per `.gravity/` project alongside `consistency`; `selftest` proves both checkers.
 
 ## Scenarios

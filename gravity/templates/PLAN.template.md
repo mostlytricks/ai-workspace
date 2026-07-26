@@ -1,5 +1,5 @@
 <!--
-  PLAN.template.md — the per-domain / per-slice "what/next" doc (workspace CLAUDE.md §6).
+  PLAN.template.md — the per-domain / per-slice "what/next" doc (the protocol card (.gravity/GRAVITY.md)).
   Copy to repos/<project>/.gravity/<domain>/PLAN.md — or PLAN.<slug>.md when the domain
   already has a PLAN and this is another slice. Seeded by /new-domain and /interview
   <project> <feature>; recognized only when present, never mandated.

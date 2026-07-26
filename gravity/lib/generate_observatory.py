@@ -193,6 +193,18 @@ def spec_health_html(facts: dict) -> str:
     bc_unbound = sum(c["bc_unbound"] for c in fenced)
     pct = f"{100 * walls / total:.0f}%" if total else "—"
 
+    gated = [c for c in fenced if c["gate"]]
+    runs = facts.get("gates", {})
+    tally = {s: sum(1 for c in gated if runs.get(c["domain"], {}).get("state") == s)
+             for s in ("green", "red", "blocked", "timeout")}
+    never = sum(1 for c in gated if c["domain"] not in runs)
+    proof_bits = [f'<b class="okc">{tally["green"]} green</b>' if tally["green"] else "",
+                  f'<b class="wt">{tally["red"]} RED</b>' if tally["red"] else "",
+                  f'<span class="satc">{tally["blocked"] + tally["timeout"]} blocked</span>'
+                  if tally["blocked"] + tally["timeout"] else "",
+                  f'<span class="dimc">{never} never run</span>' if never else ""]
+    proof_sum = (" · proof: " + " / ".join(b for b in proof_bits if b)) if gated else ""
+
     cards = []
     for c in sorted(census, key=lambda x: (not x["has_spec"], x["domain"])):
         st = status_of.get(c["domain"], "○")
@@ -220,7 +232,31 @@ def spec_health_html(facts: dict) -> str:
                    + '</div>')
         else:
             bar = '<div class="okv wt">SPEC exists but zero rules found</div>'
-        gate = (f'<div class="okv gate">gate — <span class="mono">{esc(trunc(c["gate"], 90))}</span></div>'
+        # Proof freshness — the one thing the tags/contract can't say. Every
+        # other signal here proves a test is NAMED; this is whether it PASSES.
+        # "blocked" is kept distinct from "red" on purpose: a gate that could
+        # not reach its server proved nothing, and calling that a failure would
+        # be worse than saying nothing.
+        run = facts.get("gates", {}).get(c["domain"])
+        proof = ""
+        if c["gate"]:
+            if not run:
+                proof = ('<span class="pchip pnone" title="run_gate.py --all">'
+                         'never run</span>')
+            else:
+                cls, label = {
+                    "green": ("pok", "green"), "red": ("pbad", "RED"),
+                    "blocked": ("pwarn", "blocked"),
+                    "timeout": ("pwarn", "timed out"),
+                }.get(run["state"], ("pnone", run["state"]))
+                age = (f'{run["age_days"]:.0f}d ago' if run["age_days"] and run["age_days"] >= 1
+                       else "just now")
+                stale = (' <b>· predates HEAD</b>' if run["stale"] else "")
+                tip = esc(trunc(run["tail"].replace("\n", " ⏎ "), 300)) if run["tail"] else ""
+                proof = (f'<span class="pchip {cls}" title="{tip}">{label}'
+                         f' · {age}{stale}</span>')
+        gate = (f'<div class="okv gate">gate — <span class="mono">{esc(trunc(c["gate"], 90))}</span>'
+                f'{proof}</div>'
                 if c["gate"] else
                 '<div class="okv wt">no Gate line — nothing proves a change here</div>')
         bc = ""
@@ -236,10 +272,14 @@ def spec_health_html(facts: dict) -> str:
     return f"""<div class="pad">
   <div class="hsum"><b>{len(fenced)}</b>/<b>{len(census)}</b> domains fenced ·
     <b>{total}</b> rules, <b class="okc">{walls} walls</b> ({pct}) ·
-    behavioral contract <b class="okc">{bc_bound} test-bound</b>{f' / <b class="wt">{bc_unbound} unbound</b>' if bc_unbound else ""}</div>
+    behavioral contract <b class="okc">{bc_bound} test-bound</b>{f' / <b class="wt">{bc_unbound} unbound</b>' if bc_unbound else ""}{proof_sum}</div>
   <div class="hint">A <b>wall</b> is a rule tooling enforces ([lint]/[type]/[test:…]);
     judgment ([review]) and guidance ([—]) rely on humans. Low wall-share isn't shame —
-    it's the honest map of where the contract can lie. Promote rules by giving them tests.</div>
+    it's the honest map of where the contract can lie. Promote rules by giving them tests.<br>
+    Everything above proves a test is <i>named</i>. The <b>proof</b> chip is whether it
+    <i>passes</i> — recorded by <span class="mono">run_gate.py --all</span>, hover for the
+    captured output. <b>blocked</b> is deliberately not <b>RED</b>: a gate that couldn't
+    reach its server or fixture proved nothing either way.</div>
   <div class="hgrid">{"".join(cards)}</div>
 </div>"""
 
@@ -538,6 +578,14 @@ def render_page(facts: dict, theme: str, project_path: Path, findings) -> str:
   .hcard {{ border:1px solid var(--line); border-radius:12px; background:var(--card);
     padding:12px 14px }}
   .hcard.nospec {{ border-style:dashed; opacity:.75 }}
+  /* proof-freshness chip — the recorded outcome of the gate, not its name.
+     Hover shows the captured output tail, so a misread is always auditable. */
+  .pchip {{ margin-left:8px; font-size:10.5px; padding:2px 7px; border-radius:20px;
+    border:1px solid currentColor; white-space:nowrap; cursor:help }}
+  .pchip.pok   {{ color:var(--ok) }}
+  .pchip.pbad  {{ color:var(--guard); font-weight:700 }}
+  .pchip.pwarn {{ color:var(--sat) }}
+  .pchip.pnone {{ color:var(--dim); border-style:dashed }}
   .formtag {{ font-size:10px; letter-spacing:1px; color:var(--sat);
     border:1px solid var(--line); border-radius:8px; padding:1px 7px }}
   .bar {{ display:flex; height:8px; border-radius:4px; overflow:hidden; margin:4px 0 6px }}

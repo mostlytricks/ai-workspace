@@ -1,0 +1,443 @@
+<!doctype html>
+<!--
+  ARCHITECTURE.domain.template.html — the DOMAIN-level "how it's built" page.
+  Copy to <project>/.gravity/<domain>/ARCHITECTURE.html and fill every FILL marker.
+  (Written without the comment delimiters on purpose: a nested comment-close inside THIS
+   comment would end it early, and the rest of these notes would render as page text.)
+
+  TWO PAGES, TWO QUESTIONS (the protocol card (.gravity/GRAVITY.md)). Do not let them collide:
+    .gravity/ARCHITECTURE.html          the MAP   — "where does anything live, what crosses what?"
+                                        = the Domain × Layer grid + system flows
+    .gravity/<domain>/ARCHITECTURE.html the TRACE — "how does THIS capability work, top to bottom?"
+                                        = one row of that grid, expanded down the layers   <- THIS FILE
+
+  The lane names in the gutter MUST match the layer columns of the system grid — that shared
+  coordinate system is the whole point; a reader moving between the two pages should not have
+  to learn a second vocabulary.
+
+  WHY A TRACE AND NOT A GRAPH. A flow is a path: ordered, one screen, reads like a sentence.
+  A graph is a relation: N² edges, and at domain scale it becomes a hairball that shows
+  everything and explains nothing. A graph earns its place only where N is tiny — the seam
+  level, which is `integration`'s Boundary Map, not here.
+
+  THE ANCHOR IS THE WALL. Every node carries data-path="<file>"; `check.py arch` asserts each
+  one still exists (ARCH_PATH_DEAD). It catches a MOVED OR DELETED FILE — it cannot tell you
+  an arrow is now wrong or that a branch was added and never drawn. Say which is which; never
+  let the page imply the whole diagram is verified. Nodes with nothing checkable omit the
+  attribute — anchors are opt-in, and a guess is worse than a silence.
+
+  OWNERSHIP. This page owns the full human rationale for ONE domain. The paired SPEC.md owns
+  the rules an agent loads and links UP to here. The domain's WHY stays singular in
+  MISSION.html — point back to its row, never re-derive it. What's next lives in PLAN.*.md;
+  now lives in CONTEXT.md.
+
+  Add it only for a domain whose "how it's built" outgrows its SPEC's Minimal Shape.
+  Read-only domains and content-convention domains usually never need one.
+  Theme = the shared aurora doc theme; see docs/DESIGN.docs.md in the workspace.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><!-- FILL: project --> &middot; <!-- FILL: domain --> &mdash; architecture</title>
+<style>/theme + header, and DROP the fixed section skeleton — a facet is a free-form deep-dive, not
+  another overview. Pair each facet with a compact, agent-loadable SPEC.<domain>.md (copy SPEC.template.md) that
+  links UP to the facet and carries the enforceable rules. The facet owns the full rationale; the SPEC owns the
+  rules an agent loads. Both recognized only when present, never mandated. knowledge-viewer is the worked example.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title> — System architecture</title>
+<style>
+  :root {
+    --bg:#0A0E1A; --panel:rgba(17,24,43,0.66); --panel-2:rgba(26,36,64,0.55); --line:rgba(255,255,255,0.09);
+    --text-hi:#F3F4F6; --text:#cdd3e0; --text-mid:#9CA3AF; --faint:#717a8c;
+    --accent:#34e3e6; --accent-d:#00E5E8; --blue:#4FACFE; --amber:#FBBF24; --red:#FF4D6D;
+    --mono:'Fira Code',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:920px; margin:0 auto; padding:56px 28px 120px; }
+  header.top { margin-bottom:14px; }
+  .logo { display:inline-flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .logo .sq {
+    width:13px; height:13px; border-radius:3px; background:var(--accent);
+    box-shadow:0 0 12px rgba(98,168,159,.40);
+  }
+  .logo .k { font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:.04em; }
+  h1 {
+    font-size:30px; line-height:1.2; margin:4px 0 6px;
+    color:var(--text-hi); font-weight:650; letter-spacing:-.01em;
+  }
+  .lede { color:var(--text-mid); font-size:16px; margin:0 0 8px; }
+  h2 {
+    font-size:20px; color:var(--text-hi); margin:52px 0 14px; font-weight:620;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+  h2 .n { color:var(--accent); font-family:var(--mono); font-size:14px; margin-right:10px; }
+  h3 { font-size:15px; color:var(--text-hi); margin:26px 0 8px; font-weight:620; }
+  p { margin:10px 0; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  strong { color:var(--text-hi); font-weight:620; }
+  code {
+    font-family:var(--mono); font-size:.86em; color:var(--accent);
+    background:var(--panel-2); border:1px solid var(--line); padding:1px 6px; border-radius:5px;
+  }
+  pre {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; overflow-x:auto; margin:16px 0;
+    font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--text-mid);
+  }
+  pre b { color:var(--accent); font-weight:600; }
+  pre .c { color:var(--faint); }
+  pre .a { color:var(--accent); }
+  pre .b { color:var(--blue); }
+  .toc {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 20px; margin:22px 0 0;
+  }
+  .toc ol { margin:0; columns:2; column-gap:32px; font-size:13.5px; }
+  .toc a { color:var(--text-mid); }
+  .toc a:hover { color:var(--accent); }
+  .note {
+    border-left:3px solid var(--accent); background:var(--panel);
+    border-radius:0 8px 8px 0; padding:12px 16px; margin:18px 0; font-size:14px;
+  }
+  .note.warn { border-left-color:var(--amber); }
+  .note.red { border-left-color:var(--red); }
+  .note .lbl { font-weight:620; color:var(--text-hi); }
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--faint); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+  td code { font-size:.9em; }
+  tbody tr:hover { background:rgba(255,255,255,.014); }
+  ul, ol { margin:10px 0; padding-left:22px; }
+  li { margin:5px 0; }
+  footer {
+    margin-top:70px; padding-top:18px; border-top:1px solid var(--line);
+    color:var(--faint); font-size:12.5px;
+  }
+  @media (max-width:680px){ .toc ol { columns:1; } }
+
+  /* ===== aurora doc theme + 5-theme switcher (dashboard-matched) — appended; later rules win, custom CSS above preserved =====
+     Five palettes selected via <html data-theme>, ported from .claude/dashboard onto the doc token names.
+     Switching re-points every var(--token) already used above; the flourishes below are tokenized so they
+     adapt per theme. Custom diagram CSS above this block is left untouched. */
+  :root, html[data-theme="aurora"] {
+    --bg:#0A0E1A; --panel:rgba(17,24,43,0.70); --panel-2:rgba(26,36,64,0.80); --line:rgba(255,255,255,0.08);
+    --text-hi:#F3F4F6; --text:#CBD5E1; --text-mid:#9CA3AF; --faint:#717a8c;
+    --accent:#00E5E8; --accent-d:#4FACFE; --blue:#4FACFE; --amber:#FBBF24; --red:#FF4D6D;
+    --h1-grad:linear-gradient(135deg,#00F2FE 0%,#4FACFE 60%,#F093FB 130%);
+    --glow:rgba(0,229,232,.85); --hover-glow:rgba(0,242,254,.15); --shadow:0 8px 32px rgba(0,0,0,.22);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(0,242,254,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(240,147,251,.08), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(0,229,232,.06), transparent 60%), #0A0E1A;
+  }
+  html[data-theme="daylight"] {
+    --bg:#F7F9FC; --panel:rgba(255,255,255,0.85); --panel-2:#eef2f8; --line:rgba(15,23,42,0.10);
+    --text-hi:#1E293B; --text:#334155; --text-mid:#64748B; --faint:#94A3B8;
+    --accent:#2563EB; --accent-d:#7C3AED; --blue:#2563EB; --amber:#B45309; --red:#DC2626;
+    --h1-grad:linear-gradient(135deg,#2563EB 0%,#4F46E5 60%,#7C3AED 130%);
+    --glow:rgba(37,99,235,.35); --hover-glow:rgba(37,99,235,.16); --shadow:0 8px 24px rgba(15,23,42,.08);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(37,99,235,.07), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(124,58,237,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(37,99,235,.05), transparent 60%), #F7F9FC;
+  }
+  html[data-theme="sandstone"] {
+    --bg:#FBF6EF; --panel:rgba(255,252,247,0.88); --panel-2:#f3ebdf; --line:rgba(120,80,40,0.14);
+    --text-hi:#3D2E22; --text:#5C4A38; --text-mid:#8C7A66; --faint:#a8957f;
+    --accent:#C2410C; --accent-d:#D97706; --blue:#D97706; --amber:#B45309; --red:#DC2626;
+    --h1-grad:linear-gradient(135deg,#C2410C 0%,#D97706 60%,#B45309 130%);
+    --glow:rgba(217,119,6,.40); --hover-glow:rgba(194,65,12,.16); --shadow:0 8px 24px rgba(90,60,30,.10);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(217,119,6,.10), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(194,65,12,.07), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(180,83,9,.06), transparent 60%), #FBF6EF;
+  }
+  html[data-theme="forest"] {
+    --bg:#0C1A14; --panel:rgba(18,38,30,0.70); --panel-2:rgba(26,52,42,0.82); --line:rgba(255,255,255,0.07);
+    --text-hi:#E8F2EC; --text:#C5D8CE; --text-mid:#8BA89A; --faint:#6f897c;
+    --accent:#34D399; --accent-d:#A3E635; --blue:#10B981; --amber:#FBBF24; --red:#FB7185;
+    --h1-grad:linear-gradient(135deg,#34D399 0%,#10B981 60%,#A3E635 130%);
+    --glow:rgba(52,211,153,.70); --hover-glow:rgba(52,211,153,.16); --shadow:0 8px 32px rgba(0,0,0,.25);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(52,211,153,.09), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(163,230,53,.06), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(16,185,129,.06), transparent 60%), #0C1A14;
+  }
+  html[data-theme="slate"] {
+    --bg:#16181D; --panel:rgba(30,33,40,0.72); --panel-2:rgba(42,46,55,0.85); --line:rgba(255,255,255,0.08);
+    --text-hi:#E5E7EB; --text:#C4C9D2; --text-mid:#9499A3; --faint:#6e727b;
+    --accent:#94A3B8; --accent-d:#CBD5E1; --blue:#CBD5E1; --amber:#FBBF24; --red:#FB7185;
+    --h1-grad:linear-gradient(135deg,#CBD5E1 0%,#94A3B8 60%,#64748B 130%);
+    --glow:rgba(148,163,184,.60); --hover-glow:rgba(148,163,184,.16); --shadow:0 8px 32px rgba(0,0,0,.30);
+    --body-bg:
+      radial-gradient(900px 520px at 10% -8%, rgba(148,163,184,.06), transparent 60%),
+      radial-gradient(820px 480px at 96% -2%, rgba(203,213,225,.05), transparent 55%),
+      radial-gradient(700px 600px at 50% 120%, rgba(148,163,184,.04), transparent 60%), #16181D;
+  }
+  /* tokenized flourishes — adapt to whichever theme is active */
+  body { background:var(--body-bg); background-attachment:fixed; line-height:1.7; transition:background .4s ease, color .3s ease; }
+  h1 {
+    font-family:'Outfit',var(--sans); font-weight:700; letter-spacing:-.02em;
+    background:var(--h1-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .logo .sq { background:var(--h1-grad); box-shadow:0 0 14px -1px var(--glow); }
+  h2 .n, .toc a:hover, a:hover { color:var(--accent-d); }
+  pre, .toc, .note, .card, .phase {
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow);
+  }
+  .card { transition:transform .25s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s; }
+  .card:hover { transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 40px var(--hover-glow); }
+
+  /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
+  .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
+  .themebar button {
+    font:600 11px/1 var(--sans); letter-spacing:.3px; cursor:pointer; color:var(--text-mid);
+    background:var(--panel); border:1px solid var(--line); border-radius:999px;
+    padding:6px 11px 6px 8px; display:inline-flex; align-items:center; gap:6px;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    transition:color .2s, border-color .2s, transform .2s, box-shadow .2s;
+  }
+  .themebar button:hover { color:var(--text-hi); transform:translateY(-1px); }
+  .themebar button.active { color:var(--text-hi); border-color:var(--accent); box-shadow:0 6px 20px var(--hover-glow); }
+  .themebar .sw { width:11px; height:11px; border-radius:50%; box-shadow:0 0 0 1px rgba(0,0,0,.18) inset; }
+  @media (max-width:760px){ .themebar { position:static; margin:0 0 18px; } }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+<style>
+  /* ===== the domain TRACE — one row of the system grid, expanded down the layers =====
+     Lane gutter uses the SAME layer names as ARCHITECTURE.html §02's grid columns, so the
+     two pages share one coordinate system. Every node carries data-path="<file>" — that
+     anchor is what `check.py arch` asserts still exists (ARCH_PATH_DEAD). Anchors are
+     opt-in: a node with nothing checkable simply omits the attribute. */
+  .trace { border:1px solid var(--line); border-radius:11px; background:var(--panel);
+           margin:20px 0 26px; overflow:hidden; }
+  .trace > .th { padding:11px 18px; background:var(--panel-2); border-bottom:1px solid var(--line);
+                 display:flex; flex-wrap:wrap; align-items:baseline; gap:12px; }
+  .trace > .th b { color:var(--text-hi); font-size:14px; font-weight:620; }
+  .trace > .th .sub { color:var(--faint); font-size:11.5px; font-family:var(--mono); }
+  .tbody { padding:6px 0 10px; }
+  .tstep { display:grid; grid-template-columns:86px 1fr; gap:14px; padding:0 18px; position:relative; }
+  .tstep > .lane { font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+                   text-transform:uppercase; padding-top:14px; text-align:right; color:var(--faint); }
+  /* Lane colours: the entry lane, the owning runtime, and the one lane that leaves the box. */
+  .tstep[data-lane="client"] > .lane,
+  .tstep[data-lane="ui"]     > .lane { color:var(--blue); }
+  .tstep[data-lane="api"]    > .lane,
+  .tstep[data-lane="logic"]  > .lane { color:var(--accent); }
+  .tstep[data-lane="external"] > .lane { color:var(--red); }
+  .node { padding:10px 0 10px 20px; position:relative; }
+  .node::before { content:""; position:absolute; left:0; top:0; bottom:0; width:1px; background:var(--line); }
+  .tstep:first-child .node::before { top:16px; }
+  .tstep:last-child  .node::before { bottom:calc(100% - 16px); }
+  .node::after { content:""; position:absolute; left:-3.5px; top:15px; width:8px; height:8px;
+                 border-radius:50%; background:var(--bg); border:2px solid var(--accent); }
+  .tstep[data-lane="client"] .node::after,
+  .tstep[data-lane="ui"] .node::after { border-color:var(--blue); }
+  .tstep[data-lane="external"] .node::after { border-color:var(--red); }
+  .node .sym { color:var(--text-hi); font-weight:600; font-size:13px; font-family:var(--mono); }
+  .node .call { color:var(--text-mid); font-family:var(--mono); font-size:11.5px; margin-top:2px; }
+  .node .why { color:var(--text-mid); font-size:12px; margin-top:3px; }
+  .node .path { margin-top:5px; font-family:var(--mono); font-size:10.5px; color:var(--faint); }
+  .node .path::before { content:"\2937  "; color:var(--line); }
+  .node.endpoint .sym { color:var(--accent); }
+  .node.ret .sym { color:var(--text-mid); font-weight:500; border:1px dashed var(--line);
+                   border-radius:7px; padding:5px 11px; display:inline-block; background:var(--panel-2); }
+  .tstep.egress .node { background:linear-gradient(90deg,rgba(255,77,109,.09),transparent 72%);
+                        border-radius:8px; }
+  .egress-tag { display:inline-block; margin-left:9px; font-family:var(--mono); font-size:9.5px;
+                letter-spacing:.08em; text-transform:uppercase; color:var(--red);
+                border:1px solid var(--red); border-radius:4px; padding:1px 6px; vertical-align:1px; }
+  .br { margin:8px 0 0; padding:0; list-style:none; }
+  .br li { position:relative; padding:3px 0 3px 20px; font-size:12px; color:var(--text); }
+  .br li::before { content:"\2514\2500"; position:absolute; left:0; color:var(--line);
+                   font-family:var(--mono); font-size:11px; }
+  .br li .bp { display:block; font-family:var(--mono); font-size:10.5px; color:var(--faint); margin-top:1px; }
+  .chip { display:inline-block; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+          text-transform:uppercase; border-radius:4px; padding:1px 6px; margin-right:7px;
+          vertical-align:1px; border:1px solid; }
+  .chip.opt   { color:var(--amber); border-color:var(--amber); }   /* conditional / off by default */
+  .chip.reuse { color:var(--blue);  border-color:var(--blue); }    /* shared with another trace */
+  /* the fan-in: N surfaces, M engines — what separate diagrams can never show */
+  .engines { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0 6px; }
+  .eng { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:13px 16px; }
+  .eng h4 { margin:0 0 3px; font-size:13px; color:var(--accent); font-family:var(--mono); font-weight:620; }
+  .eng .p { font-family:var(--mono); font-size:10.5px; color:var(--faint); margin-bottom:8px; }
+  .eng ul { margin:0; padding-left:18px; font-size:12px; color:var(--text-mid); }
+  .eng li { margin:3px 0; }
+  /* provenance — this page is AUTHORED, unlike the generated observatory */
+  .stamp { display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px;
+           color:var(--faint); border:1px solid var(--line); border-radius:20px;
+           padding:4px 13px; background:var(--panel); margin-top:10px; }
+  .stamp .d { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+  @media (max-width:860px){ .engines { grid-template-columns:1fr; }
+                            .tstep { grid-template-columns:60px 1fr; } }
+</style>
+<script>/* no-FOUC theme init — shares the dashboard's 'dash-theme' key */(function(){var ok=['aurora','daylight','sandstone','forest','slate'];try{var t=localStorage.getItem('dash-theme');document.documentElement.setAttribute('data-theme',ok.indexOf(t)>=0?t:'aurora');}catch(e){document.documentElement.setAttribute('data-theme','aurora');}})();</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="sq"></span><span class="k"><!-- FILL: project-slug --> &middot; <!-- FILL: domain --></span></div>
+    <h1><!-- FILL: domain --> &mdash; how it's built</h1>
+    <!-- lede = the domain in one sentence, ideally with its shape: "four surfaces, two engines, one egress". -->
+    <p class="lede"><!-- FILL --></p>
+    <p style="color:var(--faint);font-size:13px;margin-top:4px">
+      Why this domain exists &rarr; <a href="../MISSION.html">MISSION.html</a> &sect;05 (the
+      <code><!-- FILL: domain --></code> row). The rules an agent loads &rarr;
+      <a href="./SPEC.md">SPEC.md</a>. Where this row sits in the system &rarr;
+      <a href="../ARCHITECTURE.html">the Domain &times; Layer grid</a>.
+      This file is the human <em>how</em>; it does not restate any of those.
+    </p>
+    <div class="toc"><ol>
+      <li><a href="#owns">What this domain owns</a></li>
+      <li><a href="#traces">Traces</a></li>
+      <li><a href="#shape">The shape behind the traces</a></li>
+      <li><a href="#gotchas">Gotchas</a></li>
+    </ol></div>
+  </header>
+
+  <h2 id="owns"><span class="n">01</span>What This Domain Owns</h2>
+  <!-- The boundary, stated as a pair. The non-goal is the load-bearing half: it is what stops
+       this domain absorbing its neighbours. Both should already exist in the MISSION §05 row —
+       quote them, don't invent a second version. -->
+  <p><strong>Owns:</strong> <!-- FILL: the subject this domain is responsible for. --></p>
+  <p><strong>Non-goal:</strong> <!-- FILL: the neighbouring thing it deliberately does NOT own, and who does. --></p>
+
+  <h2 id="traces"><span class="n">02</span>Traces</h2>
+  <!-- The centrepiece. One trace per surface/entry point this domain exposes.
+       Lanes: use the system grid's layer columns (client · api · sidecar · content, or
+       ui · api · logic · data — whatever that project's grid uses).
+       Mark the lane "external" for any step that leaves the machine: the egress treatment
+       makes the privacy boundary a thing you SEE rather than a sentence you trust.
+       Copy the block below once per trace; delete the branches you don't need. -->
+  <div class="trace">
+    <div class="th"><b><!-- FILL: trace name, e.g. "Basic search" --></b><span class="sub"><!-- FILL: entry point &middot; one-line character, e.g. "GET /api/search &middot; one pass &middot; no model call" --></span></div>
+    <div class="tbody">
+
+      <div class="tstep" data-lane="client">
+        <div class="lane">client</div>
+        <div class="node">
+          <div class="sym"><!-- FILL: the entry symbol/component --></div>
+          <div class="call"><!-- FILL: the call it makes, with real arg names --></div>
+          <div class="path" data-path="<!-- FILL: path/to/file.ts -->"><!-- FILL: path/to/file.ts --></div>
+        </div>
+      </div>
+
+      <div class="tstep" data-lane="api">
+        <div class="lane">api</div>
+        <div class="node endpoint">
+          <div class="sym"><!-- FILL: METHOD /the/endpoint --></div>
+          <div class="call"><!-- FILL: query/body params --></div>
+          <div class="path" data-path="<!-- FILL: path -->"><!-- FILL: path --></div>
+        </div>
+      </div>
+
+      <div class="tstep" data-lane="api">
+        <div class="lane">api</div>
+        <div class="node">
+          <div class="sym"><!-- FILL: the function that does the work --></div>
+          <div class="path" data-path="<!-- FILL: path -->"><!-- FILL: path --></div>
+          <!-- branches = the ASCII "+--" fan-out. Chips carry meaning:
+               reuse = this step is shared with another trace (the fan-in worth seeing)
+               opt   = conditional / off by default — say what turns it on -->
+          <ul class="br">
+            <li><!-- FILL: what this branch does --><span class="bp"><!-- FILL: path --></span></li>
+            <li><span class="chip reuse">reuse</span><!-- FILL: the shared step --><span class="bp"><!-- FILL: where it's shared from --></span></li>
+            <li><span class="chip opt">opt</span><!-- FILL: the conditional branch --> &mdash; only when <code><!-- FILL: FLAG=true --></code><span class="bp"><!-- FILL: path --></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- OPTIONAL: the only lane that leaves the machine. Delete if this trace stays local —
+           an empty external lane across every trace is itself the privacy claim, made visible. -->
+      <div class="tstep egress" data-lane="external">
+        <div class="lane">external</div>
+        <div class="node">
+          <div class="sym"><!-- FILL: the external service --><span class="egress-tag">egress</span></div>
+          <div class="why"><!-- FILL: exactly what crosses the boundary here, and what does not. --></div>
+        </div>
+      </div>
+
+      <div class="tstep" data-lane="api">
+        <div class="lane">api</div>
+        <div class="node ret">
+          <div class="sym"><!-- FILL: the returned shape --></div>
+          <div class="why"><!-- FILL: optional — what the caller is expected to do with it. --></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <h2 id="shape"><span class="n">03</span>The Shape Behind the Traces</h2>
+  <!-- What no single trace can show. If several traces converge on the same engine/module,
+       say so here — "N surfaces, M engines" is usually the domain's real thesis and it is
+       invisible when the flows are read one at a time. Delete this section if the domain
+       has exactly one trace. -->
+  <p><!-- FILL: the one-line thesis, e.g. "four surfaces, two engines". --></p>
+  <div class="engines">
+    <div class="eng">
+      <h4><!-- FILL: engine/module name --></h4>
+      <div class="p"><!-- FILL: path --></div>
+      <ul><li><!-- FILL: surface that uses it --></li><li><!-- FILL --></li></ul>
+    </div>
+    <div class="eng">
+      <h4><!-- FILL --></h4>
+      <div class="p"><!-- FILL: path --></div>
+      <ul><li><!-- FILL --></li></ul>
+    </div>
+  </div>
+
+  <!-- ADD YOUR OWN SECTIONS HERE (§04, §05, …). The four above are the spine every domain
+       page shares so the second one a reader opens costs nothing; below it, a domain is free
+       — scoring signals, a decision table, indexed fields, expansion rules, whatever this
+       subject actually needs. Freeform BELOW the spine, never instead of it. -->
+
+  <h2 id="gotchas"><span class="n">04</span>Gotchas</h2>
+  <!-- The things that bite. Keep the OPERATIONAL ones here; a strategic "we don't do X" is a
+       MISSION non-goal, and "doing X breaks the build" is a CLAUDE.md constraint. -->
+  <ul>
+    <li><!-- FILL --></li>
+    <li><!-- FILL --></li>
+  </ul>
+
+  <div class="note warn">
+    <span class="lbl">What the wall covers.</span> Every node above is anchored with
+    <code>data-path</code>, and <code>check.py arch</code> asserts those files still exist.
+    That catches a <em>moved or deleted file</em> &mdash; it does <strong>not</strong> verify
+    that an arrow is still right, or that a branch was added and never drawn. Dead paths get a
+    finding; wrong arrows need a human re-read. Update the date below when you do one.
+  </div>
+
+  <p><span class="stamp"><span class="d"></span> authored &middot; last reviewed <!-- FILL: YYYY-MM-DD -->
+  &middot; paths checked by <code>ARCH_PATH_DEAD</code></span></p>
+  <p style="color:var(--faint);font-size:12px">
+    This page is <strong>authored and committed</strong>. The observatory
+    (<code>.gravity/observatory/</code>) is <strong>generated and git-ignored</strong>. They share a
+    visual language on purpose &mdash; one is cheaper to read than two &mdash; so the provenance is
+    stamped rather than implied: a page that reads as auto-derived is a page nobody maintains.
+  </p>
+
+  <footer>
+    <!-- FILL: project --> &middot; <!-- FILL: domain --> &middot; the domain trace &mdash; how this one
+    capability works, top to bottom. Rules &rarr; <code>SPEC.md</code>. Why &rarr;
+    <code>../MISSION.html</code>. What's next &rarr; <code>PLAN.*.md</code>.
+  </footer>
+</div>
+<div class="themebar" id="themebar" role="group" aria-label="Theme"><button data-theme="aurora"><span class="sw" style="background:linear-gradient(135deg,#00F2FE,#F093FB)"></span>Aurora</button><button data-theme="daylight"><span class="sw" style="background:linear-gradient(135deg,#60A5FA,#A78BFA)"></span>Daylight</button><button data-theme="sandstone"><span class="sw" style="background:linear-gradient(135deg,#F59E0B,#C2410C)"></span>Sandstone</button><button data-theme="forest"><span class="sw" style="background:linear-gradient(135deg,#34D399,#A3E635)"></span>Forest</button><button data-theme="slate"><span class="sw" style="background:linear-gradient(135deg,#CBD5E1,#64748B)"></span>Slate</button></div>
+<script>(function(){var bar=document.getElementById('themebar');if(!bar)return;var ok=['aurora','daylight','sandstone','forest','slate'];function set(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('dash-theme',t);}catch(e){}bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-theme')===t);});}bar.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-theme'));});});var saved='aurora';try{saved=localStorage.getItem('dash-theme')||'aurora';}catch(e){}if(ok.indexOf(saved)<0)saved='aurora';set(saved);})();</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!--
-  INTAKE.template.md — the per-batch bug/issue intake sheet (workspace CLAUDE.md §6).
+  INTAKE.template.md — the per-batch bug/issue intake sheet (the protocol card (.gravity/GRAVITY.md)).
   Copy to repos/<project>/docs/intake/<YYYY-MM-DD>.md — one file per batch, dated like
   walkthroughs (intake = the frozen BEFORE-record; a walkthrough = the frozen AFTER-record).
   Seeded and filled by /intake; the manual shape is below.

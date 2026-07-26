@@ -1,4 +1,4 @@
-<!-- SPEC.template.md — the compact, AGENT-LOADABLE rule sheet for one domain (workspace CLAUDE.md §6, "audience split").
+<!-- SPEC.template.md — the compact, AGENT-LOADABLE rule sheet for one domain (see the protocol card (.gravity/GRAVITY.md)).
      Copy to repos/<project>/.gravity/<domain>/SPEC.md (or the flat SPEC.<domain>.md) and fill the <FILL> spots.
      This is the file you hand an agent directly before a change in <domain>. It is BOTH halves of a spec:
        - GENERATIVE: the Minimal Shape + Generate loop let an agent instantiate a correct unit FROM the spec.
@@ -15,7 +15,7 @@
      the contracts BETWEEN services/domains instead of a unit WITHIN one. There is nothing to "generate", so the
      integration form SWAPS two sections — Minimal Shape → Boundary Map, Generate → Change Order — and keeps the
      rest. The swap is a self-contained block below ("INTEGRATION VARIANT"); use it for integration, delete it
-     otherwise. See workspace CLAUDE.md §5 for what an integration SPEC owns.
+     otherwise. The integration SPEC owns what crosses between services; domain SPECs keep their internals.
 
      Recognized only when present, never mandated. Delete this comment block once filled. knowledge-viewer is the worked example. -->
 

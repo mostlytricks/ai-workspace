@@ -5,7 +5,7 @@
      (.gravity/ projects — route it from the Doc Map). Recognized only when present and
      NEVER mandated: only for projects that deploy/run somewhere beyond `npm run dev` —
      skip it for local tools, libraries, and scripts.
-     The ownership test (workspace CLAUDE.md §6): "would you need this at 2am when it's
+     The ownership test: "would you need this at 2am when it's
      down?" If yes, it lives here — not in your head, not in CONTEXT.md.
      Rate of change: on deploy-shape changes (rare) — like CLAUDE.md, not like CONTEXT.md.
      Delete sections that don't apply; keep every command runnable AS WRITTEN in the

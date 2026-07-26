@@ -61,10 +61,14 @@ from check_project import (                                       # noqa: E402,F
     STALE_SLICE_DAYS,
     WARN,
     Finding,
+    check_arch_paths,
     check_gravity_consistency,
     check_given,
     check_intake,
     check_spec_honesty,
+    _ARCH_ANCHOR_RE,
+    _arch_anchor_targets,
+    _arch_pages,
     discover_domains,
     protocol_version,
     scan_couplings,
@@ -325,6 +329,41 @@ def cmd_spec(args) -> int:
     findings = check_spec_honesty(project)
     if not findings:
         print("OK — every Gate and tag verified (or honestly [review]/[—]).")
+        return 0
+    fails, warns = _print(findings)
+    print(f"{fails} fail(s), {warns} warning(s).")
+    return 1 if fails else 0
+
+
+def cmd_arch(args) -> int:
+    project = _resolve_project_arg(args.project)
+    pages = _arch_pages(Path(project) / ".gravity")
+    findings = check_arch_paths(project)
+
+    # Count what is actually CHECKABLE, not what merely looks anchored: a page
+    # freshly copied from the stencil is full of `data-path="<!-- FILL: path -->"`,
+    # and reporting a bare OK on that would be the exact lie this checker exists
+    # to prevent — "verified" when nothing was verified.
+    checkable = 0
+    for page in pages:
+        for value in _ARCH_ANCHOR_RE.findall(_read(page)):
+            checkable += len(_arch_anchor_targets(value))
+
+    print(f"project: {project}")
+    print(f"architecture pages: {len(pages)} ({checkable} resolvable path anchor(s))")
+    if not pages:
+        print("no authored ARCHITECTURE.html — nothing to check.")
+        return 0
+    if not checkable:
+        # Opt-in by design: an unanchored page is not a defect, it just hasn't
+        # been converted to the grid/trace form yet.
+        print("no resolvable anchors — nothing verifiable. Anchor grid cells and "
+              "flow steps with data-path=\"<file>\" (see ARCHITECTURE.template.html / "
+              "ARCHITECTURE.domain.template.html) to give this check something to hold.")
+        return 0
+    if not findings:
+        print(f"OK — all {checkable} anchored node(s) still name a file that exists. "
+              "(Dead paths only — arrows and cell contents still need a human.)")
         return 0
     fails, warns = _print(findings)
     print(f"{fails} fail(s), {warns} warning(s).")
@@ -662,6 +701,23 @@ def cmd_given(args) -> int:
     return 1 if fails else 0
 
 
+def _arch_fixture(root: Path) -> None:
+    """A minimal project whose domain ARCHITECTURE page anchors one node to a
+    real file — plus the three unverifiable anchor forms the checker must skip
+    rather than guess at (a glob, an unfilled stencil, and prose)."""
+    (root / "src").mkdir(parents=True, exist_ok=True)
+    (root / "src" / "engine.ts").write_text("export const engine = 1;\n", encoding="utf-8")
+    domain = root / ".gravity" / "search"
+    domain.mkdir(parents=True, exist_ok=True)
+    (domain / "ARCHITECTURE.html").write_text(
+        '<div class="node"><div class="sym">Engine</div>'
+        '<div class="path" data-path="src/engine.ts:12">src/engine.ts</div></div>\n'
+        '<div class="path" data-path="src/providers/*">a glob</div>\n'
+        '<div class="path" data-path="<!-- FILL: path -->">an unfilled stencil</div>\n'
+        '<div class="path" data-path="provider base URL from .env">prose</div>\n',
+        encoding="utf-8")
+
+
 def cmd_selftest(args) -> int:
     """Prove the checker itself: the bundled good fixture must pass, and a
     deliberately under-wired copy must fail with UNDERWIRED. Guards against the
@@ -941,6 +997,31 @@ def cmd_selftest(args) -> int:
                 ok = False
                 print(f"selftest: EXPECTED {code}, but the given checker stayed silent.")
 
+    # --- arch half: an anchored page passes; a moved file is caught. ---
+    with tempfile.TemporaryDirectory() as tmp:
+        good = Path(tmp) / "arch-good"
+        _arch_fixture(good)
+        good_findings = check_arch_paths(good)
+        if good_findings:
+            # A failure here almost certainly means the checker started GUESSING
+            # at one of the three unverifiable forms in the fixture.
+            ok = False
+            print("selftest: EXPECTED anchored arch fixture to pass, but:")
+            _print(good_findings)
+        else:
+            print("selftest: anchored arch fixture passes "
+                  "(live anchor resolved; glob/stencil/prose correctly skipped).")
+
+        bad = Path(tmp) / "arch-bad"
+        shutil.copytree(good, bad)
+        (bad / "src" / "engine.ts").unlink()          # the refactor the doc missed
+        caught = [f for f in check_arch_paths(bad) if f.code == "ARCH_PATH_DEAD"]
+        if caught:
+            print("selftest: arch drift correctly caught -> ARCH_PATH_DEAD.")
+        else:
+            ok = False
+            print("selftest: EXPECTED ARCH_PATH_DEAD, but the arch checker stayed silent.")
+
     # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
     ok = _patchloop_selftest() and ok
 
@@ -968,6 +1049,10 @@ def main(argv=None) -> int:
     h = sub.add_parser("spec", help="verify SPEC.md Gates + enforcement tags against reality")
     h.add_argument("--project", required=True, help="path to the project root (or alias)")
     h.set_defaults(func=cmd_spec)
+
+    a = sub.add_parser("arch", help="verify ARCHITECTURE.html diagram nodes still name real files")
+    a.add_argument("--project", required=True, help="path to the project root (or alias)")
+    a.set_defaults(func=cmd_arch)
 
     s = sub.add_parser("scenario", help="assert a golden-scenario's postconditions")
     s.add_argument("--scenario", required=True, help="path to the scenario dir (has expect.json)")

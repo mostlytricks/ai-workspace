@@ -1,7 +1,7 @@
 # Design
 
 <!-- Per-project stencil for a running-app UI design system. Copy to <project>/DESIGN.md and fill.
-     This is the canonical home for *app visual design* (workspace CLAUDE.md §6 ownership table):
+     This is the canonical home for *app visual design* (the protocol card (.gravity/GRAVITY.md): one concern, one home):
      temperature, type, token contract, motion, components, the lines you must not cross.
      NOT the same as DESIGN.docs.md (browser-read HTML-doc theme) — if a project needs both, the
      doc theme stays in a DESIGN.docs.md, and this file owns only the app.

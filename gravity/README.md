@@ -30,7 +30,8 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 | `MISSION.template.html` | The "why" doc — north star, principles, non-goals (four-doc pipeline, CLAUDE.md §6). |
 | `IMPLEMENTATION_PLAN.template.md` | The "what/next" doc. Two shapes: phase roadmap (arc projects) or slice queue (growing projects); optional **Tracks** section = the direction axis. Header carries the **work-layer law**. |
 | `PLAN.template.md` | Per-domain / per-slice intent — Goal + given/when/then Scenario + Slice + Verification; seeded by `/new-domain` and `/interview`. |
-| `ARCHITECTURE.template.html` | "How it's built" overview (optional fifth doc); also seeds per-domain deep-dives. |
+| `ARCHITECTURE.template.html` | "How it's built" — the **map**: the Domain × Layer grid (vertical domains as rows, layers as columns, cross-cutting ones as bands) + the system flows across it. Optional fifth doc. |
+| `ARCHITECTURE.domain.template.html` | "How it's built" — the **trace**: one grid row expanded down the layers, for `.gravity/<domain>/ARCHITECTURE.html`. Lane gutter reuses the grid's layer names so both pages share one coordinate system. |
 | `SPEC.template.md` | The per-domain **change contract** — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules). Carries the first-class INTEGRATION VARIANT (Boundary Map + Change Order) for the cross-service `integration` domain. |
 | `GRAVITY.template.md` | The **thin fenced router block** — the only thing gravity writes into root harness files (CLAUDE.md, AGENTS.md, …); machine-managed between `<!-- gravity:router -->` fences. |
 | `ROUTER.template.md` | The full in-`.gravity/` router → `.gravity/ROUTER.md`: Doc Map + read-first table + the is-it-a-domain gate. |
@@ -52,16 +53,22 @@ workspace can scan, check and render itself.
 - `scan_project.py` — the one scanner for a project's gravity docs (domains, spine, SPEC census,
   scenarios, queue, tracks, walkthroughs, context, preflight packets). Facts only, stdlib only;
   every instrument and checker reads through it so the docs are parsed exactly one way.
-- `check_project.py` — the project-scoped structural checks (`consistency`, `spec`, `intake`,
-  `given`) plus a CLI. The workspace-scoped half (tiers, `PROJECTS.md`, the golden-scenario
-  harness) stays in `.claude/scenarios/check.py`, which re-exports this one.
+- `check_project.py` — the project-scoped structural checks (`consistency`, `spec`, `arch`,
+  `intake`, `given`) plus a CLI. The workspace-scoped half (tiers, `PROJECTS.md`, the
+  golden-scenario harness) stays in `.claude/scenarios/check.py`, which re-exports this one.
 - `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/observatory/`.
   `generate_cosmos.py` (Orbit 3D + the five-palette `THEMES` family) and `generate_boundary.py`
   (the seam graph) are its renderer modules; each keeps a debug CLI.
 - `project_arg.py` — which project (path first, workspace alias only as sugar) and where output
   goes (the self-ignoring `observatory/` folder).
 - `run_gate.py` — runs a domain SPEC's extracted gate inside the project and propagates its exit
-  code (exit 2 = an honest "no gate to run" refusal, never a pass).
+  code (exit 2 = an honest "no gate to run" refusal, never a pass). `--all` sweeps every fenced
+  domain and records the outcome to the gitignored `.gravity/observatory/gates.json` — the
+  **freshness of proof**, which nothing else holds: tags say which rules have walls and the
+  Behavioral Contract says which behaviours have a *named* test, but only a run says it still
+  *passes*. Four-valued on purpose — a gate that couldn't reach its server or fixture is
+  **blocked**, never **red**, because it proved nothing either way. Surfaced in the observatory's
+  Spec Health tab, with the captured output on hover so a misclassification is always auditable.
 
 Every one of them takes a project **path**; the workspace's alias resolution
 (`.claude/scripts/resolve_project.py`) is manager-side sugar reached only when present. Installed

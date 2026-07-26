@@ -1,5 +1,5 @@
 <!--
-  IMPLEMENTATION_PLAN.template.md — the "what/next" doc (one of the four clocks; see workspace CLAUDE.md §6).
+  IMPLEMENTATION_PLAN.template.md — the "what/next" doc (one of the four clocks; see the protocol card (.gravity/GRAVITY.md)).
   Copy to repos/<project>/IMPLEMENTATION_PLAN.md and fill it in. Markdown (not HTML) on purpose:
   this is the doc that changes every phase and that the agent edits, so clean diffs matter more than polish.
   It is the resume sheet — open it in a fresh session to pick up exactly where things stand.

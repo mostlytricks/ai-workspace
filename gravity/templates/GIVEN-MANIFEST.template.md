@@ -1,5 +1,5 @@
 <!--
-  GIVEN-MANIFEST.template.md — the provenance sheet for the GIVEN layer (workspace CLAUDE.md §6).
+  GIVEN-MANIFEST.template.md — the provenance sheet for the GIVEN layer (the protocol card (.gravity/GRAVITY.md)).
   Copy to .gravity/given/MANIFEST.md (cross-cutting) or .gravity/<domain>/given/MANIFEST.md
   (domain-scoped). Seeded and filled by /given, which routes files out of .gravity/inbox/.
 
