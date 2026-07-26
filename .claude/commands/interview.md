@@ -23,15 +23,17 @@ Three modes, one core:
 
 ## Step 1–5 — The five themes (ask in this order, skip answered ones)
 
-Ask **one theme at a time**. For each, lead with a **strawman**: draft your best guess *from the evidence you read* and ask the user to confirm or correct it — a correction carries more signal than a cold answer. Where there is zero evidence, fall back to the open question. Label every guess as a guess.
+Ask the themes as **distinct questions, batched into one structured-question call** when the tool allows (one round-trip beats five — proven on real seeds; ephemeris 2026-07-26). Themes never merge into one vague question; if the tool's question cap bites, fold **Gate** into **Shape** and confirm the gate in the read-back instead. For each theme, lead with a **strawman**: draft your best guess *from the evidence you read* and ask the user to confirm or correct it — a correction carries more signal than a cold answer. Where there is zero evidence, fall back to the open question. Label every guess as a guess.
 
 | # | Theme | The question (strawman form) | Answer lands in |
 |---|---|---|---|
-| 1 | **Telos** | "From what I read, if this works, ⟨guess⟩ — right? And what would *betray* it?" (the betrayal answer is the non-goals table) | MISSION why + non-goals |
+| 1 | **Telos** | "From what I read, if this works, ⟨guess⟩ — right? And what would *betray* it?" (betrayal answers → MISSION §07's **Betrayals** tier, dated; things merely out of scope → its **Not-yets** tier) | MISSION why + non-goals |
 | 2 | **Walls** | "These look fixed: ⟨stack/env/data guesses⟩. Which are locked, which still open?" | CLAUDE.md constraints · PLAN Locked Decisions · PLAN open questions |
 | 3 | **Shape** | "The smallest slice that proves this is worth continuing looks like ⟨guess⟩?" Plus the seam: "does everything reduce to one principle like ⟨guess⟩?" No seam yet → honest `OPEN`; Phase 1 becomes *find the seam* | CLAUDE.md identity · PLAN Phase 1 |
 | 4 | **Gate** | "When Phase 1 is done, what proves it — a command, a demo, a number? My guess: ⟨guess⟩." "I'll eyeball it" is a valid answer — write `[review]` | PLAN per-phase Verification (future SPEC Gates) |
 | 5 | **Now** | "So the single next step is ⟨guess⟩?" | CONTEXT.md Next Step |
+
+**Deriving betrayal candidates (theme 1) — never hand the user a blank page.** "What would betray it?" demands imagination, and engineers rightly resist writing "never" — it reads as a prediction, and "someday it may be helpful" is true of everything. A betrayal is a **load-bearing "no"**: a present-tense fact the design leans on, where flipping it means redesign, not extension — not a vow about the future. So *generate* candidates mechanically (negate the load-bearing words of the mission sentence: "read-only page / for me / from my own data" → can-write, multi-user, others' data) and present them for **judgment** — judging candidates is easy where generating them is hard. Keep only candidates passing all three tests: (1) the "no" **buys** something nameable; (2) adding it later forces a **rebuild**, not a bolt-on; (3) a helpful agent would **plausibly drift** into building it — betrayals worth writing arrive disguised as help. Cap ~3; a rejected candidate lands in Not-yets, not the void.
 
 **Follow-ups fire only on contradiction** — an answer that conflicts with the code, the docs, or an earlier answer. Name the conflict plainly and ask which side wins. Otherwise move on: five themes, roughly five questions; going deeper needs the user's go-ahead.
 

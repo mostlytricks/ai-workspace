@@ -248,24 +248,37 @@
   </table>
 
   <h2 id="pipeline"><span class="n">06</span>Planning Pipeline</h2>
-  <p>The project docs change at different rates — keep each one narrow so the agent can resume without re-deriving the mission every time. <strong>One concern, one home:</strong> each doc owns its column; if another doc needs a fact, it links here rather than restating it.</p>
-  <table>
-    <thead><tr><th>Document</th><th>Job (what it owns)</th><th>Changes</th></tr></thead>
-    <tbody>
-      <tr><td><code>MISSION.html</code></td><td>Why: north star, principles, non-goals that survive refactors.</td><td>rarely</td></tr>
-      <tr><td><code>CLAUDE.md</code></td><td>How: repo identity, stack, constraints, entry points, how the agent should behave here.</td><td>on refactors</td></tr>
-      <tr><td><code>IMPLEMENTATION_PLAN.md</code></td><td>What/next: phase roadmap, locked decisions, the verification gate, open questions.</td><td>per phase</td></tr>
-      <tr><td><code>CONTEXT.md</code></td><td>Now: current state, last 1-2 sessions, the immediate next step.</td><td>per session</td></tr>
-      <tr><td><code>ARCHITECTURE.html</code> <span style="color:var(--faint)">(optional)</span></td><td>How it's built: component boundaries, the seam's mechanics, data contracts. Add only when "how it's built" outgrows CLAUDE.md's entry points.</td><td>on structural change</td></tr>
-    </tbody>
-  </table>
+  <!-- Deliberately two lines. The doc-kinds + rates table is PROTOCOL doctrine with one owner —
+       .gravity/GRAVITY.md (the card) on gravity projects, CLAUDE.md's "Docs in this project" map
+       on flat projects. Restating it here gave every project a private copy that drifted together
+       (found on the ephemeris seed, 2026-07-26). Point, don't copy. -->
+  <p>This project's docs change at different rates — <strong>one concern, one home</strong>: each doc owns its question (<em>why / how / what's next / now</em>), and any other doc links to the owner rather than restating it.</p>
+  <p style="color:var(--faint);font-size:13.5px">The full doc-kinds + rates table lives in <code><!-- FILL: .gravity/GRAVITY.md (gravity projects) OR CLAUDE.md § Docs in this project (flat projects) — keep one --></code> — the one owner; this page deliberately doesn't copy it.</p>
 
   <h2 id="non-goals"><span class="n">07</span>Current Non-Goals</h2>
-  <!-- The most valuable section for keeping an agent on-mission. State what you are deliberately NOT doing.
+  <!-- The most valuable section for keeping an agent on-mission — TWO TIERS, matching the
+       /interview Telos question. A BETRAYAL is NOT a vow about the future (engineers rightly
+       refuse to predict "never") — it is a LOAD-BEARING "NO": a present-tense fact the design
+       leans on, where flipping it means redesign, not extension. Three tests, all mechanical:
+         1. the "no" BUYS something nameable (decisions lean on it — security posture, trivial
+            auth, a responsibility model). Buys nothing → it's a not-yet or dead weight.
+         2. adding the feature later forces a REBUILD, not a bolt-on. Bolt-on → not-yet.
+         3. the DRIFT TEST: a competent, helpful agent would plausibly build it unfenced —
+            a betrayal worth writing arrives disguised as help; a line nobody would cross
+            ("no blockchain") carries zero information.
+       Cap ~3 — more means not-yets in costume. Date each when confirmed; it's a decision,
+       not a vibe. "Permanent" means "flipping this = a different project / major version".
+       A NOT-YET is merely out of scope now — name what would EARN it.
        /triage and /mission check recent work against these to flag drift. -->
+  <p>Two tiers — <strong>betrayals</strong> would change what this project <em>is</em> and are permanent; <strong>not-yets</strong> are merely out of scope now and may be earned later.</p>
+  <h3>Betrayals (permanent<!-- FILL: — confirmed YYYY-MM-DD -->)</h3>
   <ul>
-    <li><!-- FILL: a thing you are deliberately not building yet, and (briefly) why. --></li>
-    <li><!-- FILL --></li>
+    <li><strong><!-- FILL: the thing that must never appear --></strong> — <!-- FILL: why it would change what the project IS. --></li>
+    <li><strong><!-- FILL --></strong> — <!-- FILL --></li>
+  </ul>
+  <h3>Not-yets (revisit when earned)</h3>
+  <ul>
+    <li><!-- FILL: a thing deliberately not built yet — and what would earn it. --></li>
     <li><!-- FILL --></li>
   </ul>
 
