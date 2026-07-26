@@ -21,6 +21,7 @@ Human-facing guide for working in `ai-workspace/` — **Kepler** is the workspac
 | Bring a project up to the current gravity version | `/sync-gravity <name>` ([Upgrade a project to a newer gravity](#upgrade-a-project-to-a-newer-gravity)) |
 | Triage a batch of user bug reports into the docs | `/intake <name>` ([Manage a user bug/issue batch](#manage-a-user-bugissue-batch-intake--patch)) |
 | Feed domain knowledge / production-data docs to a project | drop in `.gravity/inbox/`, then `/given <name>` |
+| Set the workspace up on a new machine, or repair broken junctions | `python .claude/scripts/bootstrap.py` ([Set up on a new machine](#set-up-on-a-new-machine)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -357,6 +358,28 @@ Gravity itself is versioned (`VERSION` + `CHANGELOG.md` + git tag), and each ado
 - **Judgment (reported, never auto-applied):** it reads every `CHANGELOG.md` section between the project's old stamp and now, and hands you a checklist of convention changes the project might violate — quoted from the changelog, one line each. Restructuring to satisfy a new convention is its own task; a sync never does it as a side effect.
 
 A minor-only delta usually means an empty checklist — re-copy, bump, done. It never commits; the diff is your review checkpoint. (Manual fallback: `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, fill the stamp from `VERSION`, `python .claude/scripts/install_lib.py <name>`, edit the router's stamp line, run `/triage`.)
+
+---
+
+## Set up on a new machine
+
+The root repo tracks only the **skeleton** — the meta files, `gravity/`, and `.claude/` tooling. Every tier folder is denied and `PROJECTS.md` is git-ignored (it names private work), which is exactly the "no umbrella repo" boundary. The consequence: a fresh clone has the rules and the instruments but no `repos/`, no tiers, no index, and no junctions.
+
+```bash
+git clone https://github.com/mostlytricks/ai-workspace.git
+cd ai-workspace
+python .claude/scripts/bootstrap.py          # --dry-run to preview
+```
+
+That creates `repos/` + the four tier folders and seeds `PROJECTS.md` from `PROJECTS.sample.md`. Then clone your projects into `repos/`, add their rows to `PROJECTS.md`, and **run it again** — it links each one into the tier its row names (junction on Windows, relative symlink on POSIX, both through `link_project.py`).
+
+The same command is the fix for **broken links** on an established machine: it removes and re-makes any junction that dangles, and reports what it verified. It's safe to re-run any time; on a healthy workspace it reports "all present / 0 made".
+
+Three things it deliberately refuses:
+
+- **It never guesses a tier.** A folder in `repos/` with no `PROJECTS.md` row is listed under *"NOT filed"*, not filed somewhere plausible — an index that contains a guess is an index you can't trust.
+- **It never clones.** Remotes live in each project's own `.git/config`; a manifest of them would name private repos, so exporting one has to be a deliberate act.
+- **It never edits an existing `PROJECTS.md`.** The index is the source of truth for tiers, so bootstrap reads it and only seeds it when there is none.
 
 ---
 

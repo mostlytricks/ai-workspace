@@ -16,6 +16,7 @@ What travels (all of `gravity/lib/`, stdlib-only by rule):
     project_arg.py           which-project / where-output
     generate_observatory.py  the page
     generate_cosmos.py       Orbit 3D + the palette family
+    palette.py               the 5-theme anchor hues (the declared owner)
     generate_boundary.py     the seam graph
     run_gate.py              the domain gate runner
 

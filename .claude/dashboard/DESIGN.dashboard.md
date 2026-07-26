@@ -41,6 +41,8 @@ Five palettes, default `aurora`. Two light, three dark — the set deliberately 
 | `forest` | calm dark green | `#0C1A14` |
 | `slate` | neutral graphite, muted/corporate | `#16181D` |
 
+**The family has an owner: `gravity/lib/palette.py`.** The three surfaces speak different token vocabularies for the same palettes (`--surface`/`--ink` here, `--panel`/`--text-hi` in docs, dict keys in the renderer), so they were deliberately *not* merged — but the **anchor hues** they must agree on (`bg`, `ink`, `dim`, and the CSS-only `h1-grad`) are declared there, and `python .claude/scenarios/check.py theme` FAILs `THEME_DRIFT` when one surface has been retuned and the others haven't. **Order of operations: edit `palette.py` first, then propagate to all three.** Everything outside the anchors — star gradients, ring/moon hues, chart axes, per-status glyph colors — stays owned locally by whichever file draws it.
+
 **Adding/editing a theme:** add or edit one `[data-theme="x"]` block in the generator's CSS (mirror every var the `aurora` block defines — `--bg --surface --surface-hover --border --border-focus --ink --muted --focus-text --chip-bg --selection --h1-grad --shadow --shadow-hover --ring-a --ring-b --chart-axis --chart-grid --stars --body-bg`), add a `<button data-theme="x">` with a signature swatch to the `#themebar` in the header, and append the key to the `THEMES` array in the page script. Keep light-theme overlays subtle (low-alpha) so the glassmorphism still reads.
 
 **`--stars`** is the starfield's opacity per theme (dark themes ≥.5, light themes ≤.35 so the twinkle stays ambient, never noisy). Star *color* is not themed separately — the canvas reads `--chart-axis` so stars always match the chrome.

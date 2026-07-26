@@ -370,6 +370,119 @@ def cmd_arch(args) -> int:
     return 1 if fails else 0
 
 
+# --------------------------------------------------------------------------- #
+# theme — the five-palette family agrees across the three surfaces that draw it
+# --------------------------------------------------------------------------- #
+
+# The three files render the same five themes in different token vocabularies
+# (see gravity/lib/palette.py, which OWNS the anchor hues). They were never
+# copy-paste duplicates, so this compares meaning, not text: for each theme it
+# pulls each surface's own token name for an anchor and asserts one value.
+_HEX_RE = r"(#[0-9A-Fa-f]{6})"
+
+
+def _cosmos_theme_block(src: str, theme: str) -> str:
+    m = re.search(rf'"{theme}":\s*\{{(.*?)\n    \}},', src, re.S)
+    return m.group(1) if m else ""
+
+
+def _css_theme_block(src: str, theme: str) -> str:
+    # Matches both `[data-theme="x"]` (dashboard) and `html[data-theme="x"]` (docs).
+    m = re.search(rf'\[data-theme="{theme}"\]\s*\{{(.*?)\n  \}}', src, re.S)
+    return m.group(1) if m else ""
+
+
+def _theme_sources() -> dict[str, tuple[Path, str]]:
+    ws = Path(__file__).resolve().parents[2]
+    return {
+        "cosmos":    (ws / "gravity" / "lib" / "generate_cosmos.py", "dict"),
+        "dashboard": (ws / ".claude" / "dashboard" / "generate_dashboard.py", "css"),
+        "docs":      (ws / ".claude" / "scripts" / "add_theme_switch.py", "css"),
+    }
+
+
+def check_theme_drift() -> list[Finding]:
+    """Verify every surface that draws the five themes agrees with the anchors
+    declared in gravity/lib/palette.py. Empty list == the family is one family."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
+    try:
+        import palette
+    except ImportError:
+        return [Finding(FAIL, "THEME_OWNER_MISSING", "", "",
+                        "gravity/lib/palette.py is absent — the palette family has "
+                        "no owner, so nothing can be checked against it")]
+
+    findings: list[Finding] = []
+    for surface, (path, kind) in _theme_sources().items():
+        if not path.exists():
+            findings.append(Finding(FAIL, "THEME_SOURCE_MISSING", surface, "",
+                                    f"{path} does not exist — a surface that draws "
+                                    "the themes went missing or moved"))
+            continue
+        src = _read(path)
+        vocab = palette.VOCABULARY[surface]
+        for theme in palette.THEME_NAMES:
+            block = (_cosmos_theme_block(src, theme) if kind == "dict"
+                     else _css_theme_block(src, theme))
+            if not block:
+                findings.append(Finding(FAIL, "THEME_MISSING", surface, theme,
+                                        f"{path.name} declares no `{theme}` palette — "
+                                        "the five themes must exist on every surface "
+                                        "or the switcher lands on an unstyled page"))
+                continue
+            want = palette.ANCHORS[theme]
+            for key in palette.UNIVERSAL_KEYS:
+                token = vocab[key]
+                pattern = (rf'"{token}":\s*"{_HEX_RE}"' if kind == "dict"
+                           else rf'--{token}:\s*{_HEX_RE}')
+                m = re.search(pattern, block)
+                if not m:
+                    findings.append(Finding(
+                        WARN, "THEME_ANCHOR_ABSENT", surface, theme,
+                        f"{path.name} `{theme}` declares no `{token}` — cannot "
+                        f"verify the {key} anchor here"))
+                    continue
+                got = m.group(1).upper()
+                if got != want[key].upper():
+                    findings.append(Finding(
+                        FAIL, "THEME_DRIFT", surface, theme,
+                        f"{path.name} `{theme}` {key} (`{token}`) is {got}, but "
+                        f"palette.py declares {want[key]} — change the anchor in "
+                        "palette.py first, then propagate to all three surfaces"))
+            # h1_grad is CSS-only: the canvas renderer has no headline to paint.
+            if kind == "css":
+                m = re.search(r'--h1-grad:\s*([^;]+);', block)
+                if m:
+                    got = " ".join(m.group(1).split())
+                    exp = " ".join(want["h1_grad"].split())
+                    if got != exp:
+                        findings.append(Finding(
+                            FAIL, "THEME_DRIFT", surface, theme,
+                            f"{path.name} `{theme}` h1-grad is `{got}`, but "
+                            f"palette.py declares `{exp}`"))
+    return findings
+
+
+def cmd_theme(args) -> int:
+    findings = check_theme_drift()
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
+    try:
+        import palette
+        n_themes, n_surfaces = len(palette.THEME_NAMES), len(_theme_sources())
+        print(f"palette: {n_themes} themes x {n_surfaces} surfaces "
+              f"(owner: gravity/lib/palette.py)")
+    except ImportError:
+        pass
+    if not findings:
+        print("OK — every surface agrees with the declared anchors. "
+              "(Anchors only — star gradients, ring and chart colours are owned "
+              "locally by whichever file draws them.)")
+        return 0
+    fails, warns = _print(findings)
+    print(f"{fails} fail(s), {warns} warning(s).")
+    return 1 if fails else 0
+
+
 def cmd_scenario(args) -> int:
     scenario_dir = Path(args.scenario)
     expect = json.loads(_read(scenario_dir / "expect.json") or "{}")
@@ -1069,6 +1182,9 @@ def main(argv=None) -> int:
     g = sub.add_parser("given", help="check the given layer — empty inbox, manifested files, no ghost rows")
     g.add_argument("--project", required=True, help="path to the project root")
     g.set_defaults(func=cmd_given)
+
+    m = sub.add_parser("theme", help="verify the 5-theme palette agrees across every surface that draws it")
+    m.set_defaults(func=cmd_theme)
 
     t = sub.add_parser("selftest", help="prove the checker on the bundled fixture")
     t.set_defaults(func=cmd_selftest)

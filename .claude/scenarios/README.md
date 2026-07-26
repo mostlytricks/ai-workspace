@@ -94,6 +94,24 @@ Parsing tolerances: `_read` never crashes on a non-UTF8/unreadable file (replace
 
 **What it deliberately cannot do.** It catches a *moved or deleted file*. It cannot tell you a cell is now wrong, an arrow reversed, or a fifth branch was added and never drawn. The templates stamp `authored · last reviewed <date>` precisely so the page states which half is machine-checked and which half needs a human — a page that implies the whole diagram is verified is worse than one that admits it isn't. The CLI holds the same line: a project whose anchors are all unfilled stencils reports *"no resolvable anchors — nothing verifiable"*, never a bare OK.
 
+## The palette check (`check.py theme`)
+
+Gravity draws the same five themes on three surfaces — the observatory/Orbit renderer, the fleet dashboard, and the browser-read doc pages — and they are **not** copy-paste duplicates: each speaks its own token vocabulary for the same palette (`--surface`/`--ink` on the dashboard, `--panel`/`--text-hi` in docs, plain dict keys in the renderer). That is why merging them was rejected; the surfaces legitimately differ. What was missing was an **owner**, so a half-finished retune could leave one surface a shade off with nothing noticing.
+
+`gravity/lib/palette.py` is now that owner: it declares the **anchor hues** every surface must agree on (`bg`, `ink`, `dim`, plus the CSS-only `h1-grad`) and the vocabulary map the checker needs to compare tokens that were never meant to match.
+
+| Finding | Severity | Meaning |
+|---|---|---|
+| `THEME_DRIFT` | FAIL | a surface's value for an anchor disagrees with `palette.py` — a partial retune |
+| `THEME_MISSING` | FAIL | a surface declares no block for one of the five themes — the switcher would land on an unstyled page |
+| `THEME_SOURCE_MISSING` | FAIL | a file that draws the themes moved or vanished |
+| `THEME_OWNER_MISSING` | FAIL | `palette.py` is absent — nothing to check against |
+| `THEME_ANCHOR_ABSENT` | WARN | a surface declares the theme but not that token — the anchor can't be verified there |
+
+**Why FAIL, not WARN.** Unlike a dead diagram path, a drifted palette ships: it renders wrong on every page that surface generates, and it is invisible in review because each file looks internally consistent. The fix is also unambiguous — change `palette.py` first, then propagate — so there is nothing for a human to adjudicate.
+
+**Under-claiming.** It owns the anchors *only*. Star gradients, ring and moon colours, chart axes and per-status glyph hues stay owned by whichever file draws them, because nothing cross-checks those — claiming them would be a fake wall. The `is_light` split (`daylight`, `sandstone`) is declared here too, since the paper-chart treatment depends on it.
+
 It also prints a per-domain **tag census** (`review 11 · lint 4 · test 2 …`) — the at-a-glance view of how much of each contract is real walls vs reviewer judgment. HTML comments are stripped before scanning: the enforcement legend legitimately spells out the tag grammar (`[test:name]` etc.) inside a comment, and commented-out template blocks are not active contract. `/triage` runs this per `.gravity/` project alongside `consistency`; `selftest` proves both checkers.
 
 ## Scenarios

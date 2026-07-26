@@ -59,6 +59,11 @@ workspace can scan, check and render itself.
 - `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/observatory/`.
   `generate_cosmos.py` (Orbit 3D + the five-palette `THEMES` family) and `generate_boundary.py`
   (the seam graph) are its renderer modules; each keeps a debug CLI.
+- `palette.py` — **the owner of the five-theme palette family**: the anchor hues (`bg` · `ink` ·
+  `dim` · CSS-only `h1-grad`) every themed surface must agree on, plus the vocabulary map and the
+  light/dark split. The three surfaces that draw the themes keep their own token names by design
+  (they are different surfaces, not duplicates); `check.py theme` FAILs `THEME_DRIFT` when one of
+  them is retuned and the others aren't. Edit here first, then propagate.
 - `project_arg.py` — which project (path first, workspace alias only as sugar) and where output
   goes (the self-ignoring `observatory/` folder).
 - `run_gate.py` — runs a domain SPEC's extracted gate inside the project and propagates its exit

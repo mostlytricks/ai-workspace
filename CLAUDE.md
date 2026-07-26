@@ -33,7 +33,7 @@ ai-workspace/
 │   └── lib/                        #   the portable INSTRUMENTS — stdlib-only, installed verbatim into each project's `.gravity/lib/` (`install_lib.py`) so a clone renders and checks itself off-workspace; catalog in `gravity/README.md`.
 │
 ├── .claude/commands/               # Workspace-level slash commands.
-├── .claude/scripts/                # Helper scripts (link_project.py, new_project.py, retire_project.py).
+├── .claude/scripts/                # Helper scripts (bootstrap.py, link_project.py, new_project.py, retire_project.py).
 │
 ├── repos/                          # CANONICAL storage. Real project files live here.
 ├── active/                         # Junctions → repos/. Being worked; touched <30 days.
@@ -74,6 +74,7 @@ A project's real files live in **one of two places**:
 **Invariants:**
 - Tier folders (`active/`, `stable/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. No exceptions.
 - Use junctions, not symbolic links. Junctions need no admin or Developer Mode on Windows. Use `mklink /D` only when crossing drives or needing full POSIX semantics under WSL.
+- **Reconstructing a workspace (fresh machine, or repairing links): `python .claude/scripts/bootstrap.py [--dry-run]`.** The skeleton repo tracks no tier folders by design (§2), so a clone has no `repos/`, no tiers, no index, no junctions. Bootstrap creates the folders, seeds `PROJECTS.md` from the sample when absent, and re-links every `repos/` project into the tier **its index row names** — repairing dangling links on the way. It never guesses a tier (an unindexed folder is reported, not filed), never clones, and never edits an existing index.
 - **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` uses it.
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
 - Never use File Explorer drag-drop to move folders containing `node_modules` or `.venv` — it sometimes performs file-by-file copies and thrashes the disk. Use `mv` (bash) or `Move-Item` (PowerShell).
@@ -197,7 +198,7 @@ Working inside a `.gravity/` project, follow the card's navigation discipline �
 ## 7. Cross-Project Tooling
 
 - **`PROJECTS.md`** is the index: one row per project — name, stack, last-touched, tier-appropriate one-liner (focus · reactivation trigger · resume blocker). Update on any tier transition or significant status change. **Local-only (git-ignored)** — it names private projects; the skeleton ships only the sanitized `PROJECTS.sample.md` (copy it on a fresh workspace).
-- **`.claude/scenarios/`** is gravity's golden-scenario harness (project-scoped checks live in `gravity/lib/check_project.py`, re-exported here) — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `arch` (ARCHITECTURE.html nodes still name real files), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
+- **`.claude/scenarios/`** is gravity's golden-scenario harness (project-scoped checks live in `gravity/lib/check_project.py`, re-exported here) — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `arch` (ARCHITECTURE.html nodes still name real files), `theme` (the five-palette family agrees across every surface that draws it — owner `gravity/lib/palette.py`), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
 - **Everything else is a command.** The procedure lives in `.claude/commands/<name>.md` (the one home — loaded on invocation, never resident); human workflows and the full cheat sheet in `docs/HANDBOOK.md`. One line each — ⊙ marks **protocol-side** commands (they operate on a project's gravity docs and belong with `gravity/`); unmarked ones are **manager-side** (they need tiers, junctions, `PROJECTS.md`):
 
 | Command | What · when |

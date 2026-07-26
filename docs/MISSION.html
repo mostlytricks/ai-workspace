@@ -193,8 +193,11 @@
   <p><strong>ai-workspace is a local-only management layer that lets one person run many agent-assisted software projects side by side without anything getting lost between sessions.</strong> Scattered terminals forget; chat context evaporates; parallel projects blur together. This workspace is the antidote: a calm root with a fixed storage model, a per-project memory, and a deterministic lifecycle an agent can operate.</p>
   <pre><b>north star</b>: one calm root an agent can drive, where no project's knowledge is ever lost
 <b>first wedge</b>: junction tier model + handoff docs + lifecycle slash commands  <span class="c">(shipped — v1.x)</span>
-<b>now</b>: mechanical walls for every rule that matters — checkers, gates, tagged SPECs, the patch-loop
-<b>later shape</b>: a portable (Windows / Linux / WSL) workspace standard any coding agent can run</pre>
+<b>second wedge</b>: mechanical walls for every rule that matters — checkers, gates, tagged SPECs, the patch-loop  <span class="c">(shipped — v2.x/v3.x)</span>
+<b>now</b>: portability — a project carries its own protocol and instruments, so a clone renders and
+      checks itself on a machine that has never seen this workspace  <span class="c">(protocol half shipped v3.2.1; the manager half reconstructs the shell — bootstrap.py, junction/symlink parity. What's left is proving it under Linux/WSL end to end.)</span>
+<b>later shape</b>: OPEN: awaiting the next real failure mode — the walls and portability horizons are
+      claimed, and inventing a third would violate <a href="#non-goals">§06</a>'s admission test.</pre>
 
   <div class="note">
     <span class="lbl">Rules vs why.</span> <code>CLAUDE.md</code> says <em>what to do</em>; this file says <em>why it's worth doing</em>. When a rule feels arbitrary, the justification should be here — and when the mission changes, the rules follow, not the reverse.
@@ -214,7 +217,7 @@
 
   <h2 id="principles"><span class="n">03</span>Principles</h2>
   <ul>
-    <li><strong>Local-first, root is local-only.</strong> Never <code>git init</code> at the root or push the workspace as an umbrella repo. Version control lives <em>per project</em>, inside <code>repos/&lt;name&gt;/</code>.</li>
+    <li><strong>The root versions the shell, never the contents.</strong> The root <em>is</em> a git repo, but its <code>.gitignore</code> denies <code>*</code> and whitelists only the portable skeleton — the meta files, <code>gravity/</code>, and <code>.claude/</code> tooling. Every tier folder stays denied, so the workspace can be replicated onto another machine without ever becoming an umbrella repo of your projects. Project version control lives <em>per project</em>, inside <code>repos/&lt;name&gt;/</code>, with its own remote. <span style="color:var(--faint)">(The live index, <code>PROJECTS.md</code>, is git-ignored — it names private work; only the sanitized sample ships.)</span></li>
     <li><strong>Storage vs views.</strong> <code>repos/</code> is the one canonical store; tiers are cheap junction views. Changing a project's tier is a metadata move, never a file copy.</li>
     <li><strong>The docs are the memory.</strong> <code>CLAUDE.md</code> is stable identity (auto-loads); <code>CONTEXT.md</code> is a rolling snapshot of <em>now</em>. git is the changelog — so <code>CONTEXT.md</code> stays small and never becomes a log.</li>
     <li><strong>One venv per project.</strong> No shared or root-level <code>.venv</code>; silent version collisions are the enemy.</li>
@@ -239,7 +242,7 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
   <p>(Every tier holds junctions — no exceptions. <code>stable/</code> is the tier for projects that <em>shipped well</em>: staleness rules don't apply there, because a working system's silence is success, not neglect.)</p>
 
   <h2 id="docs"><span class="n">05</span>The Doc System</h2>
-  <p>The workspace runs on documents with distinct, non-overlapping jobs — at the root, and inside each project.</p>
+  <p>The workspace runs on documents with distinct, non-overlapping jobs — at the root, and inside each project. Since v3.0.0 they belong to <strong>two named products</strong>: <b>Kepler</b>, this manager (tiers, junctions, the index, the dashboard — this machine only), and <b>gravity</b>, the portable protocol a project adopts, which lives whole in <code>gravity/</code> and is versioned apart. The seam is the reason the <em>now</em> horizon is reachable at all: everything a cloned project needs travels with it.</p>
   <table>
     <thead><tr><th>Document</th><th>Scope</th><th>Job</th></tr></thead>
     <tbody>
@@ -249,13 +252,16 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
       <tr><td><code>PROJECTS.md</code></td><td>root</td><td>The live index — which project is in which tier, and its current focus.</td></tr>
       <tr><td><code>CLAUDE.md</code> · <code>CONTEXT.md</code></td><td>per project</td><td>Stable identity + rolling now. The mandatory pair every project carries.</td></tr>
       <tr><td><code>MISSION.html</code> · <code>IMPLEMENTATION_PLAN.md</code></td><td>per project</td><td>Optional "four-doc pipeline" for ambitious projects — durable why + phase roadmap (CLAUDE.md §6).</td></tr>
+      <tr><td><code>gravity/GRAVITY-PROTOCOL.md</code></td><td>distribution</td><td><strong>The canonical project-side protocol.</strong> Copied verbatim to <code>&lt;project&gt;/.gravity/GRAVITY.md</code> at adoption, so an independent repo is self-describing to an agent that never sees this workspace. Protocol rules live <em>only</em> here; workspace rules are never embedded in it.</td></tr>
+      <tr><td><code>gravity/lib/</code></td><td>distribution</td><td>The portable instruments — installed verbatim into <code>&lt;project&gt;/.gravity/lib/</code>, so a clone renders and checks <em>itself</em> off-workspace. Re-copy to upgrade; never hand-edit an installed module.</td></tr>
+      <tr><td><code>.gravity/&lt;domain&gt;/</code></td><td>per project</td><td>Where the heavy docs go when a project outgrows a flat root — one folder per subject domain, routed by <code>.gravity/ROUTER.md</code>. Recognized only when present, never mandated.</td></tr>
     </tbody>
   </table>
   <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/ship</code>, <code>/retire</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.claude/scripts/</code>.</p>
 
   <h2 id="non-goals"><span class="n">06</span>Non-Goals</h2>
   <ul>
-    <li>Do not <code>git init</code> at the root or turn the workspace into an umbrella / monorepo. Projects stay independently versioned.</li>
+    <li>Do not track any project from the root repo — no umbrella / monorepo. The root's whitelist covers the skeleton only; projects stay independently versioned. Adding a tier folder to it is the one change that would break this.</li>
     <li>Do not create a shared or root-level <code>.venv</code>.</li>
     <li>Do not put real project files inside <code>active/</code>, <code>stable/</code>, <code>dormant/</code>, or <code>archive/</code> — tier folders hold junctions only.</li>
     <li>The workspace does not manage credentials or secrets; that stays with each project and the local toolchain.</li>
