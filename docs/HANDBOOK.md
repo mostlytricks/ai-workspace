@@ -22,6 +22,7 @@ Human-facing guide for working in `ai-workspace/` — **Kepler** is the workspac
 | Triage a batch of user bug reports into the docs | `/intake <name>` ([Manage a user bug/issue batch](#manage-a-user-bugissue-batch-intake--patch)) |
 | Feed domain knowledge / production-data docs to a project | drop in `.gravity/inbox/`, then `/given <name>` |
 | Set the workspace up on a new machine, or repair broken junctions | `python .claude/scripts/bootstrap.py` ([Set up on a new machine](#set-up-on-a-new-machine)) |
+| Update a sibling Kepler workspace on another drive | `/deploy-kepler <path>` ([Propagate Kepler](#propagate-kepler-to-a-sibling-workspace)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
 ---
@@ -381,6 +382,23 @@ Three things it deliberately refuses:
 - **It never clones.** Remotes live in each project's own `.git/config`; a manifest of them would name private repos, so exporting one has to be a deliberate act.
 - **It never edits an existing `PROJECTS.md`.** The index is the source of truth for tiers, so bootstrap reads it and only seeds it when there is none.
 
+## Propagate Kepler to a sibling workspace
+
+For **several Kepler workspaces on one machine** (per-purpose, on different drives) that were created as plain copies rather than clones: `/deploy-kepler <target-path>` (script: `.claude/scripts/deploy_kepler.py`). It updates a sibling's *skeleton* from this workspace's HEAD — never its projects, never its private state.
+
+```bash
+python .claude/scripts/deploy_kepler.py D:/work-workspace              # dry-run report
+python .claude/scripts/deploy_kepler.py D:/work-workspace --apply     # do it
+```
+
+How it stays safe, mechanically:
+
+- **The manifest is `git ls-files`** — the `.gitignore` whitelist made executable. `.claude/settings.json`, `PROJECTS.md`, `repos/`, and the tiers are outside it **by construction**; there is no exclusion list to forget.
+- **Kepler's version is the skeleton commit** (hash + date — the manager has no SemVer by design, §2). A `.kepler-deployed` stamp in the target records what was last shipped, so the report can tell a **safe update** (target untouched since last deploy) from a **local modification** (the sibling's owner edited it — kept unless `--force`) and an **orphan** (source stopped shipping it — kept unless `--prune`).
+- **Dry-run is the default**; it refuses a dirty source (deploys must be reproducible from a commit) and a target that overlaps this tree. On a **first deploy** there is no stamp, so every difference honestly reads *local-modified* — eyeball the list once, then `--force`.
+
+Gravity is deliberately not this command's job: after a deploy, run `/sync-gravity` per project **in that workspace**, and its `bootstrap.py` only if tiers/junctions there are broken.
+
 ---
 
 ## Glossary
@@ -391,7 +409,7 @@ Three things it deliberately refuses:
 - **Reactivation trigger** — the one-line Next Step a `stable/` project's CONTEXT.md must carry: *"Reactivate when X."* The mirror of dormant's resume blocker — but nothing is blocked; the project simply works and is waiting for a reason to change.
 - **View vs storage** — `repos/` is **storage** (real files). Tier folders are **views** (junctions). Moving a project between views doesn't touch storage.
 - **Repo vs project** — used interchangeably here. Each project under `repos/` is its own independent git repository with its own remote.
-- **Root** — the `ai-workspace/` directory itself. Never `git init` here; it's a local-only management layer.
+- **Root** — the `ai-workspace/` directory itself. Its repo versions only the **skeleton** (deny-all/whitelist `.gitignore`); tier folders, projects, and `PROJECTS.md` are never tracked here — that would be the forbidden umbrella repo.
 - **Workspace-level `CLAUDE.md`** — the agent operating manual at the workspace root. Auto-loaded every agent session. Contains rules and invariants only.
 - **Project-level `CLAUDE.md`** — per-project stable identity file (`repos/<name>/CLAUDE.md`). Stack, run commands, conventions. Auto-loaded when an agent opens at that project.
 - **`CONTEXT.md`** — per-project mutable handoff file: Completed / Current State / Next Step, updated every session. A **rolling snapshot of now, not a log**; git history is the changelog, so pruning loses nothing.

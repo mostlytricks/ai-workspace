@@ -216,6 +216,7 @@ Working inside a `.gravity/` project, follow the card's navigation discipline �
 | ⊙ `/given <name>` | Route `.gravity/inbox/` into the given layer: one routing table (domain · fidelity · privacy), provenance manifests, inbox ends empty. |
 | ⊙ `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify → bounded fixes → proven rollback. Never merges or pushes. |
 | ⊙ `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
+| `/deploy-kepler <path>` | Propagate the skeleton to a sibling workspace (other drive): `git ls-files` is the manifest, commit = the version, dry-run first; local `settings.json`/`PROJECTS.md` untouchable by construction. |
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · browser one-tap. |
 | ⊙ `/observatory <name> [theme]` | One project, one page: Overview+drift+tracks, Queue, Seams, Spec Health, Graduation, Timeline, Orbit 3D — a wrong page means doc drift. |
