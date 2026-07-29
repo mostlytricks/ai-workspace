@@ -11,6 +11,19 @@ code archaeology can't trace the DB side of the seams. The missing evidence
 comes from the database's own METADATA — collected offline, as flat files, by
 a read-only account. The agent never needs DB access.
 
+WHAT THE MANIFEST IS FOR (say this to the human handing files in):
+the manifest is what stops the analysis from claiming coverage it doesn't
+have. Every row is `present (date)` or `OPEN:`, so when a Boundary Map says
+"clustered from constraints.csv" anyone can check whether that file was ever
+collected. Without it, "we analyzed the DB" is unfalsifiable — the analysis
+sounds equally confident whether it saw six files or one. The manifest is the
+difference between a finding and a vibe; `scan_db.py` reads it the same way.
+
+WHY CSVs FOR TABLES AND .sql FOR SOURCE: not a preference. The tabular files
+are read by machines (`.gravity/lib/scan_db.py` parses them into the entity
+graph), so they must be structured; `db-source.sql` is code a human reads, so
+it stays code. Same audience split as SPEC.md vs ARCHITECTURE.html.
+
 Rules:
 - **Metadata only, never row data.** Structure, comments, constraints, source,
   grants, activity stats — no table contents, so no PII leaves the DB.
@@ -26,10 +39,19 @@ Rules:
 **Database:** <vendor + version, e.g. Oracle 19c> · **Schemas:** <OWNER1, OWNER2>
 **Collected:** <YYYY-MM-DD> by <who> using account <read-only user> · **Refresh:** re-run all queries; never hand-edit CSVs.
 
+## What can you actually get? (start here — cheapest first)
+
+The analysis starts from whichever of these you can obtain **today**; nothing blocks on the ideal pack. **No option ever involves row data** — everything below is structure, the database's own catalog of your tables.
+
+1. **DDL you scrap yourself** → `ddl/*.sql`. `CREATE TABLE` scripts from SQL Developer / DBeaver (*export DDL*), or the repo's migration files. Needs no DBA, no special account — this is the most commonly obtainable artifact, and it carries the load-bearing facts (tables, columns, PK/FK, comments). Caveat the tool states for you: scripts can drift from the deployed schema and cover only what you scraped.
+2. **The two P1 CSVs** — the live data dictionary exported by any read-only account (queries below). Stronger than DDL: it's what the database *actually* has, complete.
+3. **The rest of the pack** (P2/P3) — each file below sharpens one question; collect opportunistically.
+
 ## Pack status
 
 | P | File | Answers | Status |
 |---|---|---|---|
+| P1 | `ddl/*.sql` | **CREATE TABLE scripts** — the scrap-it-yourself equivalent of the two P1 CSVs (graph + inventory + comments) | OPEN: not collected |
 | P1 | `tables-columns.csv` | table/column inventory + **comments** (the semantics) | OPEN: not collected |
 | P1 | `constraints.csv` | PK/FK/UK — the **entity graph** (vertical-domain clustering) | OPEN: not collected |
 | P2 | `db-source.sql` | procedures/functions/packages/views/triggers — queries living **in** the DB | OPEN: not collected |
@@ -38,7 +60,11 @@ Rules:
 | P3 | `activity.csv` | runtime truth — actually-executed SQL per module/schema | OPEN: needs DBA (`V$SQL`/AWR) |
 | — | `docs/` | human artifacts: ERD exports, table-definition sheets, interface defs | OPEN: none gathered |
 
+The graph needs **one of** `ddl/` or `constraints.csv`; when both exist the dictionary wins and DDL disagreements are reported as drift, never merged silently.
+
 Set each row to `present (<date>)` as files land. Human `docs/` are **claims to verify** against the CSVs, not evidence by themselves.
+
+**Where to put the files:** in this directory, beside this manifest (or drop them in `.gravity/inbox/` and `/given` routes them here). **As soon as anything lands:** `python .gravity/lib/scan_db.py` — it reads whatever is present, derives candidate vertical domains + seams from the FK graph, and reports every absent file as `unknown`, never as zero. `constraints.csv` is the one load-bearing file; without it no graph can be derived at all.
 
 ## Collection queries (Oracle)
 

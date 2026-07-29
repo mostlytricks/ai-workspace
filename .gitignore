@@ -20,13 +20,14 @@
 !PROJECTS.sample.md
 
 # --- read-docs: human/browser guides (docs/) ---
-# HANDBOOK.md (workflows), MISSION.html (the workspace's why), DESIGN.docs.md (HTML-doc theme)
+# HANDBOOK.md (workflows), MISSION.html (the workspace's why), INTRO.html, OVERVIEW.md
 !docs/
 !docs/**
 
 # --- the gravity protocol distribution (gravity/) ---
-# The protocol's own VERSION + CHANGELOG, the protocol card, the per-project
-# stencils (templates/), and the portable lib (scan_project, run_gate).
+# The protocol's own VERSION + CHANGELOG, the protocol card, DESIGN.docs.md (the
+# browser-read doc theme guide), the per-project stencils (templates/), and the
+# portable lib (scan_project, run_gate, doc_theme, palette).
 !gravity/
 !gravity/**
 gravity/**/__pycache__/

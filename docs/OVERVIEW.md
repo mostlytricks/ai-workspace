@@ -70,7 +70,7 @@ Both doors hold **received** material (never decided truth) and **route out** ra
 | | Intake (reported claims) | Given (handed-in knowledge) |
 |---|---|---|
 | Input | user/QA bug & issue reports | data dictionaries, business rules, vendor docs, org context |
-| Landing | `docs/intake/<date>.md`, one dated sheet per batch, reports **verbatim** | `.gravity/inbox/` — git-ignored drop zone (nothing commits before triage decides privacy) |
+| Landing | `docs/intake/<date>.md`, one dated sheet per batch, reports **verbatim** | `.gravity/inbox/` — the drop zone: contents never commit before triage decides privacy; only its README (the door sign) is tracked |
 | Ritual | `/intake`: six required facts per item (elicited or `OPEN:`), triage trio (real? → domain → bug/feature/doc-drift), dedupe to **root causes** | `/given`: one confirmed routing table → `.gravity/<domain>/given/` with provenance rows (source · received · version · **fidelity** · privacy) |
 | Hard rule | **no repro, no slice**; bugs are never a domain | **quarry, not contract** — cite, never restate; disputes resolve against `raw/`, not renderings |
 | Wall | `check.py intake` | `check.py given` |

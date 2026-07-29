@@ -17,7 +17,12 @@ The test: **is the input outside material the project should keep and cite?** If
 ## Step 0 — Locate & scan
 
 1. **Resolve the project**; not found → list candidates and stop.
-2. **Scan `.gravity/inbox/`.** Empty → say so and stop (nothing to route). Missing → create it and ensure the project's `.gitignore` covers `.gravity/inbox/` (the drop zone is *never* tracked: nothing the user drops may reach a commit before triage decides its privacy class).
+2. **Scan `.gravity/inbox/`.** Empty (or README-only) → say so and stop (nothing to route). Missing → create it, copy `gravity/templates/INBOX.template.md` to `.gravity/inbox/README.md` (drop the template's top comment), and set the project's `.gitignore` to
+   ```
+   .gravity/inbox/*
+   !.gravity/inbox/README.md
+   ```
+   — contents are *never* tracked (nothing the user drops may reach a commit before triage decides its privacy class), but the README **is**: it's the sign on the door and must survive a clone. `/adopt-gravity` seeds the same door; this is the repair path for older adoptions.
 
 ## Step 1 — Propose the routing table (one batch, confirm before touching disk)
 
@@ -26,7 +31,7 @@ For each file: read enough to know its subject, then propose one row:
 | Inbox file | Domain | Render? | Fidelity | Privacy | Provenance gaps |
 |---|---|---|---|---|---|
 
-- **Domain** — route by the router table, same navigation as any change; genuinely cross-cutting ("what is the earth"-level context) → `.gravity/given/`; domain-scoped → `.gravity/<domain>/given/`.
+- **Domain** — route by the router table, same navigation as any change; genuinely cross-cutting ("what is the earth"-level context) → `.gravity/given/`; domain-scoped → `.gravity/<domain>/given/`. **One special case: DB metadata** (a DBA-exported `tables-columns.csv` / `constraints.csv` / `grants.csv` / `rowcounts.csv` / `activity.csv` / `db-source.sql`, or files recognizably of those shapes) routes to **`.gravity/integration/structural/db/`** under its **pack name**, and its manifest is the pack's own `MANIFEST.md` (seed from `DB-EVIDENCE.template.md` if absent, flip the matching row to `present (<date>)`) — not a generic given manifest. After routing a pack file, run `python .gravity/lib/scan_db.py` and show the user what the evidence now supports.
 - **Render?** — binaries and walls-of-text get a readable `<slug>.md` rendering; clean markdown routes as-is (`verbatim`).
 - **Fidelity** — `verbatim` · `reformatted` (structure only, diffable back) · `distilled` (judgment applied — say what was dropped).
 - **Privacy** — `committable`, or `private` (raw stays git-ignored; the manifest row is the committed pointer). Default to `private` when unsure — un-ignoring later is trivial, unleaking is not.

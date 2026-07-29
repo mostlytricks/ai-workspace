@@ -52,6 +52,7 @@ from pathlib import Path
 # installed into a project and run off-workspace. Re-exported here so this
 # module stays the single import site every existing caller already knows.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
+from check_project import _given_dirs                             # noqa: E402
 from check_project import (                                       # noqa: E402,F401
     COUPLING_THRESHOLD,
     CROSS_CUTTING,
@@ -397,8 +398,118 @@ def _theme_sources() -> dict[str, tuple[Path, str]]:
     return {
         "cosmos":    (ws / "gravity" / "lib" / "generate_cosmos.py", "dict"),
         "dashboard": (ws / ".claude" / "dashboard" / "generate_dashboard.py", "css"),
-        "docs":      (ws / ".claude" / "scripts" / "add_theme_switch.py", "css"),
+        # The docs' CSS is GENERATED, so the literal source has no
+        # `[data-theme="x"]` text to grep. Checking the generator's *output*
+        # is the stronger test anyway: it verifies what actually ships into a
+        # doc, not what the source appears to say.
+        "docs":      (ws / "gravity" / "lib" / "doc_theme.py", "gen"),
     }
+
+
+def _docs_css() -> str:
+    """The doc stylesheet as generated — the artifact the checker judges."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
+    import doc_theme
+    return doc_theme.css()
+
+
+def _surface_block(kind: str, src: str, theme: str) -> str:
+    if kind == "dict":
+        return _cosmos_theme_block(src, theme)
+    return _css_theme_block(src, theme)
+
+
+def _cosmos_status_block(src: str, theme: str) -> dict[str, str]:
+    """Pull cosmos' status hues for one theme. The observatory reads these
+    verbatim (`--ok:{t["status"]["✓"]}` …), so cosmos is the surface under
+    test — parsing the observatory's f-strings would test the plumbing, not
+    the palette."""
+    block = _cosmos_theme_block(src, theme)
+    if not block:
+        return {}
+    out: dict[str, str] = {}
+    glyph = {"accent": "◑", "ok": "✓", "plan": "○"}
+    for key, g in glyph.items():
+        m = re.search(rf'"{g}":\s*"{_HEX_RE}"', block)
+        if m:
+            out[key] = m.group(1)
+    for key in ("guard", "sat"):
+        m = re.search(rf'"{key}":\s*"{_HEX_RE}"', block)
+        if m:
+            out[key] = m.group(1)
+    return out
+
+
+def check_status_drift() -> list[Finding]:
+    """Verify the STATUS hues agree across the surfaces that draw them.
+
+    Separate from the chrome anchors because the wall is narrower and newer:
+    only the observatory and the browser-read docs carry status meaning, and
+    they only had to agree from gravity 3.7.0, when the docs adopted the
+    observatory's vocabulary. A status hue that drifts is worse than a chrome
+    hue that drifts — the same colour would assert two different things.
+
+    What each half actually proves, stated plainly so this isn't read as a
+    stronger wall than it is:
+
+      observatory  a REAL agreement check. `generate_cosmos.py` hand-declares
+                   its THEMES dict, so it can and does drift from palette.py;
+                   this catches that.
+      docs         a PRESENCE check, not an agreement check. `doc_theme.py`
+                   generates its CSS *from* palette.py, so the values cannot
+                   disagree by construction. What it catches is a generator
+                   that silently stopped emitting a token (fires ABSENT), which
+                   would otherwise ship a doc with an unstyled mark.
+    """
+    ws = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(ws / "gravity" / "lib"))
+    try:
+        import palette
+    except ImportError:
+        return []  # the chrome check already reported the missing owner
+
+    findings: list[Finding] = []
+    cosmos_src = _read(ws / "gravity" / "lib" / "generate_cosmos.py")
+    try:
+        docs_css = _docs_css()
+    except Exception as exc:  # a generator that won't run ships nothing
+        findings.append(Finding(FAIL, "THEME_SOURCE_MISSING", "docs", "",
+                                f"gravity/lib/doc_theme.py could not be "
+                                f"imported ({exc}) — the doc theme cannot be "
+                                "generated, so no doc can be re-themed"))
+        docs_css = ""
+
+    for surface, vocab in palette.STATUS_VOCABULARY.items():
+        for theme in palette.THEME_NAMES:
+            want = palette.STATUS_ANCHORS[theme]
+            if surface == "observatory":
+                got_all = _cosmos_status_block(cosmos_src, theme)
+            else:
+                if not docs_css:
+                    continue
+                block = _css_theme_block(docs_css, theme)
+                got_all = {
+                    key: m.group(1)
+                    for key, tok in vocab.items()
+                    if (m := re.search(rf"--{tok}:\s*{_HEX_RE}", block))
+                }
+            for key in palette.STATUS_KEYS:
+                token = vocab[key]
+                got = got_all.get(key)
+                if not got:
+                    findings.append(Finding(
+                        WARN, "STATUS_ANCHOR_ABSENT", surface, theme,
+                        f"`{theme}` declares no `{token}` — the {key} status "
+                        "hue cannot be verified on this surface"))
+                    continue
+                if got.upper() != want[key].upper():
+                    findings.append(Finding(
+                        FAIL, "STATUS_DRIFT", surface, theme,
+                        f"`{theme}` {key} (`{token}`) is {got}, but palette.py "
+                        f"declares {want[key]} — the same mark would mean two "
+                        "different things on the observatory and in the docs; "
+                        "fix palette.py first, then propagate"))
+    return findings
 
 
 def check_theme_drift() -> list[Finding]:
@@ -419,11 +530,20 @@ def check_theme_drift() -> list[Finding]:
                                     f"{path} does not exist — a surface that draws "
                                     "the themes went missing or moved"))
             continue
-        src = _read(path)
+        if kind == "gen":
+            try:
+                src = _docs_css()
+            except Exception as exc:
+                findings.append(Finding(
+                    FAIL, "THEME_SOURCE_MISSING", surface, "",
+                    f"{path.name} could not be imported ({exc}) — the doc "
+                    "theme cannot be generated"))
+                continue
+        else:
+            src = _read(path)
         vocab = palette.VOCABULARY[surface]
         for theme in palette.THEME_NAMES:
-            block = (_cosmos_theme_block(src, theme) if kind == "dict"
-                     else _css_theme_block(src, theme))
+            block = _surface_block(kind, src, theme)
             if not block:
                 findings.append(Finding(FAIL, "THEME_MISSING", surface, theme,
                                         f"{path.name} declares no `{theme}` palette — "
@@ -450,7 +570,7 @@ def check_theme_drift() -> list[Finding]:
                         f"palette.py declares {want[key]} — change the anchor in "
                         "palette.py first, then propagate to all three surfaces"))
             # h1_grad is CSS-only: the canvas renderer has no headline to paint.
-            if kind == "css":
+            if kind in ("css", "gen"):
                 m = re.search(r'--h1-grad:\s*([^;]+);', block)
                 if m:
                     got = " ".join(m.group(1).split())
@@ -464,19 +584,21 @@ def check_theme_drift() -> list[Finding]:
 
 
 def cmd_theme(args) -> int:
-    findings = check_theme_drift()
+    findings = check_theme_drift() + check_status_drift()
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "gravity" / "lib"))
     try:
         import palette
         n_themes, n_surfaces = len(palette.THEME_NAMES), len(_theme_sources())
+        n_status = len(palette.STATUS_VOCABULARY)
         print(f"palette: {n_themes} themes x {n_surfaces} surfaces "
-              f"(owner: gravity/lib/palette.py)")
+              f"(chrome) + {n_status} surfaces (status) "
+              f"— owner: gravity/lib/palette.py")
     except ImportError:
         pass
     if not findings:
-        print("OK — every surface agrees with the declared anchors. "
-              "(Anchors only — star gradients, ring and chart colours are owned "
-              "locally by whichever file draws them.)")
+        print("OK — every surface agrees with the declared anchors, chrome and "
+              "status. (Anchors only — star gradients, ring and chart colours "
+              "are owned locally by whichever file draws them.)")
         return 0
     fails, warns = _print(findings)
     print(f"{fails} fail(s), {warns} warning(s).")
@@ -831,6 +953,114 @@ def _arch_fixture(root: Path) -> None:
         encoding="utf-8")
 
 
+def _db_selftest() -> bool:
+    """Drive `scan_db.py` on the bundled Oracle-shaped pack.
+
+    Two properties are asserted, and they are the two the instrument was
+    rewritten for:
+
+      SEPARATION  Connected components return one 10-table blob on this
+                  fixture (that was the first implementation, and it is the
+                  eyeball answer the tool replaced). The partition must find
+                  `bil` / `ord` / `cat` separately and name the FK edges that
+                  cross between them as seams — including the cross-schema one.
+      DEGRADATION Deleting `grants.csv` must make the answer visibly weaker,
+                  never quietly different: confidence drops to two signals,
+                  grant-derived facts become `unknown` rather than `0`, and the
+                  orphan test announces that it is now the weaker one.
+    """
+    ok = True
+    fixture = Path(__file__).resolve().parent / "db-pack" / "pack"
+    lib = Path(__file__).resolve().parents[2] / "gravity" / "lib"
+    if not fixture.is_dir() or not (lib / "scan_db.py").exists():
+        print("selftest: db-pack fixture or scan_db.py missing; SKIPPED.")
+        return True
+    sys.path.insert(0, str(lib))
+    import scan_db
+
+    f = scan_db.build(scan_db.load_pack(fixture))
+    labels = sorted(c["label"] for c in f["candidates"])
+    if labels == ["bil", "cat", "ord"]:
+        print("selftest: db pack separates bil/ord/cat "
+              f"(one {f['biggest_component']}-table FK component would not have).")
+    else:
+        ok = False
+        print(f"selftest: EXPECTED db domains bil/cat/ord, got {labels}.")
+
+    if f["n_tables"] == 12:
+        print("selftest: db census counts all 12 tables (PK-only rows included).")
+    else:
+        ok = False
+        print(f"selftest: EXPECTED 12 tables in the db census, got {f['n_tables']}.")
+
+    xs = [s for s in f["seams"] if s["cross_schema"]]
+    if len(f["seams"]) == 3 and len(xs) == 1:
+        print("selftest: db seams found (3, one cross-schema BILLING->APP).")
+    else:
+        ok = False
+        print(f"selftest: EXPECTED 3 seams incl. 1 cross-schema, got "
+              f"{len(f['seams'])} / {len(xs)}.")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        thin = Path(tmp) / "pack"
+        shutil.copytree(fixture, thin)
+        (thin / "grants.csv").unlink()
+        g = scan_db.build(scan_db.load_pack(thin))
+        weaker = all(len(c["signals_used"]) == 2 for c in g["candidates"])
+        unknown = g["shared_tables"] is None and g["grants_known"] is False
+        if weaker and unknown:
+            print("selftest: db degrades honestly — 2/3 signals, grant facts "
+                  "report unknown rather than 0.")
+        else:
+            ok = False
+            print("selftest: EXPECTED weaker+unknown after dropping grants.csv, "
+                  f"got signals_ok={weaker} unknown_ok={unknown}.")
+
+        # The graph source: without constraints.csv OR ddl/ there is no graph,
+        # and the tool must GUIDE (name the obtainable artifacts, cheapest
+        # first) instead of emitting an empty-but-confident report.
+        bare = Path(tmp) / "bare"
+        bare.mkdir()
+        b = scan_db.build(scan_db.load_pack(bare))
+        text = scan_db.report(b)
+        if b["n_edges"] is None and "no entity graph" in text and "DDL" in text:
+            print("selftest: db refuses without a graph source, and guides to "
+                  "the cheapest obtainable artifact (DDL first).")
+        else:
+            ok = False
+            print("selftest: EXPECTED a guiding refusal with no graph source.")
+
+        # Scraped DDL alone is a full graph source — the artifact a human can
+        # actually get without a DBA. The report must name the source and its
+        # drift caveat rather than presenting scripts as the live catalog.
+        dp = Path(tmp) / "ddlpack" / "ddl"
+        dp.mkdir(parents=True)
+        (dp / "scraped.sql").write_text(
+            'CREATE TABLE ORD_ORDER (ORDER_ID NUMBER PRIMARY KEY, '
+            'CUSTOMER_ID NUMBER);\n'
+            'CREATE TABLE ORD_LINE (LINE_ID NUMBER PRIMARY KEY, ORDER_ID NUMBER,\n'
+            '  CONSTRAINT FK_L FOREIGN KEY (ORDER_ID) REFERENCES ORD_ORDER '
+            '(ORDER_ID));\n'
+            'CREATE TABLE BIL_INVOICE (INV_ID NUMBER PRIMARY KEY, ORDER_ID NUMBER);\n'
+            'ALTER TABLE BIL_INVOICE ADD CONSTRAINT FK_I FOREIGN KEY (ORDER_ID) '
+            'REFERENCES ORD_ORDER (ORDER_ID);\n'
+            'CREATE TABLE BIL_PAYMENT (PAY_ID NUMBER PRIMARY KEY, '
+            'INV_ID NUMBER REFERENCES BIL_INVOICE (INV_ID));\n',
+            encoding="utf-8")
+        d = scan_db.build(scan_db.load_pack(dp.parent))
+        dl = sorted(c["label"] for c in d["candidates"])
+        dtext = scan_db.report(d)
+        if (d["graph_source"] == "ddl" and dl == ["bil", "ord"]
+                and "drift" in dtext.lower()):
+            print("selftest: db graph derives from scraped DDL alone "
+                  "(bil/ord), drift caveat stated.")
+        else:
+            ok = False
+            print(f"selftest: EXPECTED DDL-only graph with bil/ord, got "
+                  f"source={d['graph_source']} labels={dl}.")
+    return ok
+
+
 def cmd_selftest(args) -> int:
     """Prove the checker itself: the bundled good fixture must pass, and a
     deliberately under-wired copy must fail with UNDERWIRED. Guards against the
@@ -1137,6 +1367,9 @@ def cmd_selftest(args) -> int:
 
     # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
     ok = _patchloop_selftest() and ok
+
+    # --- db half: the pack instrument separates domains and degrades honestly. ---
+    ok = _db_selftest() and ok
 
     print("SELFTEST PASSED" if ok else "SELFTEST FAILED")
     return 0 if ok else 1

@@ -25,6 +25,9 @@ This is the **acceptance** half of gravity testing ("did our improvement work as
     SCENARIO.md        # the replay recipe
     expect.json        # declarative postconditions
     fixture/           # the golden input project
+  db-pack/pack/       # NOT a command scenario — the synthetic Oracle-shaped DB
+                      # evidence pack (CSVs) that `selftest` drives scan_db.py
+                      # against: separation, census, seams, honest degradation
 ```
 
 `check.py` is deliberately reusable: its core, `check_gravity_consistency(project_dir)`, is the same index-drift check `/triage` should call on real projects. Build it once; two callers (scenarios on fixtures, `/triage` on live repos).

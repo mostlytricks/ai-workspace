@@ -806,7 +806,9 @@ def check_given(project_dir: str | Path) -> list[Finding]:
     inbox = project / ".gravity" / "inbox"
     if inbox.is_dir():
         for f in sorted(inbox.rglob("*")):
-            if f.is_file() and f.name != ".gitkeep":
+            # README.md is the DOOR, not a dropped file — seeded at adoption,
+            # tracked so a clone still sees the sign (INBOX.template.md).
+            if f.is_file() and f.name not in (".gitkeep", "README.md"):
                 findings.append(Finding(
                     WARN, "INBOX_UNROUTED", "", "",
                     f".gravity/inbox/{f.relative_to(inbox).as_posix()} is "

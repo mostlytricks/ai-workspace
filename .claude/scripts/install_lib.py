@@ -17,6 +17,8 @@ What travels (all of `gravity/lib/`, stdlib-only by rule):
     generate_observatory.py  the page
     generate_cosmos.py       Orbit 3D + the palette family
     palette.py               the 5-theme anchor hues (the declared owner)
+    doc_theme.py             the browser-read doc stylesheet generator
+    scan_db.py               the DB evidence pack reader (FK graph -> candidate domains)
     generate_boundary.py     the seam graph
     run_gate.py              the domain gate runner
 

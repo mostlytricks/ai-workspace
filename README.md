@@ -142,7 +142,7 @@ unmarked ones are Kepler-side.
 CLAUDE.md             # Kepler's operating manual (rules & invariants) — auto-loads for agents
 AGENTS.md             # Codex-compatible shim → points to CLAUDE.md
 PROJECTS.sample.md    # tracked skeleton of the local-only project index (cp → PROJECTS.md)
-docs/                 # human/browser read-docs: INTRO.html · OVERVIEW.md · HANDBOOK.md · MISSION.html · DESIGN.docs.md
+docs/                 # human/browser read-docs: INTRO.html · OVERVIEW.md · HANDBOOK.md · MISSION.html
 gravity/              # THE PROTOCOL DISTRIBUTION: VERSION · CHANGELOG.md · GRAVITY-PROTOCOL.md · templates/ · lib/
 .claude/commands/     # the slash commands (procedures live here, loaded on invocation)
 .claude/scenarios/    # the mechanical walls: check.py consistency/spec/workspace/intake/given + fixtures

@@ -74,6 +74,8 @@ python .gravity/lib/check_project.py            # the structural checks, on this
 python .gravity/lib/check_project.py --only arch  # ARCHITECTURE.html nodes still name real files
 python .gravity/lib/run_gate.py <domain>        # the domain's gate, by its own exit code
 python .gravity/lib/run_gate.py --all           # sweep every gate; record proof freshness
+python .gravity/lib/scan_db.py                  # DB evidence pack -> candidate domains + seams
+                                                #   (reads integration/structural/db/ — DDL or CSVs)
 ```
 
 The page lands at **`.gravity/observatory/index.html`** — seven tabs over one scan of these docs (Overview + drift · Queue · Seams · Spec Health · Graduation · Timeline · Orbit 3D). It is **generated, never authored**: the folder ignores itself, and *a wrong page means the docs are wrong* — fix the docs and re-render, never the HTML.

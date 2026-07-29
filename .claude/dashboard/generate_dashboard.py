@@ -13,7 +13,7 @@ Why this shape:
 Design: the visual system is specified in DESIGN.dashboard.md (kepler · mission control:
 premium glassmorphism over a twinkling starfield, an orbital map of the tiers, luminous
 glow gradients). This is the dashboard's OWN identity and is deliberately distinct from
-the muted-teal flat theme used for reading docs (DESIGN.docs.md).
+the theme used for reading docs (gravity/lib/doc_theme.py).
 
 Run from anywhere:
     python .claude/dashboard/generate_dashboard.py
