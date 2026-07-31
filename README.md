@@ -73,6 +73,7 @@ grouped **by domain, not by doc-type**:
     GRAVITY.md                            # the protocol card — a verbatim, version-stamped copy
     ROUTER.md                             # Doc Map + what-to-read-before-changing-what
     MISSION.html · ARCHITECTURE.html · IMPLEMENTATION_PLAN.md · DESIGN.md   # cross-cutting
+    _inbox/ · _lib/ · _observatory/ · _given/  # machinery: a leading `_` is never a domain
     <domain>/  ARCHITECTURE.html · SPEC.md · PLAN.*.md   # one folder per subject
 ```
 
@@ -142,7 +143,7 @@ unmarked ones are Kepler-side.
 CLAUDE.md             # Kepler's operating manual (rules & invariants) — auto-loads for agents
 AGENTS.md             # Codex-compatible shim → points to CLAUDE.md
 PROJECTS.sample.md    # tracked skeleton of the local-only project index (cp → PROJECTS.md)
-docs/                 # human/browser read-docs: INTRO.html · OVERVIEW.md · HANDBOOK.md · MISSION.html
+docs/                 # human/browser read-docs: INTRO.html · OVERVIEW.md · OVERVIEW.ko.md · HANDBOOK.md · MISSION.html
 gravity/              # THE PROTOCOL DISTRIBUTION: VERSION · CHANGELOG.md · GRAVITY-PROTOCOL.md · templates/ · lib/
 .claude/commands/     # the slash commands (procedures live here, loaded on invocation)
 .claude/scenarios/    # the mechanical walls: check.py consistency/spec/workspace/intake/given + fixtures

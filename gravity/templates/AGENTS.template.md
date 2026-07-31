@@ -6,7 +6,7 @@
 
 1. **Before any work:** read `CLAUDE.md` (identity, stack, run/test commands, the doc router) **and** `CONTEXT.md` (current state + the single next step). Do not start without both.
 2. **If a `.gravity/` directory exists:** read `.gravity/GRAVITY.md` — the protocol card explaining every doc kind under `.gravity/` and how to navigate them. Required before touching anything inside `.gravity/`.
-3. **Before changing code in a domain:** read that domain's `.gravity/<domain>/SPEC.md` — the change contract. Find its path in `CLAUDE.md`'s Doc Map / router table; never guess paths.
+3. **Before changing code in a domain:** read that domain's `.gravity/<domain>/SPEC.md` — the change contract. Find its path in `.gravity/ROUTER.md`'s Doc Map / router table (pre-v3 projects: root `CLAUDE.md`); never guess paths.
 4. **Before any cross-service or boundary change** (API shape, generated types, auth/session, ports, shared env, queues, data access): read `.gravity/integration/SPEC.md` first (or `CONTRACT.md` if that's what exists), then the affected domain SPECs.
 5. **Before ending the session:** update `CONTEXT.md` (Completed / Current State / Next Step). A session that doesn't update it is incomplete.
 

@@ -1,9 +1,9 @@
 ---
-description: Route the drop zone into the given layer — take files the user dropped in .gravity/inbox/ (domain knowledge, data dictionaries, business rules, vendor docs), propose a routing table (domain, rendering, privacy), render readable copies with fidelity marks, write provenance manifest rows, and mv everything so the inbox ends empty. Reach for this ONLY when the user hands in outside material to register ("route my inbox", "I uploaded the docs") — NOT for bug/issue reports (/intake), not for authoring project docs (SPEC/PLAN/MISSION are decided, not given), not for code exploration.
+description: Route the drop zone into the given layer — take files the user dropped in .gravity/_inbox/ (domain knowledge, data dictionaries, business rules, vendor docs), propose a routing table (domain, rendering, privacy), render readable copies with fidelity marks, write provenance manifest rows, and mv everything so the inbox ends empty. Reach for this ONLY when the user hands in outside material to register ("route my inbox", "I uploaded the docs") — NOT for bug/issue reports (/intake), not for authoring project docs (SPEC/PLAN/MISSION are decided, not given), not for code exploration.
 argument-hint: <project-name>
 ---
 
-You are running `/given` from `ai-workspace/` to route project **`$ARGUMENTS`**'s drop zone (`.gravity/inbox/`) into its **given layer** — the home for *received* truth: what the project was **told** (domain knowledge, production data dictionaries, business rules, vendor docs), as opposed to what it decided (SPEC/MISSION/PLAN). The honesty discipline: **provenance is evidence — never invent who gave a thing, when, or what version it describes;** a missing fact is `OPEN: awaiting <what>` in the manifest, elicited strawman-first when the user is in the room.
+You are running `/given` from `ai-workspace/` to route project **`$ARGUMENTS`**'s drop zone (`.gravity/_inbox/`) into its **given layer** — the home for *received* truth: what the project was **told** (domain knowledge, production data dictionaries, business rules, vendor docs), as opposed to what it decided (SPEC/MISSION/PLAN). The honesty discipline: **provenance is evidence — never invent who gave a thing, when, or what version it describes;** a missing fact is `OPEN: awaiting <what>` in the manifest, elicited strawman-first when the user is in the room.
 
 ## When NOT to reach for this (the trigger fence)
 
@@ -17,10 +17,10 @@ The test: **is the input outside material the project should keep and cite?** If
 ## Step 0 — Locate & scan
 
 1. **Resolve the project**; not found → list candidates and stop.
-2. **Scan `.gravity/inbox/`.** Empty (or README-only) → say so and stop (nothing to route). Missing → create it, copy `gravity/templates/INBOX.template.md` to `.gravity/inbox/README.md` (drop the template's top comment), and set the project's `.gitignore` to
+2. **Scan `.gravity/_inbox/`.** Empty (or README-only) → say so and stop (nothing to route). Missing → create it, copy `gravity/templates/INBOX.template.md` to `.gravity/_inbox/README.md` (drop the template's top comment), and set the project's `.gitignore` to
    ```
-   .gravity/inbox/*
-   !.gravity/inbox/README.md
+   .gravity/_inbox/*
+   !.gravity/_inbox/README.md
    ```
    — contents are *never* tracked (nothing the user drops may reach a commit before triage decides its privacy class), but the README **is**: it's the sign on the door and must survive a clone. `/adopt-gravity` seeds the same door; this is the repair path for older adoptions.
 
@@ -31,7 +31,7 @@ For each file: read enough to know its subject, then propose one row:
 | Inbox file | Domain | Render? | Fidelity | Privacy | Provenance gaps |
 |---|---|---|---|---|---|
 
-- **Domain** — route by the router table, same navigation as any change; genuinely cross-cutting ("what is the earth"-level context) → `.gravity/given/`; domain-scoped → `.gravity/<domain>/given/`. **One special case: DB metadata** (a DBA-exported `tables-columns.csv` / `constraints.csv` / `grants.csv` / `rowcounts.csv` / `activity.csv` / `db-source.sql`, or files recognizably of those shapes) routes to **`.gravity/integration/structural/db/`** under its **pack name**, and its manifest is the pack's own `MANIFEST.md` (seed from `DB-EVIDENCE.template.md` if absent, flip the matching row to `present (<date>)`) — not a generic given manifest. After routing a pack file, run `python .gravity/lib/scan_db.py` and show the user what the evidence now supports.
+- **Domain** — route by the router table, same navigation as any change; genuinely cross-cutting ("what is the earth"-level context) → `.gravity/_given/`; domain-scoped → `.gravity/<domain>/_given/`. **One special case: DB metadata** (a DBA-exported `tables-columns.csv` / `constraints.csv` / `grants.csv` / `rowcounts.csv` / `activity.csv` / `db-source.sql`, or files recognizably of those shapes) routes to **`.gravity/integration/structural/db/`** under its **pack name**, and its manifest is the pack's own `MANIFEST.md` (seed from `DB-EVIDENCE.template.md` if absent, flip the matching row to `present (<date>)`) — not a generic given manifest. After routing a pack file, run `python .gravity/_lib/scan_db.py` and show the user what the evidence now supports.
 - **Render?** — binaries and walls-of-text get a readable `<slug>.md` rendering; clean markdown routes as-is (`verbatim`).
 - **Fidelity** — `verbatim` · `reformatted` (structure only, diffable back) · `distilled` (judgment applied — say what was dropped).
 - **Privacy** — `committable`, or `private` (raw stays git-ignored; the manifest row is the committed pointer). Default to `private` when unsure — un-ignoring later is trivial, unleaking is not.
@@ -41,7 +41,7 @@ For each file: read enough to know its subject, then propose one row:
 
 ## Step 2 — Execute
 
-Per confirmed row: move the original to `given/raw/` (or leave a `private` pointer row if it must stay local-only), write the rendering beside the manifest, add **both** manifest rows (copy `GIVEN-MANIFEST.template.md` on first use), extend `.gitignore` for private paths. The inbox **ends empty** — that is the postcondition, not a nicety.
+Per confirmed row: move the original to `_given/raw/` (or leave a `private` pointer row if it must stay local-only), write the rendering beside the manifest, add **both** manifest rows (copy `GIVEN-MANIFEST.template.md` on first use), extend `.gitignore` for private paths. The inbox **ends empty** — that is the postcondition, not a nicety.
 
 ## Step 3 — Prove & report
 
@@ -50,7 +50,7 @@ Per confirmed row: move the original to `given/raw/` (or leave a `private` point
 
 ## The consumption rules (what routing buys)
 
-- *"As the docs I gave you, prepare plans"* → read the manifests, load the cited files, and **every claim in the resulting PLAN/SPEC cites its given source** (`source: given/<file> §n`) — that citation is what makes the plan auditable.
+- *"As the docs I gave you, prepare plans"* → read the manifests, load the cited files, and **every claim in the resulting PLAN/SPEC cites its given source** (`source: _given/<file> §n`) — that citation is what makes the plan auditable.
 - **Quarry, not contract:** a given doc never becomes a shadow SPEC; repeatedly-used facts graduate into owner-docs with back-citations.
 - **Raw wins:** disputes resolve against `raw/`, never against a rendering.
 

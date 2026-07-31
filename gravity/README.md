@@ -38,8 +38,8 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 | `ROUTER.template.md` | The full in-`.gravity/` router → `.gravity/ROUTER.md`: Doc Map + read-first table + the is-it-a-domain gate. |
 | `WALKTHROUGH.template.md` | Per-change "what got done + proof" record (append-only, dated). |
 | `INTAKE.template.md` | Per-batch bug/issue intake sheet — verbatim reports + required-facts checklist → `docs/intake/<date>.md`; seeded by `/intake`. |
-| `GIVEN-MANIFEST.template.md` | Provenance sheet for the given layer — received domain knowledge routed from `.gravity/inbox/` by `/given`. |
-| `INBOX.template.md` | The drop-zone door → `.gravity/inbox/README.md` (seeded at adoption): where to put received files, what `/given` does, where DB metadata goes. Tracked so the door survives a clone; the inbox's contents never are. |
+| `GIVEN-MANIFEST.template.md` | Provenance sheet for the given layer — received domain knowledge routed from `.gravity/_inbox/` by `/given`. |
+| `INBOX.template.md` | The drop-zone door → `.gravity/_inbox/README.md` (seeded at adoption): where to put received files, what `/given` does, where DB metadata goes. Tracked so the door survives a clone; the inbox's contents never are. |
 | `DB-EVIDENCE.template.md` | Brownfield DB evidence pack: checklist + manifest of metadata CSVs a DBA exports offline; consumed by `/excavate`. |
 | `DESIGN.template.md` | Running-app UI design-system contract (UI projects only). |
 | `RUNBOOK.template.md` | Operations doc — deploy · envs · health · rollback (the "2am test"; deploying projects only). |
@@ -48,7 +48,7 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 
 Everything here is **stdlib-only and path-relative by rule**, because it doesn't stay here:
 `python .claude/scripts/install_lib.py <project>` copies this whole directory into
-`<project>/.gravity/lib/` with a `VERSION` stamp. The protocol card makes a repo
+`<project>/.gravity/_lib/` with a `VERSION` stamp. The protocol card makes a repo
 self-*describing*; the lib makes it self-*rendering* — a clone that has never seen this
 workspace can scan, check and render itself.
 
@@ -66,12 +66,12 @@ workspace can scan, check and render itself.
 - `check_project.py` — the project-scoped structural checks (`consistency`, `spec`, `arch`,
   `intake`, `given`) plus a CLI. The workspace-scoped half (tiers, `PROJECTS.md`, the
   golden-scenario harness) stays in `.claude/scenarios/check.py`, which re-exports this one.
-- `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/observatory/`.
+- `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/_observatory/`.
   `generate_cosmos.py` (Orbit 3D + the five-palette `THEMES` family) and `generate_boundary.py`
   (the seam graph) are its renderer modules; each keeps a debug CLI.
 - `doc_theme.py` — **the owner of the browser-read doc theme**: it GENERATES the stylesheet for
-  `MISSION.html` / `ARCHITECTURE.html` (five themes, the switcher, the shared status vocabulary)
-  from `palette.py`'s anchors. It travels precisely so a clone can re-theme its own docs; the
+  `MISSION.html` / `ARCHITECTURE.html` (five themes, the switcher, the shared status vocabulary,
+  the inline-SVG flow-diagram `fd-` classes) from `palette.py`'s anchors. It travels precisely so a clone can re-theme its own docs; the
   human-facing explanation is `gravity/DESIGN.docs.md`, and `.claude/scripts/apply_doc_theme.py`
   (workspace-side) writes the generated block into real files, preserving per-doc CSS.
 - `palette.py` — **the owner of the five-theme palette family**: the anchor hues (`bg` · `ink` ·
@@ -80,10 +80,10 @@ workspace can scan, check and render itself.
   (they are different surfaces, not duplicates); `check.py theme` FAILs `THEME_DRIFT` when one of
   them is retuned and the others aren't. Edit here first, then propagate.
 - `project_arg.py` — which project (path first, workspace alias only as sugar) and where output
-  goes (the self-ignoring `observatory/` folder).
+  goes (the self-ignoring `_observatory/` folder).
 - `run_gate.py` — runs a domain SPEC's extracted gate inside the project and propagates its exit
   code (exit 2 = an honest "no gate to run" refusal, never a pass). `--all` sweeps every fenced
-  domain and records the outcome to the gitignored `.gravity/observatory/gates.json` — the
+  domain and records the outcome to the gitignored `.gravity/_observatory/gates.json` — the
   **freshness of proof**, which nothing else holds: tags say which rules have walls and the
   Behavioral Contract says which behaviours have a *named* test, but only a run says it still
   *passes*. Four-valued on purpose — a gate that couldn't reach its server or fixture is
@@ -96,4 +96,6 @@ in a project, they need no argument at all — the lib's own location names its 
 
 **Never hand-edit an installed copy.** It's verbatim, like the card: fix it here and re-install
 (`/sync-gravity`). `check_project` WARNs `LIB_MISSING` / `LIB_STALE` when a project has no lib or
-an older one than the distribution.
+an older one than the distribution, and `MACHINERY_UNMIGRATED` when a pre-v4 bare-named machinery
+dir (`lib/`, `observatory/`, `inbox/`, `given/`) is still on disk — the fix is
+`python .claude/scripts/migrate_gravity_v4.py <project>`, never a hand-`mv`.

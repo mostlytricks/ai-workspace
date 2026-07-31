@@ -11,7 +11,7 @@ Parse `$ARGUMENTS` as `[project-name] [facet]`.
 
 **No arg → gravity/the workspace itself.** Gravity has **no `ARCHITECTURE.html`** — by design (CLAUDE.md §6: most systems describe their architecture in CLAUDE.md's map, not a separate page). Its architecture *is* `CLAUDE.md §1` (the workspace map) plus the tier / git / `.venv` / doc-system rules in §2–§7, and that `CLAUDE.md` already auto-loads. So report this plainly and **offer to open `CLAUDE.md`** in the browser — flagging that it's Markdown, so it renders as plain text, not a themed page. Don't fabricate an `ARCHITECTURE.html`. (This is the deliberate asymmetry with `/open-mission`, whose no-arg case *does* have a real `docs/MISSION.html`.)
 
-**`<project-name>` given** → find the project under `active/<name>`, `dormant/<name>`, or `repos/<name>` (tier folders are junctions; reads pass through). If not found, say so, list close matches, and stop. Read the root `CLAUDE.md` **Doc Map** if you're unsure where its docs live.
+**`<project-name>` given** → find the project under `active/<name>`, `dormant/<name>`, or `repos/<name>` (tier folders are junctions; reads pass through). If not found, say so, list close matches, and stop. Read the `.gravity/ROUTER.md` **Doc Map** (pre-v3 projects: root `CLAUDE.md`) if you're unsure where its docs live.
 
 Then locate the architecture doc:
 

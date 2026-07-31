@@ -31,7 +31,7 @@ Scan **code, never connect to the database**: live data-dictionary extraction ne
 **When a pack is present, do not eyeball the CSVs — run the instrument:**
 
 ```
-python gravity/lib/scan_db.py <project-path>        # (or .gravity/lib/scan_db.py inside the project)
+python gravity/lib/scan_db.py <project-path>        # (or .gravity/_lib/scan_db.py inside the project)
 python gravity/lib/scan_db.py <project-path> --json # full facts for joining
 ```
 
@@ -53,6 +53,9 @@ Show the user the service inventory, the proposed Boundary Map, and the file lis
 
 1. **Two-doc minimum if missing**: root `CLAUDE.md` (services table, ports, run commands — only what Step 0/1 evidenced) + `CONTEXT.md` (why gravity landed here; Next Step). Copy from `gravity/templates/`; fill only evidenced fields, leave the rest as the stencil's `<FILL>`.
 2. **The protocol card** — creating `.gravity/` for the first time means embedding the project-side protocol so the repo is self-describing off-workspace: `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with major.minor from the `gravity/VERSION` file (never invent a version; the card is a verbatim copy, never tailored).
+   Then make the card's own claims true — a first `.gravity/` also gets the machinery it advertises:
+   - `python .claude/scripts/install_lib.py <project>` — installs `.gravity/_lib/` so the clone can render and check itself (else `check_project` immediately WARNs `LIB_MISSING`).
+   - Seed the drop-zone door: `.gravity/_inbox/README.md` from `gravity/templates/INBOX.template.md`, plus the two project `.gitignore` lines `.gravity/_inbox/*` + `!.gravity/_inbox/README.md` — step 7's DB-evidence routing needs an inbox to drop into.
 3. **`.gravity/integration/SPEC.md`** from `SPEC.template.md`'s **integration variant**:
    - **Boundary Map** — one row per confirmed seam, each citing its source file.
    - **Ports / base URLs** table from the manifests.

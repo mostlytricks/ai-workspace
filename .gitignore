@@ -43,7 +43,7 @@ gravity/**/__pycache__/
 # Generated, local-only dashboard output. The generator stays tracked
 # (whitelisted above via .claude/**); the regenerated HTML is not.
 # Per-project instrument output moved into the projects themselves
-# (<project>/.gravity/observatory/, which ignores itself) — the tiers are
+# (<project>/.gravity/_observatory/, which ignores itself) — the tiers are
 # already denied by the `*` rule, so nothing is needed here for it.
 .claude/dashboard/dashboard.html
 

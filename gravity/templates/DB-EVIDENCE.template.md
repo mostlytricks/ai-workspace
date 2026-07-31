@@ -20,7 +20,7 @@ sounds equally confident whether it saw six files or one. The manifest is the
 difference between a finding and a vibe; `scan_db.py` reads it the same way.
 
 WHY CSVs FOR TABLES AND .sql FOR SOURCE: not a preference. The tabular files
-are read by machines (`.gravity/lib/scan_db.py` parses them into the entity
+are read by machines (`.gravity/_lib/scan_db.py` parses them into the entity
 graph), so they must be structured; `db-source.sql` is code a human reads, so
 it stays code. Same audience split as SPEC.md vs ARCHITECTURE.html.
 
@@ -64,7 +64,7 @@ The graph needs **one of** `ddl/` or `constraints.csv`; when both exist the dict
 
 Set each row to `present (<date>)` as files land. Human `docs/` are **claims to verify** against the CSVs, not evidence by themselves.
 
-**Where to put the files:** in this directory, beside this manifest (or drop them in `.gravity/inbox/` and `/given` routes them here). **As soon as anything lands:** `python .gravity/lib/scan_db.py` — it reads whatever is present, derives candidate vertical domains + seams from the FK graph, and reports every absent file as `unknown`, never as zero. `constraints.csv` is the one load-bearing file; without it no graph can be derived at all.
+**Where to put the files:** in this directory, beside this manifest (or drop them in `.gravity/_inbox/` and `/given` routes them here). **As soon as anything lands:** `python .gravity/_lib/scan_db.py` — it reads whatever is present, derives candidate vertical domains + seams from the FK graph, and reports every absent file as `unknown`, never as zero. `constraints.csv` is the one load-bearing file; without it no graph can be derived at all.
 
 ## Collection queries (Oracle)
 

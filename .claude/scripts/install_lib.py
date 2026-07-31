@@ -6,7 +6,7 @@ own instruments.
 A gravity project is its own independent repo (workspace CLAUDE.md §2), so an
 agent that clones it without this workspace sees `.gravity/` full of SPECs and
 PLANs. The protocol card (`.gravity/GRAVITY.md`) already makes that repo
-self-*describing*; this makes it self-*rendering*: with `.gravity/lib/` present,
+self-*describing*; this makes it self-*rendering*: with `.gravity/_lib/` present,
 the clone can scan, check and render its own observatory with no workspace and
 no third-party packages.
 
@@ -45,21 +45,22 @@ LIB_GITIGNORE = "__pycache__/\n"
 
 def installed_version(project: Path) -> str:
     try:
-        return (project / ".gravity" / "lib" / "VERSION").read_text(
+        return (project / ".gravity" / "_lib" / "VERSION").read_text(
             encoding="utf-8").strip()
     except OSError:
         return ""
 
 
 def install(project: Path, dry_run: bool = False) -> list[str]:
-    """Copy every lib module + a VERSION stamp into <project>/.gravity/lib/.
+    """Copy every lib module + a VERSION stamp into <project>/.gravity/_lib/.
+    Removes a stale pre-v4 `.gravity/lib/` install so a project never carries both.
     Returns the list of file names written."""
     gravity = project / ".gravity"
     if not gravity.is_dir():
         sys.exit(f"no .gravity/ in {project} — run /adopt-gravity first")
 
     version = (WORKSPACE / "gravity" / "VERSION").read_text(encoding="utf-8").strip()
-    target = gravity / "lib"
+    target = gravity / "_lib"
     sources = sorted(DIST.glob("*.py"))
     if not sources:
         sys.exit(f"no lib modules found in {DIST}")
@@ -73,6 +74,11 @@ def install(project: Path, dry_run: bool = False) -> list[str]:
         shutil.copy2(src, target / src.name)
     (target / "VERSION").write_text(version + "\n", encoding="utf-8")
     (target / ".gitignore").write_text(LIB_GITIGNORE, encoding="utf-8")
+    # pre-v4 install target — an exact machine-managed copy, safe to drop once
+    # `_lib/` exists (gravity v4 renamed machinery dirs with a `_` sigil).
+    legacy = gravity / "lib"
+    if legacy.is_dir():
+        shutil.rmtree(legacy)
     return written
 
 
@@ -103,10 +109,10 @@ def main(argv=None) -> int:
     after = installed_version(path) or "(dry run)"
 
     verb = "would install" if args.dry_run else "installed"
-    print(f"{verb} {len(written)} file(s) -> {path / '.gravity' / 'lib'}")
+    print(f"{verb} {len(written)} file(s) -> {path / '.gravity' / '_lib'}")
     print(f"  {name}: lib {before} -> {after}")
     if not args.dry_run:
-        print(f"  render it there: python .gravity/lib/generate_observatory.py")
+        print(f"  render it there: python .gravity/_lib/generate_observatory.py")
     return 0
 
 

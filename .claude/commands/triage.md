@@ -37,7 +37,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
      ```bash
      python .claude/scenarios/check.py consistency --project repos/<name>
      ```
-     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `gravity/GRAVITY-PROTOCOL.md`, stamp from `gravity/VERSION` — the card is never hand-edited); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
+     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `gravity/GRAVITY-PROTOCOL.md`, stamp from `gravity/VERSION` — the card is never hand-edited); fold `MACHINERY_UNMIGRATED` / `LIB_MISSING` / `LIB_STALE` into 📡 too (fix = `python .claude/scripts/migrate_gravity_v4.py <name>` for the first, `install_lib.py <name>` for the others); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
    - **SPEC honesty rot** (only for projects with `SPEC.md` files) — a renamed test or deleted npm script silently turns a wall into a lie. Run:
      ```bash
      python .claude/scenarios/check.py spec --project repos/<name>

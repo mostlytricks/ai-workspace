@@ -214,6 +214,25 @@
   .marklegend b { color:var(--text-hi); font-weight:600; }
   .marklegend .sep { width:1px; height:11px; background:var(--line); display:inline-block; }
 
+  /* flow diagram — hand-authored inline SVG. One flow per figure, ~12 nodes
+     max; anything tabular stays an HTML grid (tables wrap, SVG text doesn't).
+     Author with a viewBox; .fd scales it to the reading column. Arrowheads
+     come from a per-figure <defs> marker whose path carries .fd-arrow —
+     markers don't inherit the edge's stroke cross-browser, so the head keeps
+     one neutral hue on every edge kind. */
+  .fd { display:block; width:100%; height:auto; margin:14px 0; }
+  .fd-node  { fill:var(--card); stroke:var(--line); stroke-width:1.2; }
+  .fd-edge  { fill:none; stroke:var(--text-mid); stroke-width:1.2; }
+  .fd-label { fill:var(--text-hi); font:600 12px var(--sans); }
+  .fd-file  { fill:var(--text-mid); font:10.5px var(--mono); }
+  .fd-arrow { fill:var(--text-mid); stroke:none; }
+
+  /* the .flow list's claims, in vector form — a seam crosses a runtime
+     boundary, a gap is an arrow that does NOT exist yet. Hue plus dash,
+     never hue alone (the colour-blind rule the status marks follow). */
+  .fd-seam { stroke:var(--blue); }
+  .fd-gap  { stroke:var(--red); stroke-dasharray:5 4; }
+
   /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
   .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
   .themebar button {
@@ -317,7 +336,7 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
       <tr><td><code>CLAUDE.md</code> · <code>CONTEXT.md</code></td><td>per project</td><td>Stable identity + rolling now. The mandatory pair every project carries.</td></tr>
       <tr><td><code>MISSION.html</code> · <code>IMPLEMENTATION_PLAN.md</code></td><td>per project</td><td>Optional "four-doc pipeline" for ambitious projects — durable why + phase roadmap (CLAUDE.md §6).</td></tr>
       <tr><td><code>gravity/GRAVITY-PROTOCOL.md</code></td><td>distribution</td><td><strong>The canonical project-side protocol.</strong> Copied verbatim to <code>&lt;project&gt;/.gravity/GRAVITY.md</code> at adoption, so an independent repo is self-describing to an agent that never sees this workspace. Protocol rules live <em>only</em> here; workspace rules are never embedded in it.</td></tr>
-      <tr><td><code>gravity/lib/</code></td><td>distribution</td><td>The portable instruments — installed verbatim into <code>&lt;project&gt;/.gravity/lib/</code>, so a clone renders and checks <em>itself</em> off-workspace. Re-copy to upgrade; never hand-edit an installed module.</td></tr>
+      <tr><td><code>gravity/lib/</code></td><td>distribution</td><td>The portable instruments — installed verbatim into <code>&lt;project&gt;/.gravity/_lib/</code>, so a clone renders and checks <em>itself</em> off-workspace. Re-copy to upgrade; never hand-edit an installed module.</td></tr>
       <tr><td><code>.gravity/&lt;domain&gt;/</code></td><td>per project</td><td>Where the heavy docs go when a project outgrows a flat root — one folder per subject domain, routed by <code>.gravity/ROUTER.md</code>. Recognized only when present, never mandated.</td></tr>
     </tbody>
   </table>

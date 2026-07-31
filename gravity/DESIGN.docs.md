@@ -34,7 +34,7 @@ copy. Both facts were bugs, and they compounded:
    this file went on documenting the dead half. New projects copied the scar from the stencils.
 
 So the sheet became a function, and the function lives in `lib/` where `install_lib.py` already
-copies it into every project's `.gravity/lib/`. A clone that has never seen this workspace can
+copies it into every project's `.gravity/_lib/`. A clone that has never seen this workspace can
 regenerate its own doc CSS.
 
 ---
@@ -44,7 +44,7 @@ regenerate its own doc CSS.
 | File | Owns | Changes when |
 |---|---|---|
 | [`lib/palette.py`](lib/palette.py) | the **anchor hues** — chrome (`bg`/`ink`/`dim`/`h1_grad`) and status (`accent`/`ok`/`plan`/`guard`/`sat`) for all five themes | a hue is retuned |
-| [`lib/doc_theme.py`](lib/doc_theme.py) | the **stylesheet** — layout, type, glass treatment, status classes, the switcher | the docs' *look* changes |
+| [`lib/doc_theme.py`](lib/doc_theme.py) | the **stylesheet** — layout, type, glass treatment, status classes, the flow-diagram (`fd-`) vocabulary, the switcher | the docs' *look* changes |
 | `.claude/scripts/apply_doc_theme.py` | **applying** it to real files (workspace-side; not part of the protocol) | never, ideally |
 
 Anything not in that table — panel translucency, hairline weights, blur radius, the ambient glow
@@ -86,6 +86,57 @@ Layout and reading furniture:
 - `.note` (+ `.warn`, `.red`) — left-bordered callout; `.lbl` for the lead-in
 - `pre` — glass code/diagram block; inside it `<b>`, `.c` (comment), `.a` (accent), `.b` (blue)
 - `table`, `footer`
+
+---
+
+## Flow-diagram vocabulary — inline SVG
+
+When a flow outgrows the `.flow` ordered list (branches, fan-in, parallel paths), draw it as
+**hand-authored inline SVG** — never an external JS diagram library. The reasons are the theme's
+own three rules applied to vectors:
+
+1. **No CDN, no scripts.** Same rule as fonts: a doc opened from `file://` on a plane still
+   renders. Inline SVG is part of the document; mermaid/d3 from a CDN is a trust and availability
+   dependency the docs must not carry.
+2. **Themable by construction.** Every stroke and fill reads a token (`--card`, `--line`,
+   `--text-mid`, `--blue`, `--red`), so the switcher restyles diagrams with the page — a
+   hardcoded hex in an SVG is drift the five palettes can't reach.
+3. **Checkable like the grid.** Put `data-path="server/src/x.ts"` on a node's element —
+   `check.py arch`'s extraction is a raw-text regex and element-agnostic, so SVG nodes are
+   validated exactly like `<code data-path>` cells. (Caveat: only ARCHITECTURE pages are
+   scanned — an anchored flow belongs there, not in MISSION.html.)
+
+| Class | On | Means |
+|---|---|---|
+| `.fd` | the `<svg>` | a flow figure; author with a `viewBox`, it scales to the column |
+| `.fd-node` | `rect` | a step — card fill, line stroke |
+| `.fd-edge` | `path`/`line` | an arrow that exists |
+| `.fd-seam` | an edge or node | crosses a runtime boundary (the `.flow` list's `li.seam`) |
+| `.fd-gap` | an edge | does **not** exist yet — red *and* dashed, never hue alone |
+| `.fd-label` / `.fd-file` | `text` | step name / the anchored file path (mono) |
+| `.fd-arrow` | the marker's `path` | arrowhead — one neutral hue (markers don't inherit edge stroke cross-browser) |
+
+Boundaries that keep it honest: **one flow per figure, ~12 nodes max** — SVG text does not wrap,
+so anything tabular stays an HTML grid (`.grid`) and anything longer gets split or stays a
+`.flow` list. Each figure carries its own `<defs>` with a **unique marker id** (two figures on one
+page sharing `#fdarr` is a duplicate DOM id — browsers silently resolve to the first, so the
+breakage would be invisible; suffix the id with the flow's slug):
+
+```html
+<svg class="fd" viewBox="0 0 720 120" role="img" aria-label="request flow">
+  <defs><marker id="fdarr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7"
+    markerHeight="7" orient="auto"><path class="fd-arrow" d="M0 0L8 4L0 8z"/></marker></defs>
+  <rect class="fd-node" x="8" y="30" width="150" height="52" rx="10"/>
+  <text class="fd-label" x="24" y="52">route</text>
+  <text class="fd-file" x="24" y="70" data-path="server/src/index.ts">server/src/index.ts</text>
+  <line class="fd-edge" x1="158" y1="56" x2="230" y2="56" marker-end="url(#fdarr)"/>
+  <!-- … next node … -->
+</svg>
+```
+
+The classes are `fd-`-prefixed for the same reason the legend strip is `.marklegend`, not
+`.legend`: `.flow`, `.node`, `.trace`, `.grid` and `.legend` are per-doc template classes, and
+`apply_doc_theme.py` deletes any per-doc rule whose selectors the generator claims as its own.
 
 ---
 

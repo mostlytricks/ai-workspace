@@ -30,8 +30,8 @@ Everything in the system derives from that: the docs are the persistence layer, 
 ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the portable skeleton)
 ├── CLAUDE.md            # agent operating manual — auto-loads; word-budget walled (MANUAL_BLOAT)
 ├── docs/                # human read-docs (this file, HANDBOOK, INTRO, MISSION, intake sheets)
-├── gravity/templates/           # 16 stencils — copied into projects, never auto-loaded
-├── .claude/commands/    # 20 slash commands (lazy: loaded only on invocation)
+├── gravity/templates/           # 18 stencils — copied into projects, never auto-loaded
+├── .claude/commands/    # 22 slash commands (lazy: loaded only on invocation)
 ├── .claude/scenarios/   # the verification harness (check.py + golden fixtures)
 ├── repos/               # canonical project storage — each its own independent git repo
 └── active/ stable/ dormant/ archive/   # tier folders: junctions only, never real files
@@ -57,7 +57,7 @@ ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the 
 | `SPEC.md` | the **change contract**: a generative *Minimal Shape* + *Rules* where **every rule carries an enforcement tag** (`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`) naming the wall that catches violations — the contract never lies about which rules are real walls vs judgment. Behavioral domains add a `given/when/then` **Behavioral Contract**, each line bound to a named test. |
 | `ARCHITECTURE.html` | the human deep-dive (rationale), when it outgrows a file map |
 | `PLAN.*.md` | one slice's intent: Goal · Scenario (`given/when/then`) · Slice · Verification. **Bugs enter here as *currently-false* scenarios** (the repro), and their fix must leave the regression test that graduates the scenario into the SPEC. |
-| `given/` + `MANIFEST.md` | received domain knowledge (§5) |
+| `_given/` + `MANIFEST.md` | received domain knowledge (§5) |
 
 **There is no domain registry file** — the directory *is* the registry, split across four rate-of-change owners: existence (the folders) · routing (root CLAUDE.md Doc Map + read-first table) · why (MISSION row) · status (PLAN spine). `check.py consistency` fails any domain missing from any owner. **The protocol card** (`.gravity/GRAVITY.md`, verbatim template copy, version-stamped) makes each repo self-describing when opened without the workspace.
 
@@ -70,14 +70,14 @@ Both doors hold **received** material (never decided truth) and **route out** ra
 | | Intake (reported claims) | Given (handed-in knowledge) |
 |---|---|---|
 | Input | user/QA bug & issue reports | data dictionaries, business rules, vendor docs, org context |
-| Landing | `docs/intake/<date>.md`, one dated sheet per batch, reports **verbatim** | `.gravity/inbox/` — the drop zone: contents never commit before triage decides privacy; only its README (the door sign) is tracked |
-| Ritual | `/intake`: six required facts per item (elicited or `OPEN:`), triage trio (real? → domain → bug/feature/doc-drift), dedupe to **root causes** | `/given`: one confirmed routing table → `.gravity/<domain>/given/` with provenance rows (source · received · version · **fidelity** · privacy) |
+| Landing | `docs/intake/<date>.md`, one dated sheet per batch, reports **verbatim** | `.gravity/_inbox/` — the drop zone: contents never commit before triage decides privacy; only its README (the door sign) is tracked |
+| Ritual | `/intake`: six required facts per item (elicited or `OPEN:`), triage trio (real? → domain → bug/feature/doc-drift), dedupe to **root causes** | `/given`: one confirmed routing table → `.gravity/<domain>/_given/` with provenance rows (source · received · version · **fidelity** · privacy) |
 | Hard rule | **no repro, no slice**; bugs are never a domain | **quarry, not contract** — cite, never restate; disputes resolve against `raw/`, not renderings |
 | Wall | `check.py intake` | `check.py given` |
 
 The **maintenance loop** runs door-to-door: report → intake sheet → bug-intake slice PLAN (currently-false scenario) → `/patch-slice` (mechanical walls: anchor, snapshot, bare-gated verify with N=3 → forced four-proof rollback) → regression test graduates the scenario into the SPEC. Bug fixes are the fastest source of honest contract lines.
 
-## 6. The command surface (20)
+## 6. The command surface (22)
 
 Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUDE.md alone (word-budget walled). Destructive commands (`/retire`, `/cut-release`, `/ship`) are `disable-model-invocation` — human-invoked only; self-selectable commands carry **trigger fences** ("when NOT to reach for this").
 
@@ -92,11 +92,11 @@ Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUD
 
 ## 7. Verification harness & coverage
 
-`check.py` (~1,200 lines) + `scan_workspace.py` + `patch_slice.py` are the walls. One checker, many callers — the same functions run on golden fixtures (scenarios) and live repos (`/triage`).
+`check.py` + `gravity/lib/check_project.py` (~2,400 lines between them) + `scan_workspace.py` + `patch_slice.py` are the walls. One checker, many callers — the same functions run on golden fixtures (scenarios) and live repos (`/triage`).
 
 | Subcommand | Guards | Key findings |
 |---|---|---|
-| `consistency` | the four-owner domain registry never lies | `UNDERWIRED` (FAIL) · `PROTOCOL_STALE` |
+| `consistency` | the four-owner domain registry never lies | `UNDERWIRED` (FAIL) · `PROTOCOL_STALE` · `MACHINERY_UNMIGRATED` |
 | `spec` | enforcement tags stay true over time | `GATE_DEAD` · `TAG_DEAD` · `SPEC_UNFILLED` (FAIL) + per-domain tag census (walls vs `[review]`) |
 | `workspace` | tier/index/adoption drift; the manual's own size | `MULTI_TIER` (FAIL) · `MANUAL_BLOAT` |
 | `intake` | sheet honesty | `INTAKE_UNROUTED` (FAIL on a lying ✓ sheet) · `INTAKE_DEAD_ROUTE` |
@@ -108,7 +108,7 @@ Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUD
 
 ## 8. Versioning & upgrades
 
-Gravity is SemVer'd **as a convention system**: major = a rule projects depend on breaks · minor = new template/command/additive rule · patch = wording. Version lives in `VERSION` + the git tag, never prose. Each project records its adopted version (`> gravity: vX.Y` router stamp + the protocol card's stamp); `/sync-gravity` upgrades mechanically (card re-copy + stamp) and reports judgment deltas as a quoted checklist, **never auto-migrating**. `/cut-release` is the same Change Order for gravity itself and for projects.
+Gravity is SemVer'd **as a convention system**: major = a rule projects depend on breaks · minor = new template/command/additive rule · patch = wording. Version lives in `VERSION` + the git tag, never prose. Each project records its adopted version (`> gravity: vX.Y` router stamp + the protocol card's stamp); `/sync-gravity` upgrades mechanically (card re-copy + stamp) and reports judgment deltas as a quoted checklist, **never auto-migrating** — the sole exception being the v4 machinery rename, which has a dedicated mechanical migrator (`migrate_gravity_v4.py`). `/cut-release` is the same Change Order for gravity itself and for projects.
 
 ## 9. The feedback loop (a worked week)
 

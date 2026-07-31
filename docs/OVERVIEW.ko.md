@@ -30,8 +30,8 @@ Gravity는 여러 소프트웨어 프로젝트를 AI 코딩 에이전트와 함�
 ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화이트리스트가 곧 이식 가능한 스켈레톤)
 ├── CLAUDE.md            # 에이전트 운영 매뉴얼 — 자동 로드; 단어 예산 방벽(MANUAL_BLOAT) 적용
 ├── docs/                # 사람이 읽는 문서 (본 문서, HANDBOOK, INTRO, MISSION, intake 시트)
-├── gravity/templates/           # 16개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
-├── .claude/commands/    # 20개 슬래시 커맨드 (lazy: 호출 시에만 로드)
+├── gravity/templates/           # 18개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
+├── .claude/commands/    # 22개 슬래시 커맨드 (lazy: 호출 시에만 로드)
 ├── .claude/scenarios/   # 검증 하네스 (check.py + 골든 픽스처)
 ├── repos/               # 프로젝트 정본 저장소 — 각각 독립된 git 저장소
 └── active/ stable/ dormant/ archive/   # 티어 폴더: 정션(junction)만, 실제 파일 금지
@@ -57,7 +57,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 | `SPEC.md` | **변경 계약(change contract)**: 생성 기준인 *Minimal Shape* + **모든 규칙에 집행 태그**(`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`)가 붙은 *Rules* — 어떤 규칙이 실제 방벽이고 어떤 것이 리뷰어 판단인지 계약이 거짓말하지 않는다. 행위 중심 도메인은 `given/when/then` **Behavioral Contract**를 추가하며 각 줄은 명명된 테스트에 결속된다. |
 | `ARCHITECTURE.html` | 파일 맵을 넘어서는 경우의, 사람을 위한 심층 문서(근거·설계 이유) |
 | `PLAN.*.md` | 슬라이스 하나의 의도: Goal · Scenario(`given/when/then`) · Slice · Verification. **버그는 *현재-거짓* 시나리오(재현)로 여기에 진입**하고, 수정은 그 시나리오를 SPEC으로 승격시키는 회귀 테스트를 남겨야 한다. |
-| `given/` + `MANIFEST.md` | 전달받은 도메인 지식(§5) |
+| `_given/` + `MANIFEST.md` | 전달받은 도메인 지식(§5) |
 
 **도메인 레지스트리 파일은 없다** — 디렉터리 자체가 레지스트리이며, 변화 속도가 다른 네 소유자로 분산된다: 존재(폴더) · 라우팅(루트 CLAUDE.md의 Doc Map + read-first 테이블) · 왜(MISSION 행) · 상태(PLAN 스파인). `check.py consistency`가 어느 소유자에서든 누락된 도메인을 FAIL로 잡는다. **프로토콜 카드**(`.gravity/GRAVITY.md`, 템플릿 원문 복사본 + 버전 스탬프)는 워크스페이스 없이 저장소만 열어도 스스로를 설명하게 만든다.
 
@@ -70,14 +70,14 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 | | Intake (신고된 주장) | Given (전달받은 지식) |
 |---|---|---|
 | 입력 | 사용자/QA의 버그·이슈 신고 | 데이터 사전, 업무 규칙, 벤더 문서, 조직 컨텍스트 |
-| 착지 | `docs/intake/<날짜>.md` — 배치당 시트 하나, 신고문은 **원문 그대로** | `.gravity/inbox/` — 드롭 존: 트리아지가 프라이버시 등급을 정하기 전에는 내용물이 커밋될 수 없음(문패인 README만 추적됨) |
-| 의례 | `/intake`: 항목당 6개 필수 사실(질문으로 끌어내거나 `OPEN:`), 트리아지 3문(진짜인가? → 어느 도메인? → 버그/기능/문서 표류?), **근본 원인**으로 중복 제거 | `/given`: 확인받은 라우팅 테이블 하나 → `.gravity/<도메인>/given/`으로 이동 + 출처 행(source · received · version · **fidelity** · privacy) |
+| 착지 | `docs/intake/<날짜>.md` — 배치당 시트 하나, 신고문은 **원문 그대로** | `.gravity/_inbox/` — 드롭 존: 트리아지가 프라이버시 등급을 정하기 전에는 내용물이 커밋될 수 없음(문패인 README만 추적됨) |
+| 의례 | `/intake`: 항목당 6개 필수 사실(질문으로 끌어내거나 `OPEN:`), 트리아지 3문(진짜인가? → 어느 도메인? → 버그/기능/문서 표류?), **근본 원인**으로 중복 제거 | `/given`: 확인받은 라우팅 테이블 하나 → `.gravity/<도메인>/_given/`으로 이동 + 출처 행(source · received · version · **fidelity** · privacy) |
 | 강행 규칙 | **재현 없으면 슬라이스 없음**; 버그는 절대 도메인이 아니다 | **채석장이지 계약이 아니다** — 인용하되 재서술 금지; 분쟁은 렌더링이 아니라 `raw/` 원본 기준으로 해결 |
 | 방벽 | `check.py intake` | `check.py given` |
 
 **유지보수 루프**는 문에서 문까지 이어진다: 신고 → intake 시트 → 버그-intake 슬라이스 PLAN(현재-거짓 시나리오) → `/patch-slice`(기계적 방벽: 앵커, 스냅숏, bare-gated 검증 N=3 → 실패 시 4중 증명 롤백 강제) → 회귀 테스트가 시나리오를 SPEC으로 승격. 버그 수정은 정직한 계약 조항의 가장 빠른 공급원이다.
 
-## 6. 커맨드 표면 (20개)
+## 6. 커맨드 표면 (22개)
 
 커맨드는 **lazy** — 호출 시에만 로드되며, 상시 컨텍스트 비용은 CLAUDE.md 하나뿐(단어 예산 방벽 적용). 파괴적 커맨드(`/retire`, `/cut-release`, `/ship`)는 `disable-model-invocation` — 사람만 호출 가능. 모델이 스스로 선택할 수 있는 커맨드에는 **트리거 펜스**("언제 쓰면 안 되는가")가 붙는다.
 
@@ -92,11 +92,11 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 
 ## 7. 검증 하네스와 커버리지
 
-`check.py`(약 1,200줄) + `scan_workspace.py` + `patch_slice.py`가 방벽이다. 체커 하나, 호출자 여럿 — 같은 함수가 골든 픽스처(시나리오)와 라이브 저장소(`/triage`) 양쪽에서 돈다.
+`check.py` + `gravity/lib/check_project.py`(합쳐 약 2,400줄) + `scan_workspace.py` + `patch_slice.py`가 방벽이다. 체커 하나, 호출자 여럿 — 같은 함수가 골든 픽스처(시나리오)와 라이브 저장소(`/triage`) 양쪽에서 돈다.
 
 | 서브커맨드 | 지키는 것 | 주요 발견 |
 |---|---|---|
-| `consistency` | 4-소유자 도메인 레지스트리가 거짓말하지 않음 | `UNDERWIRED`(FAIL) · `PROTOCOL_STALE` |
+| `consistency` | 4-소유자 도메인 레지스트리가 거짓말하지 않음 | `UNDERWIRED`(FAIL) · `PROTOCOL_STALE` · `MACHINERY_UNMIGRATED` |
 | `spec` | 집행 태그가 시간이 지나도 참 | `GATE_DEAD` · `TAG_DEAD` · `SPEC_UNFILLED`(FAIL) + 도메인별 태그 센서스(방벽 vs `[review]`) |
 | `workspace` | 티어/인덱스/도입 표류; 매뉴얼 자체의 크기 | `MULTI_TIER`(FAIL) · `MANUAL_BLOAT` |
 | `intake` | 시트 정직성 | `INTAKE_UNROUTED`(거짓말하는 ✓ 시트에서 FAIL) · `INTAKE_DEAD_ROUTE` |
@@ -108,7 +108,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 
 ## 8. 버저닝과 업그레이드
 
-Gravity는 **컨벤션 시스템으로서** SemVer를 따른다: major = 프로젝트가 의존하는 규칙 파괴 · minor = 새 템플릿/커맨드/추가 규칙 · patch = 문구 수정. 버전은 `VERSION` 파일 + git 태그에 존재하며 산문에는 절대 없다. 각 프로젝트는 도입 버전을 기록하고(라우터의 `> gravity: vX.Y` 스탬프 + 프로토콜 카드 스탬프), `/sync-gravity`가 기계적 부분(카드 재복사 + 스탬프)을 적용하되 판단이 필요한 델타는 인용 체크리스트로 **보고만 하고 절대 자동 마이그레이션하지 않는다**. `/cut-release`는 gravity 자신과 프로젝트에 동일한 Change Order를 적용한다.
+Gravity는 **컨벤션 시스템으로서** SemVer를 따른다: major = 프로젝트가 의존하는 규칙 파괴 · minor = 새 템플릿/커맨드/추가 규칙 · patch = 문구 수정. 버전은 `VERSION` 파일 + git 태그에 존재하며 산문에는 절대 없다. 각 프로젝트는 도입 버전을 기록하고(라우터의 `> gravity: vX.Y` 스탬프 + 프로토콜 카드 스탬프), `/sync-gravity`가 기계적 부분(카드 재복사 + 스탬프)을 적용하되 판단이 필요한 델타는 인용 체크리스트로 **보고만 하고 절대 자동 마이그레이션하지 않는다** — 유일한 예외는 v4 기계부 디렉터리 개명으로, 전용 기계적 마이그레이터(`migrate_gravity_v4.py`)가 있다. `/cut-release`는 gravity 자신과 프로젝트에 동일한 Change Order를 적용한다.
 
 ## 9. 피드백 루프 (실제 사례 일주일)
 

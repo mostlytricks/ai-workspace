@@ -7,7 +7,7 @@ You are running `/open-dashboard` from `ai-workspace/`. The user wants the visua
 
 ## Do this
 
-1. **Refresh the observatories the dashboard links to** (~0.3s each, so ~4s for the fleet). Each project card carries a `⊙ observatory` chip linking into `repos/<name>/.gravity/observatory/index.html`; regenerating first means every link lands on a current page instead of a stale one:
+1. **Refresh the observatories the dashboard links to** (~0.3s each, so ~4s for the fleet). Each project card carries a `⊙ observatory` chip linking into `repos/<name>/.gravity/_observatory/index.html`; regenerating first means every link lands on a current page instead of a stale one:
 
    ```bash
    for p in repos/*/.gravity; do p=${p%/.gravity}; n=$(basename "$p")

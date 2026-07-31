@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as an optional `<project-name>`.
 - **No arg** → the workspace's own mission: `docs/MISSION.html`.
 - **`<project-name>`** → find the project under `active/<name>`, `dormant/<name>`, or `repos/<name>` (tier folders are junctions; reads pass through transparently). If not found, say so, list close matches, and stop.
   Then locate its mission, **first hit wins**:
-  1. `<project>/.gravity/MISSION.html` — faceted projects (check the root `CLAUDE.md` **Doc Map** if unsure where it lives).
+  1. `<project>/.gravity/MISSION.html` — faceted projects (check the `.gravity/ROUTER.md` **Doc Map** — pre-v3: root `CLAUDE.md` — if unsure where it lives).
   2. `<project>/MISSION.html` — flat projects.
 
   If neither exists: MISSION is **recognized only when present** (CLAUDE.md §6). Say the project has no mission doc, suggest `/mission <name>` (to synthesize an orientation) or adopting the four-doc pipeline — and **stop**. Don't fabricate a file.

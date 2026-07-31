@@ -31,8 +31,8 @@ python gravity/lib/generate_observatory.py <project> --theme <theme> --open
 - **Tabs are deep-linkable** — `<page>.html#queue`, `#grad`, etc.; docs and packets can link straight to one instrument of one project.
 - **Theming is live in the page** — the header's five swatch buttons switch the chrome *and* the embedded instruments in place (every palette is pre-rendered into the file; the choice persists in `localStorage` as `dash-theme` — shared with the workspace dashboard and the MISSION/ARCHITECTURE doc pages, so one pick follows you everywhere). The two light themes render instruments as a paper chart (dark ink on a pale canvas). `--theme` only sets the first-load default, so don't regenerate just to change color.
 - Requires a `.gravity/` directory (the scan stops with a pointer to `/adopt-gravity` otherwise). A missing integration SPEC is fine — the Seams tab shows the pointer instead.
-- **Output lands inside the project** — `<project>/.gravity/observatory/index.html`; `--open` launches the browser. The folder carries a `.gitignore` of `*` so it ignores itself: the page is visible to anyone who opens the repo but never becomes a tracked artifact that can go stale in git. Doc links are relative, so the page is not pinned to the machine that rendered it.
-- **The renderer is protocol-side** (`gravity/lib/`), so a project carrying `.gravity/lib/` renders itself with no workspace at all: `python .gravity/lib/generate_observatory.py` — no arguments, the lib's own location names its project. If a project has no `.gravity/lib/` yet, `check.py` says so (`LIB_MISSING`); install it with `python .claude/scripts/install_lib.py <project>`.
+- **Output lands inside the project** — `<project>/.gravity/_observatory/index.html`; `--open` launches the browser. The folder carries a `.gitignore` of `*` so it ignores itself: the page is visible to anyone who opens the repo but never becomes a tracked artifact that can go stale in git. Doc links are relative, so the page is not pinned to the machine that rendered it.
+- **The renderer is protocol-side** (`gravity/lib/`), so a project carrying `.gravity/_lib/` renders itself with no workspace at all: `python .gravity/_lib/generate_observatory.py` — no arguments, the lib's own location names its project. If a project has no `.gravity/_lib/` yet, `check.py` says so (`LIB_MISSING`); install it with `python .claude/scripts/install_lib.py <project>`.
 
 ## Reading it (mention what's notable, briefly)
 
@@ -54,5 +54,5 @@ Keep it short — the page is the report.
 - Don't hand-edit the generated HTML — every fact is scanned; fix the docs and rerun.
 - Don't add data files or a registry — the project's docs *are* the data.
 - Don't "fix" a freeform SPEC's census by rewording this command — retrofit the SPEC to the v2 template (`/new-spec`) if you want structured rule counts.
-- Don't commit `.gravity/observatory/` output — the folder ignores itself by design; a committed page is a page that can be stale in git, and this one's own footer says a wrong page means doc drift.
-- Don't hand-edit an installed `.gravity/lib/` — it's a verbatim copy of the distribution. Fix `gravity/lib/` and re-install (`/sync-gravity`).
+- Don't commit `.gravity/_observatory/` output — the folder ignores itself by design; a committed page is a page that can be stale in git, and this one's own footer says a wrong page means doc drift.
+- Don't hand-edit an installed `.gravity/_lib/` — it's a verbatim copy of the distribution. Fix `gravity/lib/` and re-install (`/sync-gravity`).

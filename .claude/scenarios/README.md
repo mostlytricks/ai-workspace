@@ -53,8 +53,8 @@ python .claude/scenarios/check.py scenario \
 
 The checker is **split by scope**. `gravity/lib/check_project.py` holds everything that judges one
 project from its own docs (`consistency`, `spec`, `intake`, `given`) — it travels with the protocol
-into `<project>/.gravity/lib/`, so a clone with no workspace runs the same checks against itself
-(`python .gravity/lib/check_project.py`). This file's `check.py` re-exports all of it and adds what
+into `<project>/.gravity/_lib/`, so a clone with no workspace runs the same checks against itself
+(`python .gravity/_lib/check_project.py`). This file's `check.py` re-exports all of it and adds what
 is workspace-scoped and therefore never embedded in a project: `workspace` (tiers, junctions,
 `PROJECTS.md`), the fixtures, and the `selftest` harness. Every existing import site
 (`from check import check_gravity_consistency`) still works.
@@ -63,7 +63,7 @@ is workspace-scoped and therefore never embedded in a project: `workspace` (tier
 
 `check.py` uses **heuristic slug-match**: a domain is "wired" into an index region if its kebab-case slug appears in that region (the Doc Map code block, the router table, the MISSION rows, the PLAN status spine). Fixtures are author-controlled, so this is robust enough. If real projects start tripping it (a slug that's also a common English word, say), harden with machine-readable anchors in the templates — not before.
 
-Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`). `consistency` also emits **`COUPLING_UNCONTRACTED`** (WARN): two domains whose docs cross-reference each other ≥5 times (path-shaped mentions, from `scan_project.scan_couplings` — one scanner, many callers) while neither `integration/SPEC.md` nor `CONTRACT.md` names the pair — a strong doc seam no contract owns; the fix is naming the pair in the contract, or an honest "no seam here" judgment. And **`SLICE_STALE`** (WARN), the comet rule: a `○ planned` slice PLAN untouched past 30 days (file mtime — under-claims on fresh clones), or a dated deferral row (`… (deferred YYYY-MM-DD)`) in `IMPLEMENTATION_PLAN.md` never picked up. Deferred work must resurface by age, never by memory; the fix is pick it up, re-date it, or drop it — silence is the one wrong move. Finally **`LIB_MISSING`** / **`LIB_STALE`** (WARN), the twin of `PROTOCOL_MISSING`/`PROTOCOL_STALE`: a project with no `.gravity/lib/`, or one older than the distribution, can't render or check itself off-workspace — the fix is always a re-install (`python .claude/scripts/install_lib.py <project>`), never a hand-edit. `LIB_STALE` is judged only when a *newer* distribution is doing the judging: run from a project's own installed lib the two versions are equal and it stays silent, because a bare clone genuinely cannot know a newer version exists.
+Severity: missing wiring is a **FAIL** (the orphaned-domain bug). A `.gravity/<slug>/` route pointing at a non-existent folder, or a domain folder with no `PLAN*.md`, is a **WARN** (templates legitimately ship example rows like `integration/`). `consistency` also emits **`COUPLING_UNCONTRACTED`** (WARN): two domains whose docs cross-reference each other ≥5 times (path-shaped mentions, from `scan_project.scan_couplings` — one scanner, many callers) while neither `integration/SPEC.md` nor `CONTRACT.md` names the pair — a strong doc seam no contract owns; the fix is naming the pair in the contract, or an honest "no seam here" judgment. And **`SLICE_STALE`** (WARN), the comet rule: a `○ planned` slice PLAN untouched past 30 days (file mtime — under-claims on fresh clones), or a dated deferral row (`… (deferred YYYY-MM-DD)`) in `IMPLEMENTATION_PLAN.md` never picked up. Deferred work must resurface by age, never by memory; the fix is pick it up, re-date it, or drop it — silence is the one wrong move. Finally **`LIB_MISSING`** / **`LIB_STALE`** (WARN), the twin of `PROTOCOL_MISSING`/`PROTOCOL_STALE`: a project with no `.gravity/_lib/`, or one older than the distribution, can't render or check itself off-workspace — the fix is always a re-install (`python .claude/scripts/install_lib.py <project>`), never a hand-edit. `LIB_STALE` is judged only when a *newer* distribution is doing the judging: run from a project's own installed lib the two versions are equal and it stays silent, because a bare clone genuinely cannot know a newer version exists. And **`MACHINERY_UNMIGRATED`** (WARN): a pre-v4 bare-named machinery dir (`lib/`, `observatory/`, `inbox/`, `given/` — root *and* per-domain) still on disk. v4 made the sigil the rule (`_lib/` …), and the old names stay in `NON_DOMAIN_DIRS` so they are never misread as domains — this is drift to report, not breakage. One finding per dir; the fix is always `python .claude/scripts/migrate_gravity_v4.py <project>`, never a hand-`mv`.
 
 **A domain can only be unwired from an index that exists.** A two-doc brownfield project (CLAUDE.md §5 brownfield inversion: `.gravity/integration/` with no MISSION/PLAN yet) is a sanctioned state — the checker skips the absent index files and emits one `INDEX_ABSENT` WARN each instead of FAILing every domain.
 
@@ -85,7 +85,7 @@ Parsing tolerances: `_read` never crashes on a non-UTF8/unreadable file (replace
 
 ## The architecture-anchor check (`check.py arch`)
 
-`ARCHITECTURE.html` is the one **authored** diagram surface. The observatory next to it is generated, git-ignored and regenerated on every scan; an architecture page is committed and maintained by hand, so nothing regenerates it when the code moves underneath. This check gives the diagram something mechanical to hold onto: the grid cells and flow/trace nodes in `ARCHITECTURE.template.html` / `ARCHITECTURE.domain.template.html` each carry `data-path="<file>"`, and every one of those files must still exist.
+`ARCHITECTURE.html` is the one **authored** diagram surface. The observatory next to it is generated, git-ignored and regenerated on every scan; an architecture page is committed and maintained by hand, so nothing regenerates it when the code moves underneath. This check gives the diagram something mechanical to hold onto: the grid cells and flow/trace nodes in `ARCHITECTURE.template.html` / `ARCHITECTURE.domain.template.html` each carry `data-path="<file>"`, and every one of those files must still exist. Extraction is a raw-text regex, so it is **element-agnostic**: a `data-path` on an inline-SVG `<text>` node (the v4 `fd-` flow-diagram idiom) is judged exactly like a `<code>` grid cell — `selftest` proves it with an SVG-anchored fixture node.
 
 | Finding | Severity | Meaning |
 |---|---|---|
@@ -161,13 +161,13 @@ The `/intake` command's mechanical wall: it verifies every sheet under `docs/int
 
 ## The given check (`check.py given --project <path>`)
 
-The `/given` command's mechanical wall: nothing rots in the drop zone, every file in a `given/` folder carries a provenance row, and the manifest never lies about what's on disk. Fidelity/privacy judgments stay the agent's; `private` rows are committed pointers to local-only files and are exempt from the ghost check. `selftest` proves it: an honest fixture passes; three seeded drifts are each caught.
+The `/given` command's mechanical wall: nothing rots in the drop zone, every file in a `_given/` folder carries a provenance row, and the manifest never lies about what's on disk. Fidelity/privacy judgments stay the agent's; `private` rows are committed pointers to local-only files and are exempt from the ghost check. `selftest` proves it: an honest fixture passes; three seeded drifts are each caught.
 
 | Finding | Severity | Meaning |
 |---|---|---|
 | `GIVEN_GHOST_ROW` | FAIL | a non-private manifest File row names a file that doesn't exist |
-| `INBOX_UNROUTED` | WARN | a file sitting in `.gravity/inbox/` — knowledge outside the system; run `/given` |
-| `GIVEN_UNMANIFESTED` | WARN | a file in `given/` with no manifest row — provenance unknown |
+| `INBOX_UNROUTED` | WARN | a file sitting in `.gravity/_inbox/` — knowledge outside the system; run `/given` |
+| `GIVEN_UNMANIFESTED` | WARN | a file in `_given/` with no manifest row — provenance unknown |
 
 ## The patch-loop check (the selftest's third half)
 

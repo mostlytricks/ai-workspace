@@ -868,7 +868,7 @@ def main(argv=None) -> int:
         print(f"{name}: no DB evidence pack at .gravity/{'/'.join(PACK_DIR)}/")
         print()
         print("To start one, get ANY of these (cheapest first) and put it there")
-        print("(or drop it in .gravity/inbox/ and /given routes it):")
+        print("(or drop it in .gravity/_inbox/ and /given routes it):")
         print("  1. DDL scripts you can scrap yourself — CREATE TABLE statements")
         print("     from SQL Developer / DBeaver (export DDL) or the repo's")
         print("     migration files -> ddl/*.sql")

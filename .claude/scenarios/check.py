@@ -8,7 +8,7 @@ applied to its checker):
   gravity/lib/check_project.py   PORTABLE — judges one project from its own
                                  docs (consistency, spec honesty, intake,
                                  given). Travels with the protocol, so a bare
-                                 clone carrying .gravity/lib/ checks itself.
+                                 clone carrying .gravity/_lib/ checks itself.
   this file                      WORKSPACE — tier/junction/PROJECTS.md drift,
                                  the golden-scenario fixtures, the selftest
                                  harness, and the CLI door for all of it.
@@ -873,8 +873,8 @@ def _patchloop_selftest() -> bool:
 def _given_fixture(base: Path) -> None:
     """A mini project whose given layer is honest: empty inbox, one cross-cutting
     doc, one domain doc + a private raw pointer, all manifested."""
-    (base / ".gravity" / "inbox").mkdir(parents=True)
-    cross = base / ".gravity" / "given"
+    (base / ".gravity" / "_inbox").mkdir(parents=True)
+    cross = base / ".gravity" / "_given"
     cross.mkdir()
     (cross / "company-context.md").write_text(
         "# What the earth is\n\nThe org sells sync tooling to mid-market teams.\n",
@@ -885,7 +885,7 @@ def _given_fixture(base: Path) -> None:
         "|---|---|---|---|---|---|---|\n"
         "| `company-context.md` | workspace owner | 2026-01-14 | evergreen | org context | verbatim | committable |\n",
         encoding="utf-8")
-    dom = base / ".gravity" / "support" / "given"
+    dom = base / ".gravity" / "support" / "_given"
     dom.mkdir(parents=True)
     (dom / "erp-data-dictionary.md").write_text(
         "# ERP data dictionary (readable)\n\n| table | meaning |\n|---|---|\n"
@@ -939,9 +939,12 @@ def cmd_given(args) -> int:
 def _arch_fixture(root: Path) -> None:
     """A minimal project whose domain ARCHITECTURE page anchors one node to a
     real file — plus the three unverifiable anchor forms the checker must skip
-    rather than guess at (a glob, an unfilled stencil, and prose)."""
+    rather than guess at (a glob, an unfilled stencil, and prose), plus one
+    anchor on an inline-SVG flow node (the v4 `fd-` idiom): the extraction is a
+    raw-text regex, so SVG elements must be judged exactly like <code> cells."""
     (root / "src").mkdir(parents=True, exist_ok=True)
     (root / "src" / "engine.ts").write_text("export const engine = 1;\n", encoding="utf-8")
+    (root / "src" / "flow.ts").write_text("export const flow = 1;\n", encoding="utf-8")
     domain = root / ".gravity" / "search"
     domain.mkdir(parents=True, exist_ok=True)
     (domain / "ARCHITECTURE.html").write_text(
@@ -949,7 +952,11 @@ def _arch_fixture(root: Path) -> None:
         '<div class="path" data-path="src/engine.ts:12">src/engine.ts</div></div>\n'
         '<div class="path" data-path="src/providers/*">a glob</div>\n'
         '<div class="path" data-path="<!-- FILL: path -->">an unfilled stencil</div>\n'
-        '<div class="path" data-path="provider base URL from .env">prose</div>\n',
+        '<div class="path" data-path="provider base URL from .env">prose</div>\n'
+        '<svg class="fd" viewBox="0 0 720 120">'
+        '<rect class="fd-node" x="8" y="30" width="150" height="52" rx="10"/>'
+        '<text class="fd-file" x="24" y="70" data-path="src/flow.ts">src/flow.ts</text>'
+        '</svg>\n',
         encoding="utf-8")
 
 
@@ -1322,11 +1329,11 @@ def cmd_selftest(args) -> int:
             print("selftest: honest given fixture passes (inbox empty, manifested, no ghosts).")
 
         drifts = {
-            "INBOX_UNROUTED": lambda p: (p / ".gravity" / "inbox" / "dropped.xlsx").write_text(
+            "INBOX_UNROUTED": lambda p: (p / ".gravity" / "_inbox" / "dropped.xlsx").write_text(
                 "raw", encoding="utf-8"),
-            "GIVEN_UNMANIFESTED": lambda p: (p / ".gravity" / "given" / "stray-notes.md").write_text(
+            "GIVEN_UNMANIFESTED": lambda p: (p / ".gravity" / "_given" / "stray-notes.md").write_text(
                 "unregistered", encoding="utf-8"),
-            "GIVEN_GHOST_ROW": lambda p: (p / ".gravity" / "support" / "given"
+            "GIVEN_GHOST_ROW": lambda p: (p / ".gravity" / "support" / "_given"
                                           / "erp-data-dictionary.md").unlink(),
         }
         for code, mutate in drifts.items():
@@ -1364,6 +1371,17 @@ def cmd_selftest(args) -> int:
         else:
             ok = False
             print("selftest: EXPECTED ARCH_PATH_DEAD, but the arch checker stayed silent.")
+
+        badsvg = Path(tmp) / "arch-bad-svg"
+        shutil.copytree(good, badsvg)
+        (badsvg / "src" / "flow.ts").unlink()         # the SVG flow node's anchor
+        caught = [f for f in check_arch_paths(badsvg) if f.code == "ARCH_PATH_DEAD"]
+        if caught:
+            print("selftest: SVG flow-node drift correctly caught -> ARCH_PATH_DEAD.")
+        else:
+            ok = False
+            print("selftest: EXPECTED ARCH_PATH_DEAD on the SVG anchor, "
+                  "but the arch checker stayed silent.")
 
     # --- patch-loop half: drive patch_slice.py's walls end-to-end on its fixture. ---
     ok = _patchloop_selftest() and ok

@@ -174,12 +174,12 @@ def observatory_state(base: Path) -> dict:
       None   — never rendered (the page is generated and self-ignoring, so its
                absence is normal, not an error)
 
-    `lib/` and `observatory/` are excluded from the comparison: the lib is
+    `_lib/` and `_observatory/` are excluded from the comparison: the lib is
     re-installed fleet-wide on every protocol bump and would otherwise mark
     every page stale at once — which would say nothing about the docs.
     """
     blank = {"state": None, "href": None}
-    page = base / ".gravity" / "observatory" / "index.html"
+    page = base / ".gravity" / "_observatory" / "index.html"
     if not page.is_file():
         return blank
     try:
@@ -191,14 +191,14 @@ def observatory_state(base: Path) -> dict:
         if doc.suffix.lower() not in (".md", ".html"):
             continue
         rel = doc.relative_to(base / ".gravity").parts
-        if rel and rel[0] in ("observatory", "lib"):
+        if rel and rel[0] in ("_observatory", "_lib", "observatory", "lib"):
             continue
         try:
             newest = max(newest, doc.stat().st_mtime)
         except OSError:
             continue
     return {"state": "stale" if newest > rendered else "fresh",
-            "href": f"../../repos/{base.name}/.gravity/observatory/index.html"}
+            "href": f"../../repos/{base.name}/.gravity/_observatory/index.html"}
 
 
 def gravity_adoption(name: str) -> dict:

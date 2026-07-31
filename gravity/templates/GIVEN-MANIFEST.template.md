@@ -1,20 +1,20 @@
 <!--
   GIVEN-MANIFEST.template.md — the provenance sheet for the GIVEN layer (the protocol card (.gravity/GRAVITY.md)).
-  Copy to .gravity/given/MANIFEST.md (cross-cutting) or .gravity/<domain>/given/MANIFEST.md
-  (domain-scoped). Seeded and filled by /given, which routes files out of .gravity/inbox/.
+  Copy to .gravity/_given/MANIFEST.md (cross-cutting) or .gravity/<domain>/_given/MANIFEST.md
+  (domain-scoped). Seeded and filled by /given, which routes files out of .gravity/_inbox/.
 
   THE LAYER'S RULES:
-  - given/ holds RECEIVED truth — what the project was TOLD (data dictionaries, business
+  - _given/ holds RECEIVED truth — what the project was TOLD (data dictionaries, business
     rules, vendor docs, domain explainers) — never what it decided. Authored truth lives
     in SPEC/MISSION/PLAN.
   - QUARRY, NOT CONTRACT: a given doc never becomes a shadow SPEC. A fact agents rely on
-    repeatedly graduates into its owner-doc WITH a back-citation (`source: given/<file> §n`).
+    repeatedly graduates into its owner-doc WITH a back-citation (`source: _given/<file> §n`).
   - PROVENANCE SURVIVES MODIFICATION: agents may render readable copies, but every file
     carries a fidelity mark, and disputes resolve against the raw original — never the
     rendering. raw/ holds originals as-received (git-ignore when heavy or private; the
     manifest row stays, marked `private`, as the committed pointer).
-  - A file in given/ with no row here, or a non-private row pointing at a ghost file, is
-    drift — `check.py given` flags both, and any file still sitting in .gravity/inbox/.
+  - A file in _given/ with no row here, or a non-private row pointing at a ghost file, is
+    drift — `check.py given` flags both, and any file still sitting in .gravity/_inbox/.
   Delete this comment when filled.
 -->
 

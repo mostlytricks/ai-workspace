@@ -11,7 +11,7 @@ The point of this command is the **gate** ("is this even a domain?") and the **i
 
 1. **Locate the project** under `active/`, `dormant/`, or `repos/`. If not found, list close matches and stop.
 2. **It must already have a `.gravity/` directory.** If not, tell the user to run `/adopt-gravity <project>` first (or that the project is fine on the two-doc minimum) and stop.
-3. **`<domain>` must be kebab-case** and not already exist under `.gravity/`. If it exists, switch to *adding a doc to that domain* instead.
+3. **`<domain>` must be kebab-case**, must **not start with `_`** (a leading `_` marks gravity machinery, never a domain), and must not already exist under `.gravity/`. If it exists, switch to *adding a doc to that domain* instead.
 
 ## Steps
 

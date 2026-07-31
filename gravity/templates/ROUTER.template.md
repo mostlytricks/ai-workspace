@@ -27,14 +27,17 @@ Docs are grouped by **subject domain**, not by doc-type. A domain folder holds w
   ARCHITECTURE.html         # how — system overview (browser-read)
   IMPLEMENTATION_PLAN.md    # what/next — roadmap spine + per-domain status (+ optional Tracks)
   DESIGN.md                 # visual-token contract (UI projects only)
-  inbox/                    # THE DROP ZONE — put received files here; /given routes them out (README = the door sign; contents never committed)
+  _inbox/                   # THE DROP ZONE — put received files here; /given routes them out (README = the door sign; contents never committed)
+  _lib/                     # the installed gravity instruments (machine-managed — never hand-edit; `_` = machinery, never a domain)
+  _observatory/             # generated instrument output — git-ignored, never authored (regenerate, don't fix)
+  _given/ + MANIFEST.md     # cross-cutting received knowledge (per-domain variant below)
   <domain>/   ARCHITECTURE.html · SPEC.md · PLAN.*.md   # one folder per subject; add lines as domains appear
-  <domain>/given/ + MANIFEST.md                          # received knowledge routed here by /given (provenance rows)
+  <domain>/_given/ + MANIFEST.md                         # received knowledge routed here by /given (provenance rows)
   integration/ SPEC.md · ARCHITECTURE.html · PLAN.*.md   # optional: cross-service/domain contracts only
-  integration/structural/db/ + MANIFEST.md               # the DB evidence pack (DBA-exported metadata CSVs); read by .gravity/lib/scan_db.py
+  integration/structural/db/ + MANIFEST.md               # the DB evidence pack (DBA-exported metadata CSVs); read by .gravity/_lib/scan_db.py
 ```
 
-**Handing in a file?** Drop it in `.gravity/inbox/` and run `/given` — its README explains the door. DB metadata goes to `integration/structural/db/` (directly or via the inbox); its `MANIFEST.md` is the shopping list *and* the coverage record.
+**Handing in a file?** Drop it in `.gravity/_inbox/` and run `/given` — its README explains the door. DB metadata goes to `integration/structural/db/` (directly or via the inbox); its `MANIFEST.md` is the shopping list *and* the coverage record.
 
 `SPEC.md` is the spec you hand an agent for a change — a Minimal Shape to build *from* + enforcement-tagged Rules that *fence* it (`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`); `ARCHITECTURE.html` is the human reference behind it (load it rarely — it's styled HTML). `MISSION.html` owns *why*, `IMPLEMENTATION_PLAN.md` the roadmap spine + per-domain status, root `CONTEXT.md` *now*.
 
@@ -76,4 +79,4 @@ If not: it's a **`PLAN.*.md` under an existing domain** (or an `ops/` folder for
 
 **4. Lifecycle.** idea → `PLAN.md` (`○`) → building earns `SPEC`/`ARCH` (`◑`) → shipped (`✓`). Retiring a domain = fold its `PLAN` into a neighbor or archive it, then remove its rows from the four indexes above.
 
-**Naming:** folder = the subject (kebab-case); files inside named by *kind* (`ARCHITECTURE.html` / `SPEC.md` / `PLAN.md`), with a slug suffix only when a kind repeats (`PLAN.improvement.md`).
+**Naming:** folder = the subject (kebab-case; never a leading `_` — that sigil marks gravity machinery, not a domain); files inside named by *kind* (`ARCHITECTURE.html` / `SPEC.md` / `PLAN.md`), with a slug suffix only when a kind repeats (`PLAN.improvement.md`).
