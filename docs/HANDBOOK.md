@@ -468,7 +468,7 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 
 ## See also
 
-- `docs/INTRO.html` — the browser-read **introduction to the workspace** (Kepler: tiers, junctions, the fleet, the lifecycle). The onboarding read for *this machine*; this handbook is the working reference.
+- `docs/INTRO.html` — **the Kepler guide**, the workspace twin of the gravity guide: storage & junctions, the four-tier lifecycle, the session ritual, a phrasebook of workspace commands, what is checked mechanically, and what Kepler deliberately does not do. The onboarding read for *this machine*; this handbook is the working reference.
 - `gravity/GRAVITY-GUIDE.html` — the browser-read **introduction to the protocol**, for a human engineer: what gravity covers, the whole arc from a user meeting to a verified report, and a **phrasebook** of what to ask an agent for. Travels into every adopted project as `.gravity/GRAVITY.html`, so it is also the page to send a colleague who cloned one repo and has never seen this workspace. Korean sibling: `GRAVITY-GUIDE.ko.html` → `.gravity/GRAVITY.ko.html` (identifiers stay English; the in-page toggle links the pair).
 - `CLAUDE.md` — the agent operating manual (Kepler rules and invariants).
 - `gravity/GRAVITY-PROTOCOL.md` — **the protocol card**: the canonical project-side doctrine, copied to `.gravity/GRAVITY.md` at adoption. Its human twin `gravity/GRAVITY-GUIDE.html` → `.gravity/GRAVITY.html` is copied in the same breath and refreshed with it; only the card is stamped.

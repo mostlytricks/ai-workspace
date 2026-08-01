@@ -19,6 +19,12 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-08-01
+
+### Changed
+- **`docs/INTRO.html` finished its conversion: it is now the Kepler guide, the workspace twin of `GRAVITY-GUIDE.html`** (hotfix follow-through on v4.2.0's trim, from the user asking "don't we need this type of doc for Kepler?" — the answer was yes, and it half-existed: the trim was subtractive, leaving a doc two generations behind its twin). Rebuilt in place (same path, every inbound link survives) in the guide idiom: two `fd-` figures — the storage map (four tier junctions pointing at one canonical `repos/` folder) and the lifecycle flow (`/init-project → active → /ship → stable`, the dormant loop, `/retire`) — a 12-row phrasebook, a what-is-checked/what-it-cannot-prove table (`check.py workspace` · `/triage` · `MANUAL_BLOAT` · `bootstrap.py`), and an honest "what Kepler does not do" (not a backup · never the umbrella repo · no cloud state · unversioned by design · doesn't nag `stable/`). One asymmetry with its twin is stated in the doc: the gravity phrasebook avoids slash commands because commands don't travel; Kepler's commands live here, so its phrasebook names them.
+- **`README.md` restructured as the repo's landing page** — the one page GitHub actually renders (the HTML guides show as source, and the README now says to clone first). Leads with the two products plus the full-arc paragraph (user meeting → verified report); the three protocol-doctrine paragraphs (SPEC anatomy, the work-layer law, graduation) are **removed, not tightened** — they were restatements of the card that would drift on its next change, now two pointer bullets ("this README deliberately doesn't restate it"). Kept: the tier diagram, the commands table (+ the missing `/deploy-kepler` row), the layout block; added the fresh-machine bootstrap line. Ripples: workspace `CLAUDE.md`'s tree no longer calls INTRO an "introduction to gravity" (wrong twice over), HANDBOOK's reading list describes the twin shape.
+
 ## [4.2.0] - 2026-08-01
 
 ### Added
@@ -386,7 +392,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.1...HEAD
+[4.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.1
 [4.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.0
 [4.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.1.0
 [4.0.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.0.0
