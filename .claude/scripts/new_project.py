@@ -105,6 +105,13 @@ def add_projects_row(name):
 
 
 def main():
+    # cp949 consoles can't encode the em dash in the note-path prints below;
+    # without this the script dies mid-scaffold. Mirrors retire_project.py.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     name = (sys.argv[1] if len(sys.argv) > 1 else "").strip()
     validate(name)
     scaffold(name)

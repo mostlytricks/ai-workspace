@@ -32,6 +32,7 @@ import html
 import json
 import re
 import subprocess
+import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -1185,6 +1186,14 @@ TEMPLATE = """<!DOCTYPE html>
 
 
 def main() -> None:
+    # The chart-lib warning path prints an em dash a cp949 console can't
+    # encode — the one branch of this script that would die. Mirrors
+    # retire_project.py.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     if not PROJECTS_MD.exists():
         raise SystemExit(f"PROJECTS.md not found at {PROJECTS_MD}")
     tiers = parse_projects(PROJECTS_MD.read_text(encoding="utf-8"))
