@@ -15,8 +15,13 @@ slash commands). The projects themselves are independent git repos and are never
 committed here.
 
 > New here? Open [`docs/INTRO.html`](./docs/INTRO.html) in a browser for the
-> guided introduction, or [`docs/OVERVIEW.md`](./docs/OVERVIEW.md) for the
-> dev-professional system map.
+> guided introduction to **the workspace**, or
+> [`gravity/GRAVITY-GUIDE.html`](./gravity/GRAVITY-GUIDE.html) for **the protocol**
+> — what gravity does for a human engineer, with diagrams and a phrasebook of what
+> to ask an agent for (this is the page that travels into every adopted project as
+> `.gravity/GRAVITY.html`; 한국어판:
+> [`gravity/GRAVITY-GUIDE.ko.html`](./gravity/GRAVITY-GUIDE.ko.html)). For the
+> dev-professional system map, read [`docs/OVERVIEW.md`](./docs/OVERVIEW.md).
 
 ---
 
@@ -70,7 +75,7 @@ grouped **by domain, not by doc-type**:
 <project>/
   CLAUDE.md · CONTEXT.md · README.md      # root: identity (+ a 4-line fenced router block), now, user guide
   .gravity/
-    GRAVITY.md                            # the protocol card — a verbatim, version-stamped copy
+    GRAVITY.md · GRAVITY.html             # the protocol, twice: the card (agent, version-stamped) + the guide (human, browser-read)
     ROUTER.md                             # Doc Map + what-to-read-before-changing-what
     MISSION.html · ARCHITECTURE.html · IMPLEMENTATION_PLAN.md · DESIGN.md   # cross-cutting
     _inbox/ · _lib/ · _observatory/ · _given/ · _roadmap/  # machinery: a leading `_` is never a domain
@@ -106,7 +111,9 @@ project's root files except a machine-managed 4-line fenced
 `<!-- gravity:router -->` block; the full map lives in `.gravity/ROUTER.md`. The
 protocol card (`.gravity/GRAVITY.md`) makes the repo self-describing when cloned
 without this workspace, and its `gravity: vX.Y` stamp against
-[`gravity/VERSION`](./gravity/VERSION) makes stale adoptions detectable.
+[`gravity/VERSION`](./gravity/VERSION) makes stale adoptions detectable. Its human
+twin `.gravity/GRAVITY.html` ships in the same breath, so a **person** who opens
+the clone gets a readable page instead of an agent's contract.
 
 Full distribution — the protocol card, all stencils, and the portable
 scanners — is cataloged in [`gravity/README.md`](./gravity/README.md).
@@ -145,7 +152,7 @@ CLAUDE.md             # Kepler's operating manual (rules & invariants) — auto-
 AGENTS.md             # Codex-compatible shim → points to CLAUDE.md
 PROJECTS.sample.md    # tracked skeleton of the local-only project index (cp → PROJECTS.md)
 docs/                 # human/browser read-docs: INTRO.html · OVERVIEW.md · OVERVIEW.ko.md · HANDBOOK.md · MISSION.html
-gravity/              # THE PROTOCOL DISTRIBUTION: VERSION · CHANGELOG.md · GRAVITY-PROTOCOL.md · templates/ · lib/
+gravity/              # THE PROTOCOL DISTRIBUTION: VERSION · CHANGELOG.md · GRAVITY-PROTOCOL.md (agent) · GRAVITY-GUIDE.html (human) · templates/ · lib/
 .claude/commands/     # the slash commands (procedures live here, loaded on invocation)
 .claude/scenarios/    # the mechanical walls: check.py consistency/spec/workspace/intake/given + fixtures
 ```

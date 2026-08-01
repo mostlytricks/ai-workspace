@@ -361,7 +361,7 @@ repos/<system>/                # THE workspace project = the hub (its own git re
   CLAUDE.md · CONTEXT.md · README.md    # router: the services table names each repo + where it lives
   .gitignore                   # deny services/ — the hub commits docs + evidence ONLY
   .gravity/
-    GRAVITY.md                 # protocol card
+    GRAVITY.md · GRAVITY.html  # protocol card (agent) + engineer's guide (human)
     integration/
       SPEC.md                  # Boundary Map + Change Order across ALL services
       structural/              # code-scan dumps + db/ evidence pack (above)
@@ -446,6 +446,7 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 - **`ARCHITECTURE.html`** — optional *fifth* doc, split by question: the system page is the **map** (Domain × Layer grid + flows), a domain page is the **trace** (one row expanded down the layers). `data-path` anchors checked by `check.py arch`. Recognized when present, never mandated.
 - **`.gravity/`** — optional per-project directory holding the heavy docs (everything but root `CLAUDE.md` + `CONTEXT.md` + `README.md`), grouped by subject domain; the directory **is** the domain registry. Adopt with `/adopt-gravity`, extend with `/new-domain`; `knowledge-viewer` is the worked example. The protocol's full statement is the card.
 - **Protocol card (`.gravity/GRAVITY.md`)** — the canonical project-side protocol, copied verbatim from `gravity/GRAVITY-PROTOCOL.md` and version-stamped; never hand-edited (upgrade = re-copy). Makes each repo self-describing off-workspace. `/triage` flags a missing or stale card (📡).
+- **Engineer's guide (`.gravity/GRAVITY.html` + `.gravity/GRAVITY.ko.html`)** — the card's **human twin**, copied verbatim from `gravity/GRAVITY-GUIDE.html` (+ the Korean sibling `GRAVITY-GUIDE.ko.html`). Same protocol, browser-read: diagrams, the full arc, and a phrasebook of asks. Carries no stamp of its own (the card covers the family, and they are always copied together), so a pre-v4.2 project picks it up on its next `/sync-gravity` — flagged by the same stale-card 📡.
 - **Domain (`.gravity/`)** — a durable subject area with its own principle and non-goal, earning a `.gravity/<domain>/` folder; most features are just a `PLAN.*.md` slice. Two axes, capability first — the gate lives in `.gravity/ROUTER.md`. Vs DDD: a gravity domain is a documentation facet, looser than a bounded context.
 - **Machinery sigil (`_`)** — a leading underscore on a `.gravity/` folder marks gravity's own machinery, never a subject domain: `_lib/` (installed instruments), `_observatory/` (generated page), `_inbox/` (drop zone), `_given/` (received knowledge, root and per-domain), `_roadmap/` (the plan sheet + URD analyses — authored and committed, unlike the observatory). Replaces v3's prose list; machinery sorts apart from the alphabetized domains and can't collide with one. A pre-v4 project reports `MACHINERY_UNMIGRATED`; `python .claude/scripts/migrate_gravity_v4.py <name>` fixes it.
 - **URD (User Request Document)** — the agreed record of functional requirements from user/stakeholder meetings. Enters through the inbox as **evidence** (`_given/`, verbatim, frozen — an agreement record); `/urd` analyzes it against the domain system. The future-facing sibling of a bug batch.
@@ -467,9 +468,10 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 
 ## See also
 
-- `docs/INTRO.html` — the browser-read **introduction to gravity**. The onboarding read; this handbook is the working reference.
+- `docs/INTRO.html` — the browser-read **introduction to the workspace** (Kepler: tiers, junctions, the fleet, the lifecycle). The onboarding read for *this machine*; this handbook is the working reference.
+- `gravity/GRAVITY-GUIDE.html` — the browser-read **introduction to the protocol**, for a human engineer: what gravity covers, the whole arc from a user meeting to a verified report, and a **phrasebook** of what to ask an agent for. Travels into every adopted project as `.gravity/GRAVITY.html`, so it is also the page to send a colleague who cloned one repo and has never seen this workspace. Korean sibling: `GRAVITY-GUIDE.ko.html` → `.gravity/GRAVITY.ko.html` (identifiers stay English; the in-page toggle links the pair).
 - `CLAUDE.md` — the agent operating manual (Kepler rules and invariants).
-- `gravity/GRAVITY-PROTOCOL.md` — **the protocol card**: the canonical project-side doctrine, copied to `.gravity/GRAVITY.md` at adoption.
+- `gravity/GRAVITY-PROTOCOL.md` — **the protocol card**: the canonical project-side doctrine, copied to `.gravity/GRAVITY.md` at adoption. Its human twin `gravity/GRAVITY-GUIDE.html` → `.gravity/GRAVITY.html` is copied in the same breath and refreshed with it; only the card is stamped.
 - `gravity/README.md` — the catalog of every stencil and lib instrument, one line each.
 - `.claude/commands/` — the slash-command definitions: the one home for what each command actually does.
 - `.claude/scenarios/README.md` — finding meanings and severity bars for every `check.py` checker.

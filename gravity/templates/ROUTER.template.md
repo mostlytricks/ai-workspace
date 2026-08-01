@@ -14,6 +14,8 @@ where things live, it does not restate them. One concern, one home.
 
 > Read `.gravity/GRAVITY.md` (the protocol card) first if you're new to `.gravity/` docs —
 > it explains the doc kinds, their rates of change, and the navigation discipline.
+> **Human, not an agent?** Open `.gravity/GRAVITY.html` instead — same protocol, written to be read
+> in a browser, with diagrams and a phrasebook of what to ask an agent for.
 
 ## Doc Map (`.gravity/`)
 
@@ -22,6 +24,7 @@ Docs are grouped by **subject domain**, not by doc-type. A domain folder holds w
 ```
 .gravity/
   GRAVITY.md                # the protocol card — how to work these docs (versioned copy, never hand-edit)
+  GRAVITY.html              # the same protocol for a HUMAN — browser-read guide + phrasebook (verbatim copy, travels with the card; + GRAVITY.ko.html 한국어판)
   ROUTER.md                 # this file — the map + read-first table
   MISSION.html              # why — north star (browser-read)
   ARCHITECTURE.html         # how — system overview (browser-read)

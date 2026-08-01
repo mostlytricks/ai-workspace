@@ -20,7 +20,9 @@ CLAUDE.md and are never embedded here.
 
 # The gravity protocol (project-side)
 
-This project organizes its documentation with **gravity**. Two files auto-load from the project root — `CLAUDE.md` (identity, *how*) and `CONTEXT.md` (*now*) — and everything else lives under `.gravity/`, grouped **by subject domain**, not by doc-type. Gravity owns only the **fenced `<!-- gravity:router -->` block** in the root harness files (`CLAUDE.md`, `AGENTS.md`, …) — everything else there is the project's. The full map is **`.gravity/ROUTER.md`**: navigate from its **Doc Map**, never guess paths. *(Pre-v3 projects carry the Doc Map in root `CLAUDE.md` instead — same sections, older home.)*
+This project organizes its documentation with **gravity**. *(Human reading this instead of an agent? Open **`.gravity/GRAVITY.html`** — the same protocol written for you, in a browser, with diagrams and a phrasebook of what to ask for; 한국어판은 `.gravity/GRAVITY.ko.html`. This card is the canon; those pages are the guide. They are copied and refreshed together.)*
+
+Two files auto-load from the project root — `CLAUDE.md` (identity, *how*) and `CONTEXT.md` (*now*) — and everything else lives under `.gravity/`, grouped **by subject domain**, not by doc-type. Gravity owns only the **fenced `<!-- gravity:router -->` block** in the root harness files (`CLAUDE.md`, `AGENTS.md`, …) — everything else there is the project's. The full map is **`.gravity/ROUTER.md`**: navigate from its **Doc Map**, never guess paths. *(Pre-v3 projects carry the Doc Map in root `CLAUDE.md` instead — same sections, older home.)*
 
 ## The doc kinds and their rates of change
 
@@ -31,7 +33,7 @@ This project organizes its documentation with **gravity**. Two files auto-load f
 | `.gravity/ROUTER.md` | **routing** — the Doc Map + what to read before changing what + the is-it-a-domain gate | when domains change |
 | `.gravity/<domain>/_given/` + `MANIFEST.md` | **received** — knowledge handed in from outside (quarry, never contract; disputes resolve against `raw/`) | when material arrives via `.gravity/_inbox/` |
 | `.gravity/ARCHITECTURE.html` | **how it's built** — the *map*: the Domain × Layer grid + the flows across it | on structural change |
-| `.gravity/_roadmap/ROADMAP.md` | **the plan sheet** — the business layer above the roadmap spine: URD-derived *chunks* with basis-tagged estimates; its one-way `active` transition mints tracks/slices just-in-time. Its stakeholder rendering is the **engagement book** beside it (`report-<slug>.html` — proposal + report tabs, calm standalone UI, delivered tabs frozen; a projection, never a source) | per URD cycle |
+| `.gravity/_roadmap/ROADMAP.md` | **the plan sheet** — the business layer above the roadmap spine: URD-derived *chunks* with basis-tagged estimates; its one-way `active` transition mints tracks/slices just-in-time, and **a chunk never flips `active` while its `OPEN:` count is above zero** — that interval is the analysis-and-design phase, and each question resolves into a dated row of the sheet's Design-decisions ledger. Its stakeholder rendering is the **engagement book** beside it (`report-<slug>.html` — proposal + report tabs, calm standalone UI, delivered tabs frozen; a projection, never a source, where a `verified` badge requires a *named* proof — dated walkthrough, green gate run, witnessed demo — and otherwise reads `not yet verified`) | per URD cycle |
 | `.gravity/IMPLEMENTATION_PLAN.md` | **what/next** — roadmap spine + per-domain `✓/◑/○` status (+ optional **Tracks**, the direction axis) | per phase/slice |
 | root `CONTEXT.md` | **now** — current state + the single next step | every session |
 | `.gravity/<domain>/SPEC.md` | the **change contract** for this domain (agent-loadable) | when rules change |

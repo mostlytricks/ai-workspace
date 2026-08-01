@@ -59,7 +59,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 | `PLAN.*.md` | 슬라이스 하나의 의도: Goal · Scenario(`given/when/then`) · Slice · Verification. **버그는 *현재-거짓* 시나리오(재현)로 여기에 진입**하고, 수정은 그 시나리오를 SPEC으로 승격시키는 회귀 테스트를 남겨야 한다. |
 | `_given/` + `MANIFEST.md` | 전달받은 도메인 지식(§5) |
 
-**도메인 레지스트리 파일은 없다** — 디렉터리 자체가 레지스트리이며, 변화 속도가 다른 네 소유자로 분산된다: 존재(폴더) · 라우팅(루트 CLAUDE.md의 Doc Map + read-first 테이블) · 왜(MISSION 행) · 상태(PLAN 스파인). `check.py consistency`가 어느 소유자에서든 누락된 도메인을 FAIL로 잡는다. **프로토콜 카드**(`.gravity/GRAVITY.md`, 템플릿 원문 복사본 + 버전 스탬프)는 워크스페이스 없이 저장소만 열어도 스스로를 설명하게 만든다.
+**도메인 레지스트리 파일은 없다** — 디렉터리 자체가 레지스트리이며, 변화 속도가 다른 네 소유자로 분산된다: 존재(폴더) · 라우팅(루트 CLAUDE.md의 Doc Map + read-first 테이블) · 왜(MISSION 행) · 상태(PLAN 스파인). `check.py consistency`가 어느 소유자에서든 누락된 도메인을 FAIL로 잡는다. **프로토콜 카드**(`.gravity/GRAVITY.md`, 템플릿 원문 복사본 + 버전 스탬프)는 워크스페이스 없이 저장소만 열어도 스스로를 설명하게 만든다. 그 **사람용 쌍둥이**가 `.gravity/GRAVITY.html`(`gravity/GRAVITY-GUIDE.html`의 원문 복사본, 스탬프 없음, 항상 카드와 함께 복사 — 한국어판 `.gravity/GRAVITY.ko.html`도 같은 계약으로 동반)이다: 같은 프로토콜을 브라우저로 읽는 안내서로 — `fd-` SVG 도해와 "에이전트에게 무엇을 요청할지" 문형집을 담는다. SPEC 대 ARCHITECTURE의 독자 분리를 프로토콜 자신에게 적용한 것이다.
 
 **선택 문서(있으면 인식):** `DESIGN.md`(앱 시각 계약) · `RUNBOOK.md`(운영 — "새벽 2시 테스트") · `docs/walkthroughs/`(날짜별 append-only *사후* 기록: 무엇이 출하됐고 그 증명) · `.gravity/_roadmap/`(**플랜 시트**: URD에서 나온 청크 + 근거 태그 추정치 — IMPLEMENTATION_PLAN 위의 비즈니스 계층, §5) · `AGENTS.md`(Codex 심).
 

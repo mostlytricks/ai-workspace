@@ -907,7 +907,7 @@ def main(argv=None) -> int:
                     help="project path, or a name/alias when run from the "
                          "workspace (default: the project this lib belongs to)")
     ap.add_argument("--only", choices=sorted(CHECKS), action="append",
-                    help="run just this check (repeatable; default: all four)")
+                    help="run just this check (repeatable; default: all of them)")
     args = ap.parse_args(argv)
 
     name, path = resolve_target(args.project)
