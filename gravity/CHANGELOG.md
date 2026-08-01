@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [4.2.3] - 2026-08-01
+
 ### Fixed
 - **The cp949 console-crash class is swept, not whack-a-moled: three more scripts carried it** (found by an AST audit of every `print()` literal across `.claude/scripts/`, `gravity/lib/`, the dashboard and the scenario harness, after `retire_project.py` made it three incidents — the audit script itself crashed on cp949 printing its findings, which settled the question). Fixed with the house reconfigure block at each entry point: `new_project.py` (the em-dash *note* paths — `/init-project` would have died mid-scaffold exactly when `PROJECTS.md` was missing), `gravity/lib/generate_cosmos.py` (`--list-themes` prints status glyphs; CLI path only — the observatory import path was already safe because its host reconfigures), and `generate_dashboard.py` (the chart-lib warning branch; fixing it also surfaced that the file never imported `sys` — caught by exercising the path, not by compile). Every crash path re-run and proven surviving; all remaining scripts audited console-safe. The audit is the closure of the "shared helper after a fourth incident" question: every current entry point now carries the block, so the helper waits for a genuinely new script, not another sweep.
 - **`retire_project.py` died on its own status line on a Korean-Windows console** (found archiving `lecture-note`). The announce print carries an em dash, the console is cp949, and the script never reconfigured its streams — so `/retire` was simply unusable here, crashing before `do_archive`/`do_delete` ran. Harmless on this run by luck of ordering (the print precedes all mutation, so nothing was half-done), but the same crash sits in front of `delete`, where a future reordering would make it far less benign. Now reconfigures `stdout`/`stderr` to UTF-8 with `errors="replace"` at entry, mirroring `migrate_gravity_v4.py` — the third script to need this (constellation's five hit it in v0.2.1). Manager-side, so no protocol rule changed.
@@ -401,7 +403,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.2...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.3...HEAD
+[4.2.3]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.3
 [4.2.2]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.2
 [4.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.1
 [4.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.0
