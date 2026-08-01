@@ -21,6 +21,8 @@ Human-facing guide for working in `ai-workspace/` — **Kepler** is the workspac
 | Bring a project up to the current gravity version | `/sync-gravity <name>` ([Upgrade a project to a newer gravity](#upgrade-a-project-to-a-newer-gravity)) |
 | Triage a batch of user bug reports into the docs | `/intake <name>` ([Manage a user bug/issue batch](#manage-a-user-bugissue-batch-intake--patch)) |
 | Feed domain knowledge / production-data docs to a project | drop in `.gravity/_inbox/`, then `/given <name>` |
+| Turn an agreed user-requirements doc (URD) into an improvement plan | `/urd <name>` ([Analyze a URD into the plan sheet](#analyze-a-urd-into-the-plan-sheet-urd)) |
+| Hand stakeholders the proposal / a progress report | `/report <name>` — the engagement book: one calm HTML, proposal + report tabs |
 | Set the workspace up on a new machine, or repair broken junctions | `python .claude/scripts/bootstrap.py` ([Set up on a new machine](#set-up-on-a-new-machine)) |
 | Update a sibling Kepler workspace on another drive | `/deploy-kepler <path>` ([Propagate Kepler](#propagate-kepler-to-a-sibling-workspace)) |
 | Know what exists right now | Read `PROJECTS.md` |
@@ -44,6 +46,8 @@ Run from the `ai-workspace/` root in Claude Code. One line each — **the full p
 | `/new-spec <name> <domain>` | Author a domain SPEC: Minimal Shape + Rules tagged only from evidence; runs the gate to prove it. |
 | `/intake <name>` | Triage a bug-report batch into a dated verbatim sheet → root causes → slice PLANs + queue rows. Reported claims only; no repro, no slice. |
 | `/given <name>` | Route `.gravity/_inbox/` into the given layer: one routing table, provenance manifests, inbox ends empty. |
+| `/urd <name>` | Analyze an agreed URD against the domain system: cited classification, plan-sheet chunks + basis-tagged estimates, question list for the next meeting. Never slices, never touches IMPLEMENTATION_PLAN. |
+| `/report <name>` | Maintain the engagement book (single calm-UI HTML): Proposal tab + one report tab per cycle (SRS × clearance) from the plan sheet + walkthroughs. Evidence-bound: "verified" only with a named proof; delivered tabs immutable. |
 | `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify (N=3) → proven rollback. Merge/push stays yours. |
 | `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]`, green gate required, stops before push. |
 | `/retire <name>` | End of life: read-only risk card, then **archive** (reversible) or **delete** (permanent). |
@@ -251,6 +255,22 @@ The compounding effect is the point: every fixed bug leaves the regression test 
 
 ---
 
+## Analyze a URD into the plan sheet (/urd)
+
+You hold meetings with system/application users, collect the next functional requirements, and agree them as a **User Request Document (URD)**. `/urd <name>` is the future-facing evidence door that turns one into an improvement plan — the mirror of `/intake` (a bug is a currently-false scenario; a URD item is a desired-future one):
+
+1. **The URD is routed as evidence** — into `.gravity/_given/` with a provenance manifest row, verbatim and frozen. It's an *agreement record*: disputes resolve against it, nothing paraphrases it.
+2. **Each requirement is classified with citations** against the analyzed domain system — domains touched (SPEC refs), boundary crossings (`integration/SPEC.md`), wall collisions (a SPEC rule it would violate — a *conversation*, never silently a task), new-domain candidates (gate verdict recorded, nothing minted), unknowns as `OPEN:`.
+3. **The plan sheet** (`.gravity/_roadmap/ROADMAP.md`, rolling) gains one **chunk** per accepted requirement — deliberately bigger than a slice, with size drivers (domains/crossings/OPENs) and **basis-tagged estimates**: traditional man-months for the stakeholder conversation + an agent-adjusted figure, each tagged `[measured]`/`[drivers]`/`[guess]` so a number never hides its provenance.
+4. **The question list falls out for free** — every `OPEN:` and wall collision rolls up into the dated analysis sheet's Questions section: your prep for the *next* user meeting.
+5. **Nothing is sliced.** The plan sheet is detached from `IMPLEMENTATION_PLAN.md` by design; the one-way `active` transition (its checklist lives in ROADMAP.md) later mints the track/queue rows and the first slice PLAN **just-in-time**, per chunk, on your say-so.
+
+The layering: **plan sheet** (business scope, per URD cycle) → **IMPLEMENTATION_PLAN.md** (code arc, per phase) → **domain `PLAN.*.md`** (one slice). Each speaks its own language; the URD analysis never leaks man-months into the code docs.
+
+**Reporting outward — one book** (`/report <name>`): a single calm, stakeholder-friendly HTML file per engagement (deliberately *not* the gravity doc theme), rendered from the sheet and never maintained by hand, holding the whole outward conversation as tabs — the **Proposal** first (background · scope & benefits with MM totals · sequencing · estimation-honesty note · sign-off block; frozen at sign-off, whereupon the plan sheet becomes the standing agreement record), then **one report tab per cycle**: SRS × clearance fused, every requirement in its agreed wording with a clearance badge that reads *verified* only when a named proof exists (a dated walkthrough, a green gate run, a witnessed demo). Cycles append tabs; a later URD appends its own Proposal tab; delivered tabs never change; printing lays the whole book out in sequence.
+
+---
+
 ## Adopt the full doc pipeline
 
 When a project has grown a real arc and you keep re-deriving "what was this for again?", give it the two extra docs (see [the four-doc pipeline](#the-four-doc-pipeline-optional)). Worth it when the project is multi-phase, long-lived, and `active/`; skip for one-shots and anything stable, dormant, or archived.
@@ -427,7 +447,9 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 - **`.gravity/`** — optional per-project directory holding the heavy docs (everything but root `CLAUDE.md` + `CONTEXT.md` + `README.md`), grouped by subject domain; the directory **is** the domain registry. Adopt with `/adopt-gravity`, extend with `/new-domain`; `knowledge-viewer` is the worked example. The protocol's full statement is the card.
 - **Protocol card (`.gravity/GRAVITY.md`)** — the canonical project-side protocol, copied verbatim from `gravity/GRAVITY-PROTOCOL.md` and version-stamped; never hand-edited (upgrade = re-copy). Makes each repo self-describing off-workspace. `/triage` flags a missing or stale card (📡).
 - **Domain (`.gravity/`)** — a durable subject area with its own principle and non-goal, earning a `.gravity/<domain>/` folder; most features are just a `PLAN.*.md` slice. Two axes, capability first — the gate lives in `.gravity/ROUTER.md`. Vs DDD: a gravity domain is a documentation facet, looser than a bounded context.
-- **Machinery sigil (`_`)** — a leading underscore on a `.gravity/` folder marks gravity's own machinery, never a subject domain: `_lib/` (installed instruments), `_observatory/` (generated page), `_inbox/` (drop zone), `_given/` (received knowledge, root and per-domain). Replaces v3's prose list; machinery sorts apart from the alphabetized domains and can't collide with one. A pre-v4 project reports `MACHINERY_UNMIGRATED`; `python .claude/scripts/migrate_gravity_v4.py <name>` fixes it.
+- **Machinery sigil (`_`)** — a leading underscore on a `.gravity/` folder marks gravity's own machinery, never a subject domain: `_lib/` (installed instruments), `_observatory/` (generated page), `_inbox/` (drop zone), `_given/` (received knowledge, root and per-domain), `_roadmap/` (the plan sheet + URD analyses — authored and committed, unlike the observatory). Replaces v3's prose list; machinery sorts apart from the alphabetized domains and can't collide with one. A pre-v4 project reports `MACHINERY_UNMIGRATED`; `python .claude/scripts/migrate_gravity_v4.py <name>` fixes it.
+- **URD (User Request Document)** — the agreed record of functional requirements from user/stakeholder meetings. Enters through the inbox as **evidence** (`_given/`, verbatim, frozen — an agreement record); `/urd` analyzes it against the domain system. The future-facing sibling of a bug batch.
+- **Plan sheet / chunk (`.gravity/_roadmap/ROADMAP.md`)** — the business layer above `IMPLEMENTATION_PLAN.md`: one rolling sheet of URD-derived **chunks** (deliberately bigger than slices, never pre-cut). Statuses run one-way `proposed → agreed → active → shipped`; the `active` transition mints IMPLEMENTATION_PLAN track/queue rows just-in-time. Estimates carry **basis tags** (`[measured]` from slice actuals · `[drivers]` from domain/crossing/OPEN counts · `[guess]`) — the estimation-side twin of SPEC enforcement tags.
 - **`SPEC.md` — the change contract** — the per-domain agent-loadable contract: Minimal Shape + enforcement-tagged Rules (anatomy in the card). Vs industry "spec-driven development": **spec-governed change, not spec-generated scaffolding**.
 - **Integration domain** — optional `.gravity/integration/` for contracts *between* services/domains (Boundary Map + Change Order). Promote from `CONTRACT.md` when agents repeatedly cross boundaries; never for a service's internals.
 - **Doc ownership** — each concern has one canonical owner doc; other docs *link*, never restate. `/triage` flags collisions. The ownership table is workspace `CLAUDE.md` §6; the protocol side is the card.

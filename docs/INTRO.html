@@ -249,7 +249,7 @@ footer { margin-top:70px; padding-top:18px; border-top:1px solid var(--line); co
   <b>.gravity/</b>
     <span class="a">GRAVITY.md</span>                            <span class="c"># the protocol card (versioned copy — below)</span>
     MISSION.html · ARCHITECTURE.html · IMPLEMENTATION_PLAN.md
-    <span class="a">_inbox/ · _lib/ · _observatory/ · _given/</span>  <span class="c"># machinery — a leading _ is never a domain</span>
+    <span class="a">_inbox/ · _lib/ · _observatory/ · _given/ · _roadmap/</span>  <span class="c"># machinery — a leading _ is never a domain</span>
     <span class="b">&lt;domain&gt;/</span>    ARCHITECTURE.html · SPEC.md · PLAN.*.md
     <span class="b">integration/</span> SPEC.md   <span class="c"># the contracts BETWEEN services/domains + the change order</span></pre>
   <p><strong>The protocol card makes each repo self-describing.</strong> Projects are independent repos — an agent cloning one <em>without</em> the workspace would find SPECs and PLANs with no explanation. So every <code>.gravity/</code> ships <code>GRAVITY.md</code>: a verbatim, version-stamped copy of the project-side protocol (doc kinds, navigation discipline, SPEC anatomy). Never hand-edited; upgrading gravity means re-copying it, and <code>/triage</code> flags a stale card.</p>

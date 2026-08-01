@@ -73,7 +73,7 @@ grouped **by domain, not by doc-type**:
     GRAVITY.md                            # the protocol card — a verbatim, version-stamped copy
     ROUTER.md                             # Doc Map + what-to-read-before-changing-what
     MISSION.html · ARCHITECTURE.html · IMPLEMENTATION_PLAN.md · DESIGN.md   # cross-cutting
-    _inbox/ · _lib/ · _observatory/ · _given/  # machinery: a leading `_` is never a domain
+    _inbox/ · _lib/ · _observatory/ · _given/ · _roadmap/  # machinery: a leading `_` is never a domain
     <domain>/  ARCHITECTURE.html · SPEC.md · PLAN.*.md   # one folder per subject
 ```
 
@@ -125,7 +125,8 @@ unmarked ones are Kepler-side.
 | ⊙ `/adopt-gravity <name>` | Retrofit `.gravity/` into an existing project; `/sync-gravity` upgrades a stale adoption |
 | ⊙ `/excavate <name>` | Brownfield survey → cited Boundary Map; unknowns stay `OPEN:`, seams are never guessed |
 | ⊙ `/new-domain` · `/new-spec` · `/interview` | Mint a domain (gate + 4 indexes) · author a tagged SPEC from evidence · elicit what's only in your head |
-| ⊙ `/intake` · `/given` | The two evidence doors: bug-report batches · received domain knowledge, both routed with provenance |
+| ⊙ `/intake` · `/given` · `/urd` | The three evidence doors: bug batches (the past) · received domain knowledge · agreed user requirements (the future) — all routed with provenance; `/urd` writes the plan sheet with basis-tagged estimates |
+| ⊙ `/report <name>` | The outward artifact: the engagement book — one calm-UI HTML; Proposal tab + one report tab per cycle (SRS × clearance), "verified" only with named proof |
 | ⊙ `/preflight <name> <domain>` | The pre-change packet: read-first order, coupled SPECs, the runnable gate, honest warnings |
 | ⊙ `/patch-slice` · `/cut-release` | Land one slice under the patch-loop walls · cut one release (stops before push) |
 | ⊙ `/observatory <name>` | One project, one page — Overview+drift+tracks · Queue · Seams · Spec Health · Graduation · Timeline · Orbit 3D. A wrong page means doc drift |

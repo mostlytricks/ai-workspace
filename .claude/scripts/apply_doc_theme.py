@@ -259,6 +259,10 @@ def discover(root: Path, skeleton_only: bool = False) -> list[Path]:
         "gravity/templates/ARCHITECTURE.domain.template.html",
         "docs/MISSION.html",
     ] if root == WORKSPACE else []
+    # REPORT.template.html and the engagement report books it seeds
+    # (.gravity/_roadmap/report-*.html) are deliberately NOT discovered: the
+    # report is stakeholder-facing and carries its own calm standalone
+    # stylesheet — not the gravity doc theme — and delivered tabs are frozen.
     for g in globs:
         p = root / g
         if p.is_file():

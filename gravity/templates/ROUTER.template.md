@@ -31,13 +31,14 @@ Docs are grouped by **subject domain**, not by doc-type. A domain folder holds w
   _lib/                     # the installed gravity instruments (machine-managed — never hand-edit; `_` = machinery, never a domain)
   _observatory/             # generated instrument output — git-ignored, never authored (regenerate, don't fix)
   _given/ + MANIFEST.md     # cross-cutting received knowledge (per-domain variant below)
+  _roadmap/                 # the plan sheet (ROADMAP.md) + dated URD analyses (/urd) + the stakeholder engagement book (report-<slug>.html, /report); authored & committed, never a domain
   <domain>/   ARCHITECTURE.html · SPEC.md · PLAN.*.md   # one folder per subject; add lines as domains appear
   <domain>/_given/ + MANIFEST.md                         # received knowledge routed here by /given (provenance rows)
   integration/ SPEC.md · ARCHITECTURE.html · PLAN.*.md   # optional: cross-service/domain contracts only
   integration/structural/db/ + MANIFEST.md               # the DB evidence pack (DBA-exported metadata CSVs); read by .gravity/_lib/scan_db.py
 ```
 
-**Handing in a file?** Drop it in `.gravity/_inbox/` and run `/given` — its README explains the door. DB metadata goes to `integration/structural/db/` (directly or via the inbox); its `MANIFEST.md` is the shopping list *and* the coverage record.
+**Handing in a file?** Drop it in `.gravity/_inbox/` and run `/given` — its README explains the door. DB metadata goes to `integration/structural/db/` (directly or via the inbox); its `MANIFEST.md` is the shopping list *and* the coverage record. An agreed requirements document (URD) enters the same way — run `/urd` to route it and write the plan sheet.
 
 `SPEC.md` is the spec you hand an agent for a change — a Minimal Shape to build *from* + enforcement-tagged Rules that *fence* it (`[lint]`/`[type]`/`[test:name]`/`[review]`/`[—]`); `ARCHITECTURE.html` is the human reference behind it (load it rarely — it's styled HTML). `MISSION.html` owns *why*, `IMPLEMENTATION_PLAN.md` the roadmap spine + per-domain status, root `CONTEXT.md` *now*.
 

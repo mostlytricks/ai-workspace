@@ -1,0 +1,244 @@
+<!doctype html>
+<!--
+  REPORT.template.html — the outward-facing engagement BOOK: one single HTML holding the
+  WHOLE stakeholder conversation — a PROPOSAL tab (scope · benefits · estimates · sign-off,
+  frozen at sign-off) followed by one REPORT tab per cycle (SRS × clearance fused).
+  Copy to <project>/.gravity/_roadmap/report-<slug>.html — ONE FILE PER ENGAGEMENT (no date
+  in the filename; the dates live on the tabs). /report seeds it with Proposal + Report #1
+  and APPENDS a tab each cycle; a LATER URD on the same project appends its own Proposal
+  tab, then its cycles. Past tabs are IMMUTABLE once delivered (append-only; git history
+  holds each delivery's exact snapshot).
+
+  RULES OF THE PAGE:
+  - CALM, STAKEHOLDER-FACING UI — deliberately NOT the gravity doc theme. No palette
+    switcher, no dark cosmic chrome: this page is handed to users and supervisors, so it is
+    light, quiet, single-accent, and print-friendly (@media print lays all tabs out in
+    sequence with page breaks). Still zero external resources — system fonts, inline CSS,
+    one tiny inline tab script.
+  - STAKEHOLDER LANGUAGE ONLY. No gravity jargon (chunks, slices, SPECs, O-counts) — the
+    method appears only as its effects. Requirements keep their agreed wording and U-ids.
+  - The clearance badge is EVIDENCE-BOUND: "✓ verified" requires a named proof — a dated
+    walkthrough, a green gate run, a demo the users saw (name it in the title tooltip).
+    No proof → the dashed "○ not yet verified" badge; no wording may dress it up.
+    "✕ failing" = verified not working / blocked. Glyph + colour always, never colour alone.
+  - Each tab re-renders the standing SRS half (requirements, roles, decisions in force)
+    from the sources at its date — so the latest tab is always the current definition and
+    the "did the SRS drift from reality" problem is structurally gone.
+  - The report is a PROJECTION, never a source: every fact traces to the plan sheet, an
+    analysis sheet, the decisions ledger, or a walkthrough.
+  Delete this comment when filled.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><!-- FILL: Project --> — Progress reports · <!-- FILL: engagement title --></title>
+<style>
+  /* Calm report stylesheet — standalone on purpose (NOT the gravity doc theme; see header). */
+  :root {
+    --ink:#2B3440; --ink-soft:#4A5568; --muted:#718096; --faint:#A0AEC0;
+    --bg:#F6F8FA; --card:#FFFFFF; --line:#E4E9EF; --line-soft:#EDF1F5;
+    --accent:#33638E; --accent-soft:#EAF1F8;
+    --ok-bg:#E8F5EC; --ok-ink:#256C3C;
+    --warn-bg:#FDF3E1; --warn-ink:#8A5A16;
+    --bad-bg:#FBEAEA; --bad-ink:#A03232;
+    --wait-bg:#EFF2F6; --wait-ink:#5B6B7C;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink-soft);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:880px; margin:0 auto; padding:44px 26px 90px; }
+
+  header.top { margin-bottom:20px; }
+  .proj { font-size:13px; color:var(--muted); letter-spacing:.02em; margin-bottom:2px; }
+  h1 { font-size:26px; color:var(--ink); font-weight:700; letter-spacing:-.01em; margin:0 0 4px; }
+  .lede { color:var(--muted); font-size:15px; margin:0; }
+
+  /* tab bar — one tab per reporting cycle, newest last (and active by default) */
+  .tabs { display:flex; flex-wrap:wrap; gap:2px; margin:26px 0 0; border-bottom:2px solid var(--line); }
+  .tabs button { appearance:none; background:none; border:none; cursor:pointer;
+    font:600 13.5px/1 inherit; font-family:inherit; color:var(--muted);
+    padding:11px 16px 12px; border-bottom:2px solid transparent; margin-bottom:-2px;
+    border-radius:8px 8px 0 0; transition:color .15s, background .15s; }
+  .tabs button:hover { color:var(--ink); background:var(--line-soft); }
+  .tabs button.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--card); }
+
+  section.tab { display:none; padding-top:6px; }
+  section.tab.active { display:block; }
+
+  /* the one-line verdict banner at the top of each tab */
+  .status { background:var(--accent-soft); border:1px solid #D4E2EF; border-radius:10px;
+    padding:12px 16px; margin:20px 0 8px; font-size:14px; color:var(--ink); }
+  .status .when { color:var(--muted); font-size:13px; }
+
+  h2 { font-size:17px; color:var(--ink); font-weight:650; margin:38px 0 10px;
+    padding-bottom:7px; border-bottom:1px solid var(--line); }
+  h2 .n { color:var(--faint); font-size:13px; font-weight:600; margin-right:9px; }
+  p { margin:9px 0; }
+  strong { color:var(--ink); font-weight:650; }
+  code { font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace; font-size:.88em;
+    background:var(--line-soft); border-radius:5px; padding:1px 6px; color:var(--ink); }
+
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; background:var(--card);
+    border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  th { background:#FBFCFD; color:var(--muted); font-weight:600; font-size:11.5px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .sub { color:var(--faint); font-size:12.5px; }
+
+  /* badges — soft pills; glyph + colour, never colour alone */
+  .b { display:inline-block; border-radius:999px; padding:2px 11px; font-size:12px;
+    font-weight:600; white-space:nowrap; }
+  .b-ok    { background:var(--ok-bg);   color:var(--ok-ink); }
+  .b-bad   { background:var(--bad-bg);  color:var(--bad-ink); }
+  .b-build { background:var(--accent-soft); color:var(--accent); }
+  .b-wait  { background:var(--wait-bg); color:var(--wait-ink); }
+  .b-todo  { background:none; color:var(--wait-ink); border:1px dashed var(--faint); } /* not-yet-verified: dashed on purpose */
+  .b-prov  { background:none; color:var(--warn-ink); border:1px dashed #D9A94D; }      /* provisional decision */
+
+  .legendline { font-size:12px; color:var(--muted); margin:6px 2px 0; }
+
+  ul { margin:9px 0; padding-left:20px; } li { margin:6px 0; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0; }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 17px; }
+  .box h3 { margin:0 0 7px; font-size:13px; color:var(--ink); }
+  .box p { margin:4px 0 0; font-size:13.5px; color:var(--ink-soft); }
+
+  .ask { background:var(--warn-bg); border:1px solid #F0DDB4; border-radius:10px;
+    padding:11px 15px; margin:12px 0; font-size:13.5px; }
+  .ask .who { font-weight:650; color:var(--warn-ink); }
+
+  footer { margin-top:60px; padding-top:16px; border-top:1px solid var(--line);
+    color:var(--faint); font-size:12.5px; }
+
+  @media (max-width:640px){ .cols { grid-template-columns:1fr; } }
+  @media print {
+    body { background:#fff; }
+    .tabs { display:none; }
+    section.tab { display:block !important; page-break-before:always; }
+    section.tab:first-of-type { page-break-before:auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="proj"><!-- FILL: Project name --></div>
+    <h1><!-- FILL: engagement title, in the users' words --></h1>
+    <p class="lede"><!-- FILL: one friendly sentence — what this engagement delivers and for whom. --></p>
+  </header>
+
+  <!-- One button per tab: the Proposal first, then report cycles. /report appends here;
+       the newest gets class "active" (and remove it from the previous). data-tab pairs
+       button ↔ section. -->
+  <div class="tabs" id="tabs">
+    <button data-tab="prop1">Proposal · <!-- FILL: YYYY-MM-DD --></button>
+    <button class="active" data-tab="r1">Report #1 · <!-- FILL: YYYY-MM-DD --></button>
+  </div>
+
+  <!-- ============ Proposal — FROZEN at sign-off; a later URD appends prop2 ============ -->
+  <section class="tab" id="prop1">
+    <div class="status"><strong>Proposal</strong> — presented for sign-off. <span class="when">· <!-- FILL: YYYY-MM-DD --></span></div>
+
+    <h2><span class="n">01</span>Background &amp; objective</h2>
+    <p><!-- FILL: 2-3 sentences — what the system is today, what the users asked for, what this proposal covers. --></p>
+
+    <h2><span class="n">02</span>Scope &amp; benefits</h2>
+    <table>
+      <thead><tr><th style="width:40px">#</th><th>Work package</th><th>Benefit to the users</th><th style="width:90px">Effort (trad.)</th></tr></thead>
+      <tbody>
+        <tr><td><code>R1</code></td><td><!-- FILL: package, one line --></td><td><!-- FILL: benefit, in their words --></td><td><!-- FILL --> MM</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Total agreed scope: <!-- FILL --> MM.</strong> <!-- FILL: what's deferred and its trigger, if anything. --></p>
+
+    <h2><span class="n">03</span>Approach &amp; sequencing</h2>
+    <p><!-- FILL: delivery approach in plain words (thin verified increments, decisions already locked); any hard ordering and the reason. --></p>
+
+    <h2><span class="n">04</span>Estimation note</h2>
+    <p><!-- FILL: the honesty basis — which figures are evidence-sized vs judgment; the agent-assisted working estimate, labeled; when estimates upgrade to measured. --></p>
+
+    <h2><span class="n">05</span>Risks &amp; asks</h2>
+    <div class="ask"><span class="who"><!-- FILL: owner -->:</span> <!-- FILL: ask/risk · impact if unresolved. --></div>
+
+    <h2><span class="n">06</span>Sign-off</h2>
+    <p class="sub">Sign-off = agreement on the scope and benefits (02), the decisions in force (listed on the report tabs), and the sequencing (03). From then on, the plan behind this book is the standing agreement record.</p>
+    <table>
+      <thead><tr><th>Party</th><th>Name</th><th>Date</th><th>Signature</th></tr></thead>
+      <tbody>
+        <tr><td>Users' representative</td><td></td><td></td><td></td></tr>
+        <tr><td>Supervisor</td><td></td><td></td><td></td></tr>
+        <tr><td>Project owner</td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ Report #1 — FROZEN once delivered (append-only file) ============ -->
+  <section class="tab active" id="r1">
+    <div class="status"><strong>Status:</strong> <!-- FILL: one-line overall verdict. --> <span class="when">· Period: <!-- FILL: from–to --></span></div>
+
+    <h2><span class="n">01</span>Requirements &amp; clearance</h2>
+    <table>
+      <thead><tr><th style="width:44px">ID</th><th>Requirement (as agreed)</th><th style="width:110px">Status</th><th style="width:150px">Clearance</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>U1</code></td>
+          <td><!-- FILL: agreed wording, one line --><br><span class="sub">Done means: <!-- FILL: acceptance basis in user terms --></span></td>
+          <td><span class="b b-build">building</span></td>
+          <td><span class="b b-todo" title="no proof yet">○ not yet verified</span></td>
+        </tr>
+        <tr>
+          <td><code>U2</code></td>
+          <td><!-- FILL --><br><span class="sub">Done means: <!-- FILL --></span></td>
+          <td><span class="b b-ok">delivered</span></td>
+          <td><span class="b b-ok" title="<!-- FILL: the named proof — demo date / test / artifact -->">✓ verified</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="legendline"><span class="b b-ok">✓ verified</span> a named proof exists &nbsp;·&nbsp; <span class="b b-todo">○ not yet verified</span> no proof yet — dashed on purpose &nbsp;·&nbsp; <span class="b b-bad">✕ failing</span> verified not working / blocked</p>
+
+    <h2><span class="n">02</span>Access model in force</h2>
+    <!-- The standing definition, re-rendered each cycle. Delete if no access model. -->
+    <table>
+      <thead><tr><th style="width:120px">Role</th><th>May</th></tr></thead>
+      <tbody>
+        <tr><td><strong><!-- FILL --></strong></td><td><!-- FILL --></td></tr>
+      </tbody>
+    </table>
+
+    <h2><span class="n">03</span>Decisions in force</h2>
+    <ul>
+      <li><strong><!-- FILL: decision --></strong> — <!-- FILL: what/why, one line. --> <span class="b b-ok">✓ confirmed</span></li>
+      <li><strong><!-- FILL --></strong> — <!-- FILL --> <span class="b b-prov" title="<!-- FILL: who confirms -->">◇ provisional</span></li>
+    </ul>
+
+    <h2><span class="n">04</span>This period · next period</h2>
+    <div class="cols">
+      <div class="box"><h3>✔ This period</h3><p><!-- FILL: what happened, evidence-linked. --></p></div>
+      <div class="box"><h3>→ Next period</h3><p><!-- FILL: what happens next + what it needs from the readers. --></p></div>
+    </div>
+
+    <h2><span class="n">05</span>Risks &amp; asks</h2>
+    <div class="ask"><span class="who"><!-- FILL: owner -->:</span> <!-- FILL: the ask/risk · impact if unresolved. --></div>
+  </section>
+  <!-- ============ /report appends the next <section class="tab"> above this line ============ -->
+
+  <footer>
+    <!-- FILL: project --> · engagement reports · rendered from the project's plan sheet — delivered tabs are never edited; each cycle adds a tab.
+  </footer>
+</div>
+<script>
+(function(){
+  var bar=document.getElementById('tabs'); if(!bar) return;
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    bar.querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===b);});
+    document.querySelectorAll('section.tab').forEach(function(s){s.classList.toggle('active',s.id===b.getAttribute('data-tab'));});
+  });
+})();
+</script>
+</body>
+</html>

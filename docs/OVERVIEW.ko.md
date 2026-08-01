@@ -30,8 +30,8 @@ Gravity는 여러 소프트웨어 프로젝트를 AI 코딩 에이전트와 함�
 ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화이트리스트가 곧 이식 가능한 스켈레톤)
 ├── CLAUDE.md            # 에이전트 운영 매뉴얼 — 자동 로드; 단어 예산 방벽(MANUAL_BLOAT) 적용
 ├── docs/                # 사람이 읽는 문서 (본 문서, HANDBOOK, INTRO, MISSION, intake 시트)
-├── gravity/templates/           # 18개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
-├── .claude/commands/    # 22개 슬래시 커맨드 (lazy: 호출 시에만 로드)
+├── gravity/templates/           # 21개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
+├── .claude/commands/    # 24개 슬래시 커맨드 (lazy: 호출 시에만 로드)
 ├── .claude/scenarios/   # 검증 하네스 (check.py + 골든 픽스처)
 ├── repos/               # 프로젝트 정본 저장소 — 각각 독립된 git 저장소
 └── active/ stable/ dormant/ archive/   # 티어 폴더: 정션(junction)만, 실제 파일 금지
@@ -61,11 +61,11 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 
 **도메인 레지스트리 파일은 없다** — 디렉터리 자체가 레지스트리이며, 변화 속도가 다른 네 소유자로 분산된다: 존재(폴더) · 라우팅(루트 CLAUDE.md의 Doc Map + read-first 테이블) · 왜(MISSION 행) · 상태(PLAN 스파인). `check.py consistency`가 어느 소유자에서든 누락된 도메인을 FAIL로 잡는다. **프로토콜 카드**(`.gravity/GRAVITY.md`, 템플릿 원문 복사본 + 버전 스탬프)는 워크스페이스 없이 저장소만 열어도 스스로를 설명하게 만든다.
 
-**선택 문서(있으면 인식):** `DESIGN.md`(앱 시각 계약) · `RUNBOOK.md`(운영 — "새벽 2시 테스트") · `docs/walkthroughs/`(날짜별 append-only *사후* 기록: 무엇이 출하됐고 그 증명) · `AGENTS.md`(Codex 심).
+**선택 문서(있으면 인식):** `DESIGN.md`(앱 시각 계약) · `RUNBOOK.md`(운영 — "새벽 2시 테스트") · `docs/walkthroughs/`(날짜별 append-only *사후* 기록: 무엇이 출하됐고 그 증명) · `.gravity/_roadmap/`(**플랜 시트**: URD에서 나온 청크 + 근거 태그 추정치 — IMPLEMENTATION_PLAN 위의 비즈니스 계층, §5) · `AGENTS.md`(Codex 심).
 
-## 5. 증거 계층 — 들어오는 두 개의 문
+## 5. 증거 계층 — 들어오는 세 개의 문
 
-두 문 모두 **전달받은** 자료(결정된 진실이 아님)를 담고, 쌓이지 않고 **라우팅되어 나간다**.
+모든 문은 **전달받은** 자료(결정된 진실이 아님)를 담고, 쌓이지 않고 **라우팅되어 나간다**.
 
 | | Intake (신고된 주장) | Given (전달받은 지식) |
 |---|---|---|
@@ -77,7 +77,9 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 
 **유지보수 루프**는 문에서 문까지 이어진다: 신고 → intake 시트 → 버그-intake 슬라이스 PLAN(현재-거짓 시나리오) → `/patch-slice`(기계적 방벽: 앵커, 스냅숏, bare-gated 검증 N=3 → 실패 시 4중 증명 롤백 강제) → 회귀 테스트가 시나리오를 SPEC으로 승격. 버그 수정은 정직한 계약 조항의 가장 빠른 공급원이다.
 
-## 6. 커맨드 표면 (22개)
+**세 번째 문은 미래를 향한다**: `/urd`는 합의된 **User Request Document**(사용자 미팅에서 합의한 기능 요구사항 — URD는 `_given/`에 원문 그대로 착지하는 *합의 기록*)를 받아, 각 요구사항을 도메인 시스템에 대조해 출처 명기로 분류하고(도메인 · 경계 횡단 · 방벽 충돌 · `OPEN:`), **플랜 시트**(`.gravity/_roadmap/ROADMAP.md`)를 작성한다: URD 크기의 *청크*에 근거 태그 추정치(`[measured]`/`[drivers]`/`[guess]`; 전통적 MM + 에이전트 보정치)를 붙인다. 청크는 절대 슬라이스로 미리 쪼개지 않는다 — 일방향 `active` 전이가 IMPLEMENTATION_PLAN 행을 적시(just-in-time)에 발행하고, 모든 `OPEN:`/충돌은 다음 사용자 미팅용 질문 목록으로 롤업된다. 대칭 구조: 버그는 현재-*거짓* 시나리오, URD 항목은 원하는-*미래* 시나리오 — 같은 성숙 경계, 반대 방향.
+
+## 6. 커맨드 표면 (24개)
 
 커맨드는 **lazy** — 호출 시에만 로드되며, 상시 컨텍스트 비용은 CLAUDE.md 하나뿐(단어 예산 방벽 적용). 파괴적 커맨드(`/retire`, `/cut-release`, `/ship`)는 `disable-model-invocation` — 사람만 호출 가능. 모델이 스스로 선택할 수 있는 커맨드에는 **트리거 펜스**("언제 쓰면 안 되는가")가 붙는다.
 
@@ -85,7 +87,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 |---|---|
 | 라이프사이클 | `/init-project` · `/ship` · `/retire` |
 | 문서 시스템 | `/adopt-gravity` · `/sync-gravity` · `/new-domain` · `/new-spec` · `/excavate`(브라운필드: 저작 전에 고고학 — 출처 명기된 Boundary Map, 모르는 것은 `OPEN:` 유지) |
-| 증거·도출 | `/interview`(머릿속 → 문서, 스트로맨 우선) · `/intake`(신고) · `/given`(지식) · `/mission`(재정렬, 읽기 전용) |
+| 증거·도출 | `/interview`(머릿속 → 문서, 스트로맨 우선) · `/intake`(신고) · `/given`(지식) · `/urd`(합의된 요구사항 → 플랜 시트) · `/report`(플랜 시트 → 동결된 이해관계자 보고서, 증거 기반 클리어런스) · `/mission`(재정렬, 읽기 전용) |
 | 유지보수 | `/patch-slice`(스크립트 방벽이 감싼 패치 루프) |
 | 릴리스 | `/cut-release`(Change Order: `[Unreleased]` 증거로 확인받은 범프, 게이트 그린 필수, 푸시 직전 정지) |
 | 조망·뷰 | `/triage`(주간 표류 리포트; 기계적 스캔) · `/dashboard` / `/open-dashboard` · `/observatory`(프로젝트당 한 페이지 — 개요·도메인·심(seam)·스펙 건강·3D, 문서에서 라이브 스캔) · `/open-mission` / `/open-architecture` |
@@ -116,7 +118,7 @@ Gravity는 **컨벤션 시스템으로서** SemVer를 따른다: major = 프로�
 
 ## 10. 범위 펜스 — Gravity가 아닌 것
 
-- **스프린트/보드/추정/지표가 아니고, CI도 아니다** — gravity는 *세션 간 지식 손실*이 실패 모드인 라이프사이클 구간만 다룬다. 파이프라인과 프로세스 관리는 다른 도구의 일이다.
+- **스프린트/보드/속도 지표가 아니고, CI도 아니다** — gravity는 *세션 간 지식 손실*이 실패 모드인 라이프사이클 구간만 다룬다. 파이프라인과 프로세스 관리는 다른 도구의 일이다. 플랜 시트의 근거 태그 추정치는 의도된 유일한 예외다: 이해관계자 합의를 위한 *분석 산출물*(모든 숫자가 자기 근거를 명시)일 뿐, 추적 시스템이 아니다.
 - **엄브렐러 저장소가 아니다** — 워크스페이스는 스켈레톤만 추적하고, 모든 프로젝트는 자체 리모트를 가진 독립 저장소다.
 - **능력 보조 장치가 아니다** — 방벽은 프론티어 모델에도 여전한 실패 모드(세션 기억상실, 관성 오류, 그럴듯하지만 틀린 주장, 의례 과잉 적용)를 겨냥한다. 줄어들 것으로 기대되는 쪽은 레시피다.
 - **강제 의례가 아니다** — CLI 스크립트 하나는 영원히 문서 두 개로 행복하게 산다.

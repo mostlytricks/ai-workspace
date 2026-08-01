@@ -30,8 +30,8 @@ Everything in the system derives from that: the docs are the persistence layer, 
 ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the portable skeleton)
 ├── CLAUDE.md            # agent operating manual — auto-loads; word-budget walled (MANUAL_BLOAT)
 ├── docs/                # human read-docs (this file, HANDBOOK, INTRO, MISSION, intake sheets)
-├── gravity/templates/           # 18 stencils — copied into projects, never auto-loaded
-├── .claude/commands/    # 22 slash commands (lazy: loaded only on invocation)
+├── gravity/templates/           # 21 stencils — copied into projects, never auto-loaded
+├── .claude/commands/    # 24 slash commands (lazy: loaded only on invocation)
 ├── .claude/scenarios/   # the verification harness (check.py + golden fixtures)
 ├── repos/               # canonical project storage — each its own independent git repo
 └── active/ stable/ dormant/ archive/   # tier folders: junctions only, never real files
@@ -61,11 +61,11 @@ ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the 
 
 **There is no domain registry file** — the directory *is* the registry, split across four rate-of-change owners: existence (the folders) · routing (root CLAUDE.md Doc Map + read-first table) · why (MISSION row) · status (PLAN spine). `check.py consistency` fails any domain missing from any owner. **The protocol card** (`.gravity/GRAVITY.md`, verbatim template copy, version-stamped) makes each repo self-describing when opened without the workspace.
 
-**Optional, recognized-when-present:** `DESIGN.md` (app visual contract) · `RUNBOOK.md` (ops — the "2am test") · `docs/walkthroughs/` (dated, append-only *after*-records: what shipped + proof) · `AGENTS.md` (Codex shim).
+**Optional, recognized-when-present:** `DESIGN.md` (app visual contract) · `RUNBOOK.md` (ops — the "2am test") · `docs/walkthroughs/` (dated, append-only *after*-records: what shipped + proof) · `.gravity/_roadmap/` (the **plan sheet**: URD-derived chunks + basis-tagged estimates, the business layer above IMPLEMENTATION_PLAN — §5) · `AGENTS.md` (Codex shim).
 
-## 5. The evidence layer — two doors in
+## 5. The evidence layer — three doors in
 
-Both doors hold **received** material (never decided truth) and **route out** rather than accumulate:
+Every door holds **received** material (never decided truth) and **routes out** rather than accumulates:
 
 | | Intake (reported claims) | Given (handed-in knowledge) |
 |---|---|---|
@@ -77,7 +77,9 @@ Both doors hold **received** material (never decided truth) and **route out** ra
 
 The **maintenance loop** runs door-to-door: report → intake sheet → bug-intake slice PLAN (currently-false scenario) → `/patch-slice` (mechanical walls: anchor, snapshot, bare-gated verify with N=3 → forced four-proof rollback) → regression test graduates the scenario into the SPEC. Bug fixes are the fastest source of honest contract lines.
 
-## 6. The command surface (22)
+The **third door faces forward**: `/urd` receives an agreed **User Request Document** (meeting-agreed functional requirements — the URD lands in `_given/` verbatim, an *agreement record*), classifies each requirement against the domain system with citations (domains · crossings · wall collisions · `OPEN:`s), and writes the **plan sheet** (`.gravity/_roadmap/ROADMAP.md`): URD-sized *chunks* with basis-tagged estimates (`[measured]`/`[drivers]`/`[guess]`; traditional MM + agent-adjusted). Chunks are never pre-cut into slices — the one-way `active` transition mints IMPLEMENTATION_PLAN rows just-in-time, and every `OPEN:`/collision rolls up into the question list for the next user meeting. Symmetry: a bug is a currently-*false* scenario, a URD item a desired-*future* one — same maturation boundary, opposite direction.
+
+## 6. The command surface (24)
 
 Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUDE.md alone (word-budget walled). Destructive commands (`/retire`, `/cut-release`, `/ship`) are `disable-model-invocation` — human-invoked only; self-selectable commands carry **trigger fences** ("when NOT to reach for this").
 
@@ -85,7 +87,7 @@ Commands are **lazy** — loaded only on invocation; the auto-load cost is CLAUD
 |---|---|
 | Lifecycle | `/init-project` · `/ship` · `/retire` |
 | Doc system | `/adopt-gravity` · `/sync-gravity` · `/new-domain` · `/new-spec` · `/excavate` (brownfield: archaeology before authorship — cited Boundary Map, unknowns stay `OPEN:`) |
-| Evidence & elicitation | `/interview` (head → docs, strawman-first) · `/intake` (reports) · `/given` (knowledge) · `/mission` (re-orient, read-only) |
+| Evidence & elicitation | `/interview` (head → docs, strawman-first) · `/intake` (reports) · `/given` (knowledge) · `/urd` (agreed requirements → plan sheet) · `/report` (plan sheet → frozen stakeholder report, evidence-bound clearance) · `/mission` (re-orient, read-only) |
 | Maintenance | `/patch-slice` (script-walled patch loop) |
 | Release | `/cut-release` (Change Order: confirmed bump from `[Unreleased]` evidence, green gate required, stops before push) |
 | Survey & views | `/triage` (weekly drift report; mechanical scan) · `/dashboard` / `/open-dashboard` · `/observatory` (one project, one page — overview · domains · seams · spec health · 3D, scanned live from the docs) · `/open-mission` / `/open-architecture` |
@@ -116,7 +118,7 @@ Field report → `docs/intake/` sheet (verbatim, six facts) → fix → **regres
 
 ## 10. Scope fence — what gravity is not
 
-- **Not sprints/boards/estimates/metrics, and not CI** — gravity covers a lifecycle phase only where *knowledge loss between sessions* is the failure mode. Pipelines and process management are other tools' jobs.
+- **Not sprints/boards/velocity-metrics, and not CI** — gravity covers a lifecycle phase only where *knowledge loss between sessions* is the failure mode. Pipelines and process management are other tools' jobs. The plan sheet's basis-tagged estimates are the one deliberate exception: an *analysis output* for the stakeholder agreement (each number names its evidence), never a tracking system.
 - **Not an umbrella repo** — the workspace tracks only its skeleton; every project is its own repo with its own remote.
 - **Not a capability crutch** — the walls target failure modes frontier models still have (session amnesia, momentum errors, convincing-but-wrong claims, ceremony temptation); the recipes are the part expected to shrink.
 - **Not mandatory ceremony** — a CLI script lives happily on two docs forever.
