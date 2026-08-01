@@ -504,13 +504,21 @@ def scan_tracks(project: Path) -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # Walkthroughs — the frozen per-slice trust artifacts under docs/walkthroughs/
-# (dated, append-only; workspace CLAUDE.md §6). Facts per file: date (from the
-# filename — the one mandatory part), title, and Domain(s) from the header
-# line in either wild style (plain `Domain(s): dram` or blockquote
-# `> Domain(s): \`agent-console\`.`), slug-fallback when absent.
+# (dated, append-only; workspace CLAUDE.md §6). Two generations coexist in one
+# log: legacy .md sheets and the themed .html debriefs that superseded them
+# (gravity vNext) — same filename contract, so both stay on the timeline.
+# Facts per file: date (from the filename — the one mandatory part), title
+# (md `# Walkthrough — …` heading / html <title>), and domains — md: the
+# Domain(s) header line in either wild style (plain `Domain(s): dram` or
+# blockquote `> Domain(s): \`agent-console\`.`); html: the machine-readable
+# `gravity-domains` meta (the visible Domain(s) line is markup-riddled there).
+# Slug-fallback when absent.
 # ---------------------------------------------------------------------------
-WT_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.md$")
+WT_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.(?:md|html)$")
 WT_DOMS = re.compile(r"Domain\(s\):\s*(.+)$", re.M)
+WT_HTML_TITLE = re.compile(r"<title>\s*(?:Walkthrough\s*[—-]\s*)?(.*?)</title>",
+                           re.S)
+WT_HTML_DOMS = re.compile(r'name="gravity-domains"\s+content="([^"<]*)"')
 
 
 def scan_walkthroughs(project: Path) -> list[dict]:
@@ -519,16 +527,23 @@ def scan_walkthroughs(project: Path) -> list[dict]:
         return []
     known = {p.name for p in domain_dirs(project / ".gravity")}
     out = []
-    for f in sorted(wdir.glob("*.md")):
+    for f in sorted(list(wdir.glob("*.md")) + list(wdir.glob("*.html"))):
         m = WT_NAME.match(f.name)
         if not m:
             continue
-        head = "\n".join(f.read_text(encoding="utf-8",
-                                     errors="replace").splitlines()[:20])
-        tm = re.search(r"^#\s+(.+)$", head, re.M)
-        title = strip_md(re.sub(r"^Walkthrough\s*[—-]\s*", "",
-                                tm.group(1))) if tm else m.group(2)
-        dm = WT_DOMS.search(head)
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if f.suffix == ".html":
+            # title/meta live in <head>, past the header comment — whole-file
+            # search, not a first-20-lines head like the md branch.
+            tm = WT_HTML_TITLE.search(text)
+            title = re.sub(r"\s+", " ", tm.group(1)).strip() if tm else m.group(2)
+            dm = WT_HTML_DOMS.search(text)
+        else:
+            head = "\n".join(text.splitlines()[:20])
+            tm = re.search(r"^#\s+(.+)$", head, re.M)
+            title = strip_md(re.sub(r"^Walkthrough\s*[—-]\s*", "",
+                                    tm.group(1))) if tm else m.group(2)
+            dm = WT_DOMS.search(head)
         doms = (re.findall(r"[a-z0-9][\w-]*", dm.group(1).lower())
                 if dm else [])
         if not doms:
@@ -795,7 +810,7 @@ def preflight(project: Path, domain: str) -> str:
         A("none — unfenced domain (see above)")
     if c["gate_cmd"]:
         A(f"gate: `{c['gate_cmd']}`")
-        A(f"prove the change: `python .claude/scripts/run_gate.py "
+        A(f"prove the change: `python .kepler/scripts/run_gate.py "
           f"{facts['project']} {domain}`")
     elif c["has_spec"]:
         A("gate: ⚠ none — nothing mechanical proves a change here")

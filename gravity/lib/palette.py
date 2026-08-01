@@ -7,7 +7,7 @@ they share:
 
     gravity/lib/generate_cosmos.py        Orbit 3D / observatory drawing tokens
                                           (canvas + SVG colours, not CSS vars)
-    .claude/dashboard/generate_dashboard.py   the fleet dashboard's CSS block
+    .kepler/dashboard/generate_dashboard.py   the fleet dashboard's CSS block
     gravity/lib/doc_theme.py              browser-read doc CSS (MISSION /
                                           ARCHITECTURE pages)
 
@@ -183,4 +183,4 @@ if __name__ == "__main__":
         kind = "light" if is_light(name) else "dark "
         print(f"  {name:10} {kind}  bg {a['bg']}  ink {a['ink']}  dim {a['dim']}"
               f"   ok {s['ok']}  guard {s['guard']}  plan {s['plan']}")
-    print("\nverify with: python .claude/scenarios/check.py theme")
+    print("\nverify with: python .kepler/scenarios/check.py theme")

@@ -9,7 +9,7 @@ The honesty discipline is the same one everywhere in gravity, pointed at a legac
 
 ## Step 0 — Locate & inventory (read before writing anything)
 
-1. **Resolve the project** via `.claude/scripts/resolve_project.py` (tier junctions and external-path junctions both work). Not found → list candidates and stop.
+1. **Resolve the project** via `.kepler/scripts/resolve_project.py` (tier junctions and external-path junctions both work). Not found → list candidates and stop.
 2. **Check what docs exist**: root `CLAUDE.md` / `CONTEXT.md` / any `CONTRACT.md` / `GLOBAL_RULES.md` / `.gravity/`. Existing content is evidence — read it, never overwrite it. Also check for a **DB evidence pack** at `.gravity/integration/structural/db/` (see `gravity/templates/DB-EVIDENCE.template.md`) — its MANIFEST says what's `present` vs `OPEN:`.
 3. **Detect the shape — monorepo or hub.** If the project is a **hub** (a docs-only repo whose `services/` folder holds independent service clones, each with its own `.git` — HANDBOOK "Many services, many repos"), the scan surface is `services/*/`; Boundary-Map citations use the `services/<name>/…` relative paths so they stay stable across machines. Never `git mv`/commit inside the service clones — the hub repo owns only the docs and evidence.
 4. **Inventory the runnable parts**: build manifests (`pom.xml`, `build.gradle`, `package.json`, `Dockerfile`, `docker-compose.*`) → one row per runnable service (name, stack, likely port). This table is the skeleton everything else hangs on.
@@ -54,7 +54,7 @@ Show the user the service inventory, the proposed Boundary Map, and the file lis
 1. **Two-doc minimum if missing**: root `CLAUDE.md` (services table, ports, run commands — only what Step 0/1 evidenced) + `CONTEXT.md` (why gravity landed here; Next Step). Copy from `gravity/templates/`; fill only evidenced fields, leave the rest as the stencil's `<FILL>`.
 2. **The protocol card** — creating `.gravity/` for the first time means embedding the project-side protocol so the repo is self-describing off-workspace: `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, delete the template's top comment block, and fill its `v<X.Y>` stamp with major.minor from the `gravity/VERSION` file (never invent a version; the card is a verbatim copy, never tailored). Copy its human twin in the same breath — `cp gravity/GRAVITY-GUIDE.html <project>/.gravity/GRAVITY.html` plus the Korean sibling `GRAVITY-GUIDE.ko.html` → `.gravity/GRAVITY.ko.html` (verbatim, top comments dropped, no stamps of their own).
    Then make the card's own claims true — a first `.gravity/` also gets the machinery it advertises:
-   - `python .claude/scripts/install_lib.py <project>` — installs `.gravity/_lib/` so the clone can render and check itself (else `check_project` immediately WARNs `LIB_MISSING`).
+   - `python .kepler/scripts/install_lib.py <project>` — installs `.gravity/_lib/` so the clone can render and check itself (else `check_project` immediately WARNs `LIB_MISSING`).
    - Seed the drop-zone door: `.gravity/_inbox/README.md` from `gravity/templates/INBOX.template.md`, plus the two project `.gitignore` lines `.gravity/_inbox/*` + `!.gravity/_inbox/README.md` — step 7's DB-evidence routing needs an inbox to drop into.
 3. **`.gravity/integration/SPEC.md`** from `SPEC.template.md`'s **integration variant**:
    - **Boundary Map** — one row per confirmed seam, each citing its source file.

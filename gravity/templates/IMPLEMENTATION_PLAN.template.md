@@ -10,7 +10,7 @@
   expanded into a "phase spec" (Goal → Review gate → Proposed Changes → Verification) — a
   spec-first, human-gated, deep-linked slice. done/todo phases stay one-liners; you only write the
   full spec for the phase you're about to build, then collapse it to a one-liner once it ships
-  (its detail survives in git history + the phase's WALKTHROUGH.md).
+  (its detail survives in git history + the phase's walkthrough in docs/walkthroughs/).
 
   TWO SHAPES: arc-shaped projects use the Phase roadmap (default, below); projects that GROW by
   accreting features use the SLICE-QUEUE VARIANT further down instead. Keep one, delete the other.
@@ -47,7 +47,7 @@ goal:     <the end state these phases add up to>
 2. Read this file + `CONTEXT.md` (current state) + `MISSION.html` (why, if anything feels unmoored).
 3. Confirm the branch; run the gate (below) to verify green.
 4. Read the **next** phase's spec, confirm its **User review required** block, then build it.
-5. When it passes the gate: write the phase's `WALKTHROUGH.md`, collapse the spec to a one-liner, update `CONTEXT.md`.
+5. When it passes the gate: author the phase's walkthrough (the themed debrief — copy `WALKTHROUGH.template.html`, or ask for `/debrief`), collapse the spec to a one-liner, update `CONTEXT.md`.
 
 ## Phase roadmap
 
@@ -108,7 +108,7 @@ Rolling lanes instead of numbered phases. Rules:
   better, in its domain `PLAN.<slug>.md` (link, don't restate; seed from `PLAN.template.md`).
 - `next` is ordered and short (≤3). `later` is an unordered pool, not a commitment.
 - A shipped slice leaves the queue: status `✓` moves to the Domain status spine; its
-  detail survives in git history + its `WALKTHROUGH.md`.
+  detail survives in git history + its walkthrough in `docs/walkthroughs/`.
 - New slices enter via `/interview <project> <feature>` (the intake ritual: the
   is-it-a-domain gate + the given/when/then Scenario).
 - **Chores defer as one-line rows, not slice PLANs**: `| later | <chore> (deferred

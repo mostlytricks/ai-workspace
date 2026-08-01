@@ -8,7 +8,7 @@ Always open the agent at this root, never one level deeper. When a project subdi
 
 ## 1. Workspace Map
 
-Two layers, one workspace: **Kepler** (this manual — tiers, junctions, index) and the **gravity protocol** (everything a project adopts), which lives whole in `gravity/`; read-docs stay in `docs/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
+Two layers, one workspace: **Kepler** (this manual — tiers, junctions, index) and the **gravity protocol** (everything a project adopts), which lives whole in `gravity/`; read-docs stay in `docs/`, and Kepler's own machinery + working docs live in `.kepler/` (so the root doesn't bury what matters — the same "few files at root" rule §6 gives projects).
 
 ```text
 ai-workspace/
@@ -34,9 +34,16 @@ ai-workspace/
 │   ├── templates/                  #   the per-project / per-domain STENCILS (copied, never auto-loaded) — CLAUDE/AGENTS/CONTEXT, the four-doc pipeline (MISSION/IMPLEMENTATION_PLAN/ARCHITECTURE), per-domain PLAN/SPEC (with the §5 integration variant), GRAVITY fenced router block + ROUTER, WALKTHROUGH/INTAKE/GIVEN-MANIFEST/DB-EVIDENCE/INBOX, ROADMAP/URD-ANALYSIS/REPORT (the plan-sheet layer), DESIGN/RUNBOOK. Each stencil self-describes in its header; the catalog lives in `gravity/README.md`.
 │   └── lib/                        #   the portable INSTRUMENTS — stdlib-only, installed verbatim into each project's `.gravity/_lib/` (`install_lib.py`) so a clone renders and checks itself off-workspace; catalog in `gravity/README.md`.
 │
-├── .claude/commands/               # Workspace-level slash commands.
-├── .claude/scripts/                # Helper scripts: bootstrap/link/new/retire (tiers) · install_lib · apply_doc_theme · migrate_gravity_v4 (the v4 machinery rename) · scan_workspace · patch_slice · resolve_project · deploy_kepler.
-├── .claude/dashboard/              # The visual fleet dashboard (generate_dashboard.py + its DESIGN.dashboard.md).
+├── .claude/                        # THE HARNESS INTERFACE — only what Claude Code mandates lives here:
+│   ├── commands/                   #   Workspace-level slash commands (the harness loads them from this path).
+│   └── settings.local.json         #   Per-machine agent state (untracked).
+│
+├── .kepler/                        # KEPLER'S OWN MACHINERY + working docs — the manager's `.gravity/`-equivalent, applied to itself:
+│   ├── scripts/                    #   Helper scripts: bootstrap/link/new/retire (tiers) · install_lib · apply_doc_theme · migrate_gravity_v4 (the v4 machinery rename) · scan_workspace · patch_slice · resolve_project · deploy_kepler.
+│   ├── dashboard/                  #   The visual fleet dashboard (generate_dashboard.py + its DESIGN.dashboard.md).
+│   ├── scenarios/                  #   The golden-scenario harness + workspace checks (check.py — see §7).
+│   ├── intake/                     #   Kepler's own dated intake sheets (dogfooding /intake on the workspace itself).
+│   └── PLAN.*.md                   #   Kepler's own plans (e.g. PLAN.patch-loop.md — the shipped patch-loop ritual spec).
 │
 ├── repos/                          # CANONICAL storage. Real project files live here.
 ├── active/                         # Junctions → repos/. Being worked; touched <30 days.
@@ -61,7 +68,7 @@ Never create files at the workspace root other than the meta files listed above.
 
 ## 2. Git Boundaries
 
-- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the whole `gravity/` distribution, `.claude/` commands+scripts, the root docs) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `stable/`, `dormant/`, or `archive/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
+- **The root repo tracks only the gravity *skeleton*, never the projects.** `ai-workspace/` is a git repo (remote `mostlytricks/ai-workspace`), but its `.gitignore` is **deny-all-then-whitelist**: it commits only the meta files (`AGENTS.md`, `CLAUDE.md`, the whole `gravity/` distribution, `.claude/` commands, `.kepler/` machinery, the root docs) and denies every tier folder. The whitelist **is** the portable skeleton — what gets replicated into another local runtime. So: never add `repos/`, `active/`, `stable/`, `dormant/`, or `archive/` to this repo (the `*` rule already blocks them) — that would make it the forbidden *umbrella repo* of your projects.
 - **Each project is its own independent repo** under `repos/<project>/`, with its own remote. Project version control never mixes with the skeleton repo above.
 - **The protocol is versioned apart from this manager** (SemVer): gravity's version lives in `gravity/VERSION` + a git tag `vX.Y.Z`, with changes recorded in `gravity/CHANGELOG.md` (see it for the major/minor/patch rule — *major = a rule projects depend on breaks*). Manager-only changes (tiers, dashboard, workspace commands) don't bump it. A project records the gravity version it adopted via the `> gravity: vX.Y` stamp inside the fenced router block in its root harness files (seeded from `GRAVITY.template.md`), so stale adoptions are detectable.
 - Junctions are transparent to `git` — commands run from inside a tier junction operate on the real `.git` in `repos/<project>/`.
@@ -77,8 +84,8 @@ A project's real files live in **one of two places**:
 **Invariants:**
 - Tier folders (`active/`, `stable/`, `dormant/`, `archive/`) hold **directory junctions** (`mklink /J`) only — never real project files. No exceptions.
 - Use junctions, not symbolic links. Junctions need no admin or Developer Mode on Windows. Use `mklink /D` only when crossing drives or needing full POSIX semantics under WSL.
-- **Reconstructing a workspace (fresh machine, or repairing links): `python .claude/scripts/bootstrap.py [--dry-run]`.** The skeleton repo tracks no tier folders by design (§2), so a clone has no `repos/`, no tiers, no index, no junctions. Bootstrap creates the folders, seeds `PROJECTS.md` from the sample when absent, and re-links every `repos/` project into the tier **its index row names** — repairing dangling links on the way. It never guesses a tier (an unindexed folder is reported, not filed), never clones, and never edits an existing index.
-- **Create links only via `python .claude/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` uses it.
+- **Reconstructing a workspace (fresh machine, or repairing links): `python .kepler/scripts/bootstrap.py [--dry-run]`.** The skeleton repo tracks no tier folders by design (§2), so a clone has no `repos/`, no tiers, no index, no junctions. Bootstrap creates the folders, seeds `PROJECTS.md` from the sample when absent, and re-links every `repos/` project into the tier **its index row names** — repairing dangling links on the way. It never guesses a tier (an unindexed folder is reported, not filed), never clones, and never edits an existing index.
+- **Create links only via `python .kepler/scripts/link_project.py <link> <target>`** (junction on Windows, symlink on Linux/WSL) or PowerShell `New-Item -ItemType Junction`. **Never** the Git-Bash form `cmd //c "mklink /J active\\$name …"` — MSYS quoting silently drops the `$name` variable and creates a bogus `active$name` link. The helper is argv-driven, so no shell can corrupt the paths; `/init-project` uses it.
 - Tier transitions = `mv <tier>/<name> <other-tier>/`. Same-drive `mv` is metadata-only and instant; never touches `node_modules` or `.venv`.
 - Never use File Explorer drag-drop to move folders containing `node_modules` or `.venv` — it sometimes performs file-by-file copies and thrashes the disk. Use `mv` (bash) or `Move-Item` (PowerShell).
 
@@ -203,7 +210,7 @@ Working inside a `.gravity/` project, follow the card's navigation discipline �
 ## 7. Cross-Project Tooling
 
 - **`PROJECTS.md`** is the index: one row per project — name, stack, last-touched, tier-appropriate one-liner (focus · reactivation trigger · resume blocker). Update on any tier transition or significant status change. **Local-only (git-ignored)** — it names private projects; the skeleton ships only the sanitized `PROJECTS.sample.md` (copy it on a fresh workspace).
-- **`.claude/scenarios/`** is gravity's golden-scenario harness (project-scoped checks live in `gravity/lib/check_project.py`, re-exported here) — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `arch` (ARCHITECTURE.html nodes still name real files), `theme` (the five-palette family agrees across every surface that draws it — owner `gravity/lib/palette.py`), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.claude/scenarios/README.md` — read that, not this bullet, to interpret a finding.
+- **`.kepler/scenarios/`** is gravity's golden-scenario harness (project-scoped checks live in `gravity/lib/check_project.py`, re-exported here) — the mechanical walls: `check.py consistency` (domain↔index drift in one project), `spec` (SPEC Gate/tag honesty vs repo reality), `arch` (ARCHITECTURE.html nodes still name real files), `theme` (the five-palette family agrees across every surface that draws it — owner `gravity/lib/palette.py`), `workspace` (tier/index drift from `scan_workspace.py` facts — one scanner, many callers), `intake` (sheet honesty), `given` (inbox routed, manifested, no ghosts), `scenario`/`selftest` (the harness proving itself on fixtures). Finding meanings and severity bars live in `.kepler/scenarios/README.md` — read that, not this bullet, to interpret a finding.
 - **Everything else is a command.** The procedure lives in `.claude/commands/<name>.md` (the one home — loaded on invocation, never resident); human workflows and the full cheat sheet in `docs/HANDBOOK.md`. One line each — ⊙ marks **protocol-side** commands (they operate on a project's gravity docs and belong with `gravity/`); unmarked ones are **manager-side** (they need tiers, junctions, `PROJECTS.md`):
 
 | Command | What · when |
@@ -222,6 +229,7 @@ Working inside a `.gravity/` project, follow the card's navigation discipline �
 | ⊙ `/urd <name>` | Analyze an agreed URD against the domain system: cited classification per requirement, plan-sheet chunks with basis-tagged estimates (MM + agent-adjusted), question list for the next user meeting. Never slices. |
 | ⊙ `/report <name>` | Maintain the engagement book (single calm-UI HTML): Proposal tab (frozen at sign-off) + one report tab per cycle (SRS × clearance), from the plan sheet + walkthroughs. Agreed wording kept, "verified" only with named proof, delivered tabs immutable. Never originates facts. |
 | ⊙ `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify → bounded fixes → proven rollback. Never merges or pushes. |
+| ⊙ `/debrief <name> [slug]` | The report for work just finished: themed walkthrough — why asked · how handled · key idea · flow-delta figure · real proof · next move. Written once, frozen. |
 | ⊙ `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]` evidence, green gate required, **stops before push**. |
 | `/deploy-kepler <path>` | Propagate the skeleton to a sibling workspace (other drive): `git ls-files` is the manifest, commit = the version, dry-run first; local `settings.json`/`PROJECTS.md` untouchable by construction. |
 | `/triage` | Weekly survey: mechanical scan + checkers → one-page drift report. Read-only. |

@@ -137,6 +137,7 @@ unmarked ones are Kepler-side.
 | ⊙ `/report <name>` | The outward artifact: the engagement book — one calm-UI HTML; Proposal tab + one report tab per cycle, "verified" only with named proof |
 | ⊙ `/preflight <name> <domain>` | The pre-change packet: read-first order, coupled SPECs, the runnable gate, honest warnings |
 | ⊙ `/patch-slice` · `/cut-release` | Land one slice under the patch-loop walls · cut one release (stops before push) |
+| ⊙ `/debrief` | The report for work just finished: themed walkthrough — why asked · how handled · key idea · flow-delta figure · proof · next move |
 | ⊙ `/observatory <name>` | One project, one page — Overview+drift · Queue · Seams · Spec Health · Graduation · Timeline · Orbit 3D. A wrong page means doc drift |
 | ⊙ `/mission <name>` | Re-orient: what it's for, where it stands, what to ask next |
 
@@ -155,10 +156,10 @@ PROJECTS.sample.md    # tracked skeleton of the local-only project index (cp →
 docs/                 # human/browser read-docs: INTRO.html (the Kepler guide) · OVERVIEW.md/.ko.md · HANDBOOK.md · MISSION.html
 gravity/              # THE PROTOCOL DISTRIBUTION: VERSION · CHANGELOG.md · the card (agent) · the guides (human, EN+KO) · templates/ · lib/
 .claude/commands/     # the slash commands (procedures live here, loaded on invocation)
-.claude/scenarios/    # the mechanical walls: check.py consistency/spec/arch/given/intake/theme/workspace + fixtures
+.kepler/scenarios/    # the mechanical walls: check.py consistency/spec/arch/given/intake/theme/workspace + fixtures
 ```
 
 Fresh machine? Clone, `cp PROJECTS.sample.md PROJECTS.md`, then
-`python .claude/scripts/bootstrap.py --dry-run` — the index rebuilds the tier
+`python .kepler/scripts/bootstrap.py --dry-run` — the index rebuilds the tier
 structure and repairs dangling junctions; it never guesses a tier and never
 clones a project.

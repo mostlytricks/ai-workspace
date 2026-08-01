@@ -48,7 +48,7 @@ def _walk_up_for_gravity(start: Path) -> Path | None:
 def _workspace_resolve(token: str):
     """The manager-side alias resolver, when this lib sits in the workspace.
     Returns None when unreachable — the caller then reports an honest error."""
-    scripts = _HERE.parents[1] / ".claude" / "scripts"
+    scripts = _HERE.parents[1] / ".kepler" / "scripts"
     if not (scripts / "resolve_project.py").exists():
         return None
     sys.path.insert(0, str(scripts))

@@ -1,8 +1,8 @@
 # Changelog — gravity (the ai-workspace system)
 
 Notable changes to **gravity itself** — the rules in `CLAUDE.md`, the `*.template.*`
-stencils, and the `.claude/` commands/scripts. This versions the **methodology**, not
-the projects it manages (each project carries its own `CHANGELOG.md`).
+stencils, the `.claude/` commands, and the `.kepler/` scripts. This versions the
+**methodology**, not the projects it manages (each project carries its own `CHANGELOG.md`).
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); gravity adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), read for a *convention system*:
@@ -18,6 +18,12 @@ A project records the gravity version it was built on via the `> gravity: vX.Y` 
 root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detectable.
 
 ## [Unreleased]
+
+### Added
+- **The walkthrough is now the debrief — themed HTML with the change drawn on the flow it changed** (from the user asking for an on-demand report after a slice: "why/what purpose I request, how did u handle it, key idea, suggested next move… gravity.html style, use svg properly"). `WALKTHROUGH.template.html` supersedes `WALKTHROUGH.template.md`: same home (`docs/walkthroughs/<date>-<domain>-<slug>`), same append-only lifecycle, but browser-read in the doc theme, with three sections the md sheet never had — **Request** (why it was asked), **Key idea**, **Suggested next move** — beside the existing what-changed/proof. Existing `.md` walkthroughs stay valid history: `scan_project.py`'s `scan_walkthroughs` now reads both generations (html title from `<title>`, domains from a machine-readable `gravity-domains` meta — the visible Domain(s) line is markup-riddled in HTML, so the md line-regex doesn't port). The figure contract: draw the *same flow* the architecture page draws with the delta made loud — two new `fd-` classes, **`.fd-new`** (added/changed by this slice — accent *and* heavier stroke) and **`.fd-old`** (removed — faint *and* dashed), same colour-blind rule as `fd-gap`. New ⊙ `/debrief <project> [slug]` authors one on demand from the session that just happened (evidence-honest: proof is pasted output from commands actually run; "gate not run" is a valid line, a green claim without output is not). `apply_doc_theme.py` discovers `docs/walkthroughs/*.html` — refreshing the generated theme block is re-theming, not rewriting history; the record itself stays frozen. Follow-through sweep (post-review): the `WALKTHROUGH.md` shorthand in the IMPLEMENTATION_PLAN/PLAN/SPEC stencils (a filename that never existed — walkthroughs are dated files in `docs/walkthroughs/`) reworded to the extension-agnostic doc kind, and the stale template pointers in `/patch-slice` + `/observatory` updated.
+
+### Changed
+- **Workspace machinery re-homed: `.claude/` → `.kepler/`** (manager-side restructure; logged here because portable files carried the old paths in their help text). `.claude/` now holds only what the harness mandates (commands + settings); the dashboard, helper scripts, scenario harness, and Kepler's own working docs (intake sheets, `PLAN.patch-loop.md`) live under `.kepler/`. Portable-side mentions updated to match: the remediation messages in `check_project.py` (`install_lib`/`migrate` hints), `palette.py`'s verify hint, `run_gate.py`/`scan_project.py` usage text, `generate_observatory.py`, `gravity/README.md`, `DESIGN.docs.md`, `GRAVITY-GUIDE.html`, and the re-theme comments in the MISSION/ARCHITECTURE templates; `project_arg.py`'s workspace alias-resolver hop (`_workspace_resolve`) now looks in `.kepler/scripts/` — the one *wiring* change, everything else was help text (it degrades to an honest error, so the miss would have been silent alias loss, not a crash). `SPEC.template.md`'s stateful-paths comment now cites `/patch-slice` (STATE-SNAP step) instead of a workspace file path — a clone should never point at `ai-workspace` internals. The per-project `docs/intake/<date>.md` convention is **unchanged** — that path is the protocol's, not the workspace's.
 
 ## [4.2.3] - 2026-08-01
 

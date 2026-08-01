@@ -6,7 +6,7 @@
 
   RATE-OF-CHANGE BOUNDARY: this file holds ONE slice's intent. The roadmap spine
   (which slice is now/next) lives in IMPLEMENTATION_PLAN.md; *now* lives in CONTEXT.md;
-  the proof a shipped slice works lives in its WALKTHROUGH.md; what's true of every
+  the proof a shipped slice works lives in its walkthrough (docs/walkthroughs/); what's true of every
   valid unit forever lives in SPEC.md. Link across, don't restate.
 
   Delete sections that don't apply — don't pad. Delete this comment when filled.

@@ -1,6 +1,6 @@
 ---
 description: Survey active/ + stable/ + dormant/ projects; flag stale, stencil, and bloated CONTEXT.md files plus index drift; produce a one-page status report.
-allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/scan_workspace.py:*), Bash(python .claude/scenarios/check.py:*)
+allowed-tools: Read, Glob, Grep, Bash(python .kepler/scripts/scan_workspace.py:*), Bash(python .kepler/scenarios/check.py:*)
 ---
 
 You are running the `/triage` workspace command from `ai-workspace/`. Your job is to produce a one-page status report on every project under `active/`, `stable/`, and `dormant/` so the user can decide what to work on, what to prune, what to ship or demote, and what to archive.
@@ -10,9 +10,9 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 1. **Get the facts + structural findings mechanically** — the scanner computes, the checker judges; you format and add the judgment layers (step 7):
 
    ```bash
-   python .claude/scripts/scan_workspace.py --pretty
-   python .claude/scenarios/check.py workspace
-   python .claude/scenarios/check.py theme
+   python .kepler/scripts/scan_workspace.py --pretty
+   python .kepler/scenarios/check.py workspace
+   python .kepler/scenarios/check.py theme
    ```
 
    The scan JSON carries per-project `tiers`, `context` (`last_touched` · `days_ago` · `staleness` at the canonical 14/30 boundaries · `next_step` · `stencil` · `lines`/`completed_bullets`), `index` row, `adoption` stamps, and the cross-cuts (`orphans` · `multi_tier` · `index_only` · `not_indexed`). The checker turns those facts into findings: FAILs `MULTI_TIER` / `INDEX_MISSING_ON_DISK` / `INDEX_WRONG_TIER`; WARNs `UNINITIALIZED` / `STENCIL` / `BLOAT` / `MISSING_TRIGGER` / `MISSING_BLOCKER` / `REPO_ORPHAN` / `NOT_INDEXED` / `ADOPTION_STALE` / `ADOPTION_MISSING_ROW`. The `theme` run is workspace-wide rather than per-project: it FAILs `THEME_DRIFT` when the five-palette family has been retuned on one surface but not the other two (owner: `gravity/lib/palette.py`). **Do not** re-derive any of this by hand (no date math, no tier globbing, no stencil grepping) — and don't suppress a finding you don't understand; surface it.
@@ -21,7 +21,7 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
 
 3. **Map scan facts → report rows:** `staleness` drives the Active section markers (fresh ✅ · stale ⚠️ · very-stale 🚨 — the 🚨 decision is `/ship` if shipped, `dormant/` if blocked, or work it). `MISSING_TRIGGER` drives the Stable ❓ row; `MISSING_BLOCKER` the Dormant ❓ row; `STENCIL` 📋; `BLOAT` 📈 (recommend the prune per CLAUDE.md §6 — don't perform it unless asked); `UNINITIALIZED` fills that section.
 
-4. **Index drift section = the checker's FAILs + index WARNs**, one line each, verbatim enough to act on. `ADOPTION_STALE`/`ADOPTION_MISSING_ROW` fixes are one command: `python .claude/scripts/scan_workspace.py --adoption-table` prints the correct table to paste into PROJECTS.md.
+4. **Index drift section = the checker's FAILs + index WARNs**, one line each, verbatim enough to act on. `ADOPTION_STALE`/`ADOPTION_MISSING_ROW` fixes are one command: `python .kepler/scripts/scan_workspace.py --adoption-table` prints the correct table to paste into PROJECTS.md.
 
 5. **Missing Codex shim:** flag any project whose scan `adoption.shim` is false but `adoption.docsys` isn't null — it won't be discoverable by agents that look for `AGENTS.md`. Fix: `cp gravity/templates/AGENTS.template.md <project>/AGENTS.md`.
 
@@ -35,14 +35,14 @@ You are running the `/triage` workspace command from `ai-workspace/`. Your job i
    - **Doc collision:** the same fact is *stated* in two docs that don't own it (per the §6 ownership rule) — most often the architectural seam or the one-line description appearing in **both** `MISSION.html` and `CLAUDE.md`, or a non-goal duplicated as a constraint. Flag it so the non-owner can be turned into a reference (MISSION owns *why*/the principle; CLAUDE.md owns *how*/the mechanics). Verbatim-or-near duplication is the signal; a brief pointer like "preserve the seam (MISSION §04)" is correct and not a collision.
    - **`.gravity/` registry drift** (only for `.gravity/` projects) — run the checker, never eyeball the four indexes:
      ```bash
-     python .claude/scenarios/check.py consistency --project repos/<name>
+     python .kepler/scenarios/check.py consistency --project repos/<name>
      ```
-     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `gravity/GRAVITY-PROTOCOL.md`, stamp from `gravity/VERSION` — the card is never hand-edited); fold `MACHINERY_UNMIGRATED` / `LIB_MISSING` / `LIB_STALE` into 📡 too (fix = `python .claude/scripts/migrate_gravity_v4.py <name>` for the first, `install_lib.py <name>` for the others); mention other WARNs only when notable. Finding meanings: `.claude/scenarios/README.md`.
+     Fold every FAIL (`UNDERWIRED` — an orphaned domain) into the 🧭 flag; fold the protocol-card WARNs (`PROTOCOL_MISSING` / `PROTOCOL_STALE`) into 📡 (fix = re-copy `gravity/GRAVITY-PROTOCOL.md`, stamp from `gravity/VERSION` — the card is never hand-edited); fold `MACHINERY_UNMIGRATED` / `LIB_MISSING` / `LIB_STALE` into 📡 too (fix = `python .kepler/scripts/migrate_gravity_v4.py <name>` for the first, `install_lib.py <name>` for the others); mention other WARNs only when notable. Finding meanings: `.kepler/scenarios/README.md`.
    - **SPEC honesty rot** (only for projects with `SPEC.md` files) — a renamed test or deleted npm script silently turns a wall into a lie. Run:
      ```bash
-     python .claude/scenarios/check.py spec --project repos/<name>
+     python .kepler/scenarios/check.py spec --project repos/<name>
      ```
-     Fold FAILs (`SPEC_UNFILLED` · `GATE_DEAD` · `TAG_DEAD`) into the 🔬 flag; note WARNs one line per project (they mark pre-tagged-form SPECs, not active lies). Quote the per-domain **tag census** when a domain is heavily `[review]`. Finding meanings: `.claude/scenarios/README.md`.
+     Fold FAILs (`SPEC_UNFILLED` · `GATE_DEAD` · `TAG_DEAD`) into the 🔬 flag; note WARNs one line per project (they mark pre-tagged-form SPECs, not active lies). Quote the per-domain **tag census** when a domain is heavily `[review]`. Finding meanings: `.kepler/scenarios/README.md`.
 
 8. **Produce the report** with this exact structure (omit a section entirely if it has no entries):
 

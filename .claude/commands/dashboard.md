@@ -1,6 +1,6 @@
 ---
 description: One-screen dashboard across active/, stable/, dormant/, archive/ — counts, last-touched, next step, and drift flags. Also regenerates the visual HTML dashboard.
-allowed-tools: Read, Glob, Grep, Bash(python .claude/scripts/scan_workspace.py:*), Bash(python .claude/scenarios/check.py:*), Bash(python .claude/dashboard/generate_dashboard.py)
+allowed-tools: Read, Glob, Grep, Bash(python .kepler/scripts/scan_workspace.py:*), Bash(python .kepler/scenarios/check.py:*), Bash(python .kepler/dashboard/generate_dashboard.py)
 ---
 
 You are running the `/dashboard` workspace command from `ai-workspace/`. Print a single-screen status view across all four tiers so the user can see workspace state at a glance. Read-only.
@@ -10,7 +10,7 @@ You are running the `/dashboard` workspace command from `ai-workspace/`. Print a
 1. **Get the facts mechanically — never re-derive them by hand:**
 
    ```bash
-   python .claude/scripts/scan_workspace.py --pretty
+   python .kepler/scripts/scan_workspace.py --pretty
    ```
 
    The JSON has everything the sections below need: per-project `tiers`, `context` (`last_touched`, `days_ago`, `staleness` — already classified at the 14/30 boundaries — `next_step`, `stencil`, `lines`/`completed_bullets`), `index` (row + focus), `adoption` stamps, plus `orphans` / `multi_tier` / `index_only` / `not_indexed` and `tier_counts`. **Do not** glob tiers, parse dates, or count days yourself — the scanner already did, deterministically.
@@ -22,7 +22,7 @@ You are running the `/dashboard` workspace command from `ai-workspace/`. Print a
 4. **Drift flags** — run the mechanical checker and fold its findings into the `Flags:` line:
 
    ```bash
-   python .claude/scenarios/check.py workspace
+   python .kepler/scenarios/check.py workspace
    ```
 
    FAILs (multi-tier, index↔disk mismatches) and WARNs (orphans, stencils, missing triggers/blockers, adoption-table rot) map onto the flag counts. Don't re-check what it already proved; don't suppress a FAIL.
@@ -66,14 +66,14 @@ Rules for the output:
 7. **Regenerate the HTML dashboard.** After printing the terminal view, run the generator so the visual dashboard reflects the same `PROJECTS.md` state:
 
    ```bash
-   python .claude/dashboard/generate_dashboard.py
+   python .kepler/dashboard/generate_dashboard.py
    ```
 
-   - It parses `PROJECTS.md` and writes the self-contained `.claude/dashboard/dashboard.html` (offline, no deps — Chart.js and the Outfit/Inter/Fira Code fonts are vendored under `vendor/`). If `python` isn't found, try `py`.
-   - The HTML also carries a **GitHub-style contribution heatmap** — commits/day across every `repos/*/.git` (`git log --all --no-merges`), with per-day project tooltips, streak/busiest-day stats, and a theme-aware heat ramp. Unlike the cards, this reads **live from git** (like the adoption chips), not from `PROJECTS.md` — so it can't drift.
-   - **Visual source of truth:** the HTML's design system (premium glassmorphism, deep-navy palette, glow gradients, vendored fonts) is specified in `.claude/dashboard/DESIGN.dashboard.md`. It's deliberately **distinct** from the browser-read doc theme (`gravity/lib/doc_theme.py`, explained in `gravity/DESIGN.docs.md`) — the dashboard is built for *scanning*, docs for *reading*. To restyle the dashboard, edit `DESIGN.dashboard.md` and the `TEMPLATE` in `generate_dashboard.py` together (and re-vendor any new fonts).
+   - It parses `PROJECTS.md` and writes the self-contained `.kepler/dashboard/dashboard.html` (offline, no deps — Chart.js and the Outfit/Inter/Fira Code fonts are vendored under `vendor/`). If `python` isn't found, try `py`.
+   - The HTML also carries a **GitHub-style contribution heatmap** — commits/day across every `repos/*/.git` (`git log --all --no-merges`), with per-day project tooltips, streak/busiest-day stats, and a theme-aware heat ramp. Unlike the roster rows, this reads **live from git** (like the adoption chips), not from `PROJECTS.md` — so it can't drift.
+   - **Visual source of truth:** the HTML's design system (premium glassmorphism, deep-navy palette, glow gradients, vendored fonts) is specified in `.kepler/dashboard/DESIGN.dashboard.md`. It's deliberately **distinct** from the browser-read doc theme (`gravity/lib/doc_theme.py`, explained in `gravity/DESIGN.docs.md`) — the dashboard is built for *scanning*, docs for *reading*. To restyle the dashboard, edit `DESIGN.dashboard.md` and the `TEMPLATE` in `generate_dashboard.py` together (and re-vendor any new fonts).
    - The HTML is derived from `PROJECTS.md`, **not** from the live disk scan above — so if step 4 surfaced index drift, the HTML inherits it. Mention that in one line and offer to reconcile `PROJECTS.md` first.
-   - Then offer to open it: `start .claude/dashboard/dashboard.html`. Don't open it unprompted.
+   - Then offer to open it: `start .kepler/dashboard/dashboard.html`. Don't open it unprompted.
 
 ## Notes
 

@@ -21,8 +21,8 @@ a missing dependency as a failure would be worse than reporting nothing —
 the same under-claiming rule as LIB_STALE, where unknown is not stale.
 
 Usage:
-    python .claude/scripts/run_gate.py <project-or-alias> <domain>
-    python .claude/scripts/run_gate.py [<project-or-alias>] --all
+    python .kepler/scripts/run_gate.py <project-or-alias> <domain>
+    python .kepler/scripts/run_gate.py [<project-or-alias>] --all
 
 Exit codes: the gate's own code; 2 = no gate to run (missing SPEC/Gate line —
 an honest refusal, not a pass). `--all` exits 1 if any gate came back red.

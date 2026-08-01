@@ -1,9 +1,10 @@
 # ai-workspace root is local-only — never commit it as an umbrella repo.
 # This .gitignore is defense-in-depth: deny everything, then whitelist only the
-# workspace meta files and the .claude/ tooling below. The whitelist IS the
-# portable skeleton — exactly what gets replicated when you set the workspace up
-# in another local runtime; the tiers (repos/active/stable/dormant/archive)
-# are machine-local and stay denied by the `*` rule above.
+# workspace meta files, the .claude/ harness interface, and Kepler's own
+# machinery (.kepler/) below. The whitelist IS the portable skeleton — exactly
+# what gets replicated when you set the workspace up in another local runtime;
+# the tiers (repos/active/stable/dormant/archive) are machine-local and stay
+# denied by the `*` rule above.
 
 *
 
@@ -32,7 +33,7 @@
 !gravity/**
 gravity/**/__pycache__/
 
-# --- workspace tooling (commands, scripts, dashboard generator) ---
+# --- the harness interface (.claude/): slash commands + settings, nothing else ---
 !.claude/
 !.claude/**
 
@@ -40,12 +41,17 @@ gravity/**/__pycache__/
 # must never ship with the skeleton (Claude Code convention: *.local = untracked).
 .claude/settings.local.json
 
+# --- Kepler's own machinery (.kepler/): dashboard, scripts, scenario harness,
+# and Kepler's working docs (intake sheets, PLANs) ---
+!.kepler/
+!.kepler/**
+
 # Generated, local-only dashboard output. The generator stays tracked
-# (whitelisted above via .claude/**); the regenerated HTML is not.
+# (whitelisted above via .kepler/**); the regenerated HTML is not.
 # Per-project instrument output moved into the projects themselves
 # (<project>/.gravity/_observatory/, which ignores itself) — the tiers are
 # already denied by the `*` rule, so nothing is needed here for it.
-.claude/dashboard/dashboard.html
+.kepler/dashboard/dashboard.html
 
 # Python bytecode from the helper scripts — never part of the tracked skeleton.
-.claude/**/__pycache__/
+.kepler/**/__pycache__/

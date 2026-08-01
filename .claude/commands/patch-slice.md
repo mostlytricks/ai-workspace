@@ -3,13 +3,13 @@ description: Patch one slice under the patch-loop ritual — git anchor before, 
 argument-hint: <project> [slug]
 ---
 
-You are running `/patch-slice` from `ai-workspace/`. The user wants to land one slice in project **`$ARGUMENTS`** under the patch-loop ritual (`docs/PLAN.patch-loop.md` — the 7 steps and findings F1–F8 live there). The mechanical walls are **`.claude/scripts/patch_slice.py`**; every step below that has a subcommand is run *through it*, never re-implemented by hand — it was built so a weaker agent can't skip a step, trust a piped exit code, or report a rollback it never proved. You keep exactly two judgment steps: **writing the patch** and **writing the re-plan prose**.
+You are running `/patch-slice` from `ai-workspace/`. The user wants to land one slice in project **`$ARGUMENTS`** under the patch-loop ritual (`.kepler/PLAN.patch-loop.md` — the 7 steps and findings F1–F8 live there). The mechanical walls are **`.kepler/scripts/patch_slice.py`**; every step below that has a subcommand is run *through it*, never re-implemented by hand — it was built so a weaker agent can't skip a step, trust a piped exit code, or report a rollback it never proved. You keep exactly two judgment steps: **writing the patch** and **writing the re-plan prose**.
 
 Exit codes from the script: `0` ok · `1` a wall failed (stop, read its output) · `75` fix-loop exhausted, rollback required.
 
 ## Step 0 — Resolve the project and the gate
 
-1. Resolve `<project>` via `python .claude/scripts/resolve_project.py <name>`; `cd` into the project (junction or real path — the script finds the repo root itself). Not a git repo → stop; the ritual needs one.
+1. Resolve `<project>` via `python .kepler/scripts/resolve_project.py <name>`; `cd` into the project (junction or real path — the script finds the repo root itself). Not a git repo → stop; the ritual needs one.
 2. Find the **real gate** the `/new-spec` way: the affected domain's `.gravity/<domain>/SPEC.md` **Gate** line first, else the runnable scripts in `package.json` / `pyproject.toml` (`test`, `typecheck`, `lint` — commands that exit non-zero). **Never invent a gate.** No gate at all → say so plainly; the user owns the risk, and `preflight --skip-gate` logs the skip loudly.
 
 ## Step 1 — Intent first: the slice PLAN
@@ -21,7 +21,7 @@ A slice PLAN must exist **before any edit** (`gravity/templates/PLAN.template.md
 ## Step 2 — Preflight (walls: clean tree, green baseline, CONTEXT drift — F2/F8)
 
 ```bash
-python <workspace>/.claude/scripts/patch_slice.py preflight --gate "<gate cmd>"
+python <workspace>/.kepler/scripts/patch_slice.py preflight --gate "<gate cmd>"
 ```
 
 - **Dirty tree** → the script prints the F2 remedy: the dirt is usually an *unclosed previous loop* — verify it, land it as its own commit, don't stash it. Do that, then re-run preflight.
@@ -31,8 +31,8 @@ python <workspace>/.claude/scripts/patch_slice.py preflight --gate "<gate cmd>"
 ## Step 3 — Anchor + snap (walls: escape hatch in the doc, state git can't see — F6)
 
 ```bash
-python <workspace>/.claude/scripts/patch_slice.py anchor --plan <plan path> --slug <slug>
-python <workspace>/.claude/scripts/patch_slice.py snap --spec <domain SPEC> --plan <plan path>
+python <workspace>/.kepler/scripts/patch_slice.py anchor --plan <plan path> --slug <slug>
+python <workspace>/.kepler/scripts/patch_slice.py snap --spec <domain SPEC> --plan <plan path>
 ```
 
 The script writes the anchor SHA into the PLAN's Execution block and creates `slice/<slug>`. Snap resolution order is `--paths` > SPEC `Stateful paths:` line > PLAN declaration; "no paths declared" is a clean skip, not an error — most domains have none.
@@ -42,7 +42,7 @@ The script writes the anchor SHA into the PLAN's Execution block and creates `sl
 **PATCH** — yours: the actual edits, per the slice PLAN. Load the domain SPEC first (the contract), normal working discipline. No auto-commit-per-edit noise.
 
 ```bash
-python <workspace>/.claude/scripts/patch_slice.py verify --gate "<gate cmd>" --plan <plan path>
+python <workspace>/.kepler/scripts/patch_slice.py verify --gate "<gate cmd>" --plan <plan path>
 ```
 
 Then the **behavioral drive**: run the changed flow once for real (the actual API route / CLI invocation / skill run — a fixture counts only if it hits the real entry point). Tests passing ≠ feature working.
@@ -50,7 +50,7 @@ Then the **behavioral drive**: run the changed flow once for real (the actual AP
 - Red → fix and re-verify. The script counts attempts; **exit 75 means the loop is exhausted — it is a stop, not a suggestion:**
 
 ```bash
-python <workspace>/.claude/scripts/patch_slice.py rollback --to <anchor SHA> --gate "<gate cmd>" --plan <plan path> [--probe "<cmd that exercises restored state>"]
+python <workspace>/.kepler/scripts/patch_slice.py rollback --to <anchor SHA> --gate "<gate cmd>" --plan <plan path> [--probe "<cmd that exercises restored state>"]
 ```
 
 Give a `--probe` whenever state was snapped ("restored state actually functions" is the fourth proof — F7; without one the script warns SKIPPED). A rollback is a **finding for re-plan, never a failure to hide** — the script records it in the PLAN; you carry it into step 5.
@@ -59,12 +59,12 @@ Give a `--probe` whenever state was snapped ("restored state actually functions"
 
 1. **Checkpoint commit** on the slice branch (project-appropriate message). Fire-drills, if the user wants one, happen **only after this commit** — a drill against uncommitted state destroys the patch (F3).
 2. ```bash
-   python <workspace>/.claude/scripts/patch_slice.py cleanup
+   python <workspace>/.kepler/scripts/patch_slice.py cleanup
    ```
 3. **RE-PLAN** — the step that closes the loop, same session:
    - Slice PLAN: status → ✓ (or the rollback finding), Execution block already carries the mechanical story.
    - `CONTEXT.md`: Completed bullet + fresh Next Step; fix any preflight drift findings.
-   - Shipping something reviewable → a WALKTHROUGH (`gravity/templates/WALKTHROUGH.template.md`), linked not restated.
+   - Shipping something reviewable → a WALKTHROUGH (`gravity/templates/WALKTHROUGH.template.html` — the themed debrief; `/debrief` authors it), linked not restated.
    - **Bug graduation:** the once-false scenario now has a named test → promote it into the domain SPEC's **Behavioral Contract** as a `[test:<name>]` line. Intent graduates to contract by earning a wall — bug fixes are the fastest source of honest contract lines.
 
 ## Report back

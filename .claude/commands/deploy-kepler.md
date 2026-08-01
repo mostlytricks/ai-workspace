@@ -12,7 +12,7 @@ All mechanics live in one deterministic script — **do not** copy files by hand
 1. **Dry-run first, always:**
 
 ```bash
-python .claude/scripts/deploy_kepler.py "$ARGUMENTS"
+python .kepler/scripts/deploy_kepler.py "$ARGUMENTS"
 ```
 
 2. **Relay the report** — source commit vs target stamp, and the four buckets: `new` / `update` (safe — target untouched since last deploy) / `local-modified` (the sibling's owner edited it) / `orphaned` (a previous deploy shipped it; the source no longer does).

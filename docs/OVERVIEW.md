@@ -2,7 +2,7 @@
 
 > The developer-professional view of the whole system, in one read.
 > Current as of **gravity v2.5.1 + unreleased** (2026-07). Korean edition: `OVERVIEW.ko.md`.
-> Deep dives: `CLAUDE.md` (the agent operating manual) · `HANDBOOK.md` (workflows) · `.claude/scenarios/README.md` (checker reference).
+> Deep dives: `CLAUDE.md` (the agent operating manual) · `HANDBOOK.md` (workflows) · `.kepler/scenarios/README.md` (checker reference).
 
 ---
 
@@ -32,7 +32,7 @@ ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the 
 ├── docs/                # human read-docs (this file, HANDBOOK, INTRO, MISSION, intake sheets)
 ├── gravity/templates/           # 21 stencils — copied into projects, never auto-loaded
 ├── .claude/commands/    # 24 slash commands (lazy: loaded only on invocation)
-├── .claude/scenarios/   # the verification harness (check.py + golden fixtures)
+├── .kepler/scenarios/   # the verification harness (check.py + golden fixtures)
 ├── repos/               # canonical project storage — each its own independent git repo
 └── active/ stable/ dormant/ archive/   # tier folders: junctions only, never real files
 ```
@@ -61,7 +61,7 @@ ai-workspace/            # skeleton repo (deny-all .gitignore; whitelist IS the 
 
 **There is no domain registry file** — the directory *is* the registry, split across four rate-of-change owners: existence (the folders) · routing (root CLAUDE.md Doc Map + read-first table) · why (MISSION row) · status (PLAN spine). `check.py consistency` fails any domain missing from any owner. **The protocol card** (`.gravity/GRAVITY.md`, verbatim template copy, version-stamped) makes each repo self-describing when opened without the workspace — and its **human twin** `.gravity/GRAVITY.html` (from `gravity/GRAVITY-GUIDE.html`, verbatim, unstamped, always copied with the card — plus the `.ko` Korean sibling, same contract) does the same job for a person: the protocol as a browser-read guide with `fd-` SVG figures and a phrasebook of asks. The SPEC-versus-ARCHITECTURE audience split, applied to the protocol itself.
 
-**Optional, recognized-when-present:** `DESIGN.md` (app visual contract) · `RUNBOOK.md` (ops — the "2am test") · `docs/walkthroughs/` (dated, append-only *after*-records: what shipped + proof) · `.gravity/_roadmap/` (the **plan sheet**: URD-derived chunks + basis-tagged estimates, the business layer above IMPLEMENTATION_PLAN — §5) · `AGENTS.md` (Codex shim).
+**Optional, recognized-when-present:** `DESIGN.md` (app visual contract) · `RUNBOOK.md` (ops — the "2am test") · `docs/walkthroughs/` (dated, append-only *after*-records — the themed debrief: why asked · how handled · key idea · flow delta · proof; `/debrief` authors one on demand) · `.gravity/_roadmap/` (the **plan sheet**: URD-derived chunks + basis-tagged estimates, the business layer above IMPLEMENTATION_PLAN — §5) · `AGENTS.md` (Codex shim).
 
 ## 5. The evidence layer — three doors in
 
@@ -125,4 +125,4 @@ Field report → `docs/intake/` sheet (verbatim, six facts) → fix → **regres
 
 ---
 
-*Cross-references: templates inventory — workspace `CLAUDE.md` §1 · rituals and rules — §6 · finding tables — `.claude/scenarios/README.md` · glossary and workflows — `HANDBOOK.md`.*
+*Cross-references: templates inventory — workspace `CLAUDE.md` §1 · rituals and rules — §6 · finding tables — `.kepler/scenarios/README.md` · glossary and workflows — `HANDBOOK.md`.*

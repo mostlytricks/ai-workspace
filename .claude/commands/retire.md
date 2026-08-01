@@ -47,7 +47,7 @@ Do not proceed to Step 3 until the user has chosen archive or delete (and confir
 ## Step 3 — Execute via the helper (never hand-roll the junction removal)
 
 ```bash
-python .claude/scripts/retire_project.py archive "$ARGUMENTS"   # OR: delete
+python .kepler/scripts/retire_project.py archive "$ARGUMENTS"   # OR: delete
 ```
 
 The helper detaches junctions with `rmdir`/`unlink` (link only — never recurses into the target) and refuses to `rmtree` anything that is itself a reparse point. If `python` isn't found, use the PowerShell fallback below; do **not** substitute `rm -rf active/<name>` — that can delete the real files through the junction.
@@ -68,7 +68,7 @@ New-Item -ItemType Junction -Path "archive\$($args)" -Target "repos\$($args)" | 
 ## Step 5 — Regenerate the dashboard
 
 ```bash
-python .claude/dashboard/generate_dashboard.py
+python .kepler/dashboard/generate_dashboard.py
 ```
 Report the new tier counts.
 

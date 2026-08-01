@@ -11,7 +11,7 @@ The point of the ritual is honesty at the gate: a project enters stable because 
 ## Validation
 
 1. **Empty name** — if `$ARGUMENTS` is empty/whitespace, ask which project and stop.
-2. **In active/** — `active/<name>` must exist (a junction). If the project is elsewhere (`stable/` already, `dormant/`, `archive/`), say where it is and stop — shipping is active→stable only. Resolve aliases via `python .claude/scripts/resolve_project.py <name>` if the literal name isn't found.
+2. **In active/** — `active/<name>` must exist (a junction). If the project is elsewhere (`stable/` already, `dormant/`, `archive/`), say where it is and stop — shipping is active→stable only. Resolve aliases via `python .kepler/scripts/resolve_project.py <name>` if the literal name isn't found.
 3. **Two docs present** — `CLAUDE.md` + `CONTEXT.md` must exist in the project. If missing, stop and suggest fixing that first (a project without docs isn't "shipped well").
 
 ## Step 1 — Check the entry gate (read-only). Print an evidence card.
@@ -54,7 +54,7 @@ Move the project's row from `## active/` to `## stable/`. Rewrite the date colum
 ## Step 5 — Regenerate the dashboard
 
 ```bash
-python .claude/dashboard/generate_dashboard.py
+python .kepler/dashboard/generate_dashboard.py
 ```
 
 Report the new tier counts.

@@ -2,7 +2,7 @@
 
 > 개발 실무자 관점에서 전체 시스템을 한 번에 읽는 문서.
 > 기준 버전: **gravity v2.5.1 + unreleased** (2026-07). 영문판: `OVERVIEW.md`.
-> 상세 문서: `CLAUDE.md`(에이전트 운영 매뉴얼) · `HANDBOOK.md`(워크플로) · `.claude/scenarios/README.md`(체커 레퍼런스).
+> 상세 문서: `CLAUDE.md`(에이전트 운영 매뉴얼) · `HANDBOOK.md`(워크플로) · `.kepler/scenarios/README.md`(체커 레퍼런스).
 
 ---
 
@@ -32,7 +32,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 ├── docs/                # 사람이 읽는 문서 (본 문서, HANDBOOK, INTRO, MISSION, intake 시트)
 ├── gravity/templates/           # 21개 스텐실 — 프로젝트로 복사될 뿐, 자동 로드되지 않음
 ├── .claude/commands/    # 24개 슬래시 커맨드 (lazy: 호출 시에만 로드)
-├── .claude/scenarios/   # 검증 하네스 (check.py + 골든 픽스처)
+├── .kepler/scenarios/   # 검증 하네스 (check.py + 골든 픽스처)
 ├── repos/               # 프로젝트 정본 저장소 — 각각 독립된 git 저장소
 └── active/ stable/ dormant/ archive/   # 티어 폴더: 정션(junction)만, 실제 파일 금지
 ```
@@ -61,7 +61,7 @@ ai-workspace/            # 스켈레톤 저장소 (deny-all .gitignore — 화�
 
 **도메인 레지스트리 파일은 없다** — 디렉터리 자체가 레지스트리이며, 변화 속도가 다른 네 소유자로 분산된다: 존재(폴더) · 라우팅(루트 CLAUDE.md의 Doc Map + read-first 테이블) · 왜(MISSION 행) · 상태(PLAN 스파인). `check.py consistency`가 어느 소유자에서든 누락된 도메인을 FAIL로 잡는다. **프로토콜 카드**(`.gravity/GRAVITY.md`, 템플릿 원문 복사본 + 버전 스탬프)는 워크스페이스 없이 저장소만 열어도 스스로를 설명하게 만든다. 그 **사람용 쌍둥이**가 `.gravity/GRAVITY.html`(`gravity/GRAVITY-GUIDE.html`의 원문 복사본, 스탬프 없음, 항상 카드와 함께 복사 — 한국어판 `.gravity/GRAVITY.ko.html`도 같은 계약으로 동반)이다: 같은 프로토콜을 브라우저로 읽는 안내서로 — `fd-` SVG 도해와 "에이전트에게 무엇을 요청할지" 문형집을 담는다. SPEC 대 ARCHITECTURE의 독자 분리를 프로토콜 자신에게 적용한 것이다.
 
-**선택 문서(있으면 인식):** `DESIGN.md`(앱 시각 계약) · `RUNBOOK.md`(운영 — "새벽 2시 테스트") · `docs/walkthroughs/`(날짜별 append-only *사후* 기록: 무엇이 출하됐고 그 증명) · `.gravity/_roadmap/`(**플랜 시트**: URD에서 나온 청크 + 근거 태그 추정치 — IMPLEMENTATION_PLAN 위의 비즈니스 계층, §5) · `AGENTS.md`(Codex 심).
+**선택 문서(있으면 인식):** `DESIGN.md`(앱 시각 계약) · `RUNBOOK.md`(운영 — "새벽 2시 테스트") · `docs/walkthroughs/`(날짜별 append-only *사후* 기록 — 테마 입힌 디브리핑: 왜 요청했나 · 어떻게 처리했나 · 핵심 아이디어 · 흐름 델타 · 증명; `/debrief`가 요청 시 작성) · `.gravity/_roadmap/`(**플랜 시트**: URD에서 나온 청크 + 근거 태그 추정치 — IMPLEMENTATION_PLAN 위의 비즈니스 계층, §5) · `AGENTS.md`(Codex 심).
 
 ## 5. 증거 계층 — 들어오는 세 개의 문
 
@@ -125,4 +125,4 @@ Gravity는 **컨벤션 시스템으로서** SemVer를 따른다: major = 프로�
 
 ---
 
-*상호 참조: 템플릿 목록 — 워크스페이스 `CLAUDE.md` §1 · 의례와 규칙 — §6 · 발견 테이블 — `.claude/scenarios/README.md` · 용어집과 워크플로 — `HANDBOOK.md`.*
+*상호 참조: 템플릿 목록 — 워크스페이스 `CLAUDE.md` §1 · 의례와 규칙 — §6 · 발견 테이블 — `.kepler/scenarios/README.md` · 용어집과 워크플로 — `HANDBOOK.md`.*

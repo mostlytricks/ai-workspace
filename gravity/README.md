@@ -51,7 +51,7 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 | `SPEC.template.md` | The per-domain **change contract** — generative (Minimal Shape + Generate loop) and limiting (enforcement-tagged Rules). Carries the first-class INTEGRATION VARIANT (Boundary Map + Change Order) for the cross-service `integration` domain. |
 | `GRAVITY.template.md` | The **thin fenced router block** — the only thing gravity writes into root harness files (CLAUDE.md, AGENTS.md, …); machine-managed between `<!-- gravity:router -->` fences. |
 | `ROUTER.template.md` | The full in-`.gravity/` router → `.gravity/ROUTER.md`: Doc Map + read-first table + the is-it-a-domain gate. |
-| `WALKTHROUGH.template.md` | Per-change "what got done + proof" record (append-only, dated). |
+| `WALKTHROUGH.template.html` | Per-change debrief: why asked · how handled · key idea · flow-delta figure (`fd-new`/`fd-old`) · proof · next move (append-only, dated, browser-read; authored by `/debrief`; superseded `WALKTHROUGH.template.md` — old `.md` sheets stay valid history). |
 | `INTAKE.template.md` | Per-batch bug/issue intake sheet — verbatim reports + required-facts checklist → `docs/intake/<date>.md`; seeded by `/intake`. |
 | `URD-ANALYSIS.template.md` | Per-URD dated analysis sheet → `.gravity/_roadmap/<date>-<slug>.md` — one agreed User Request Document classified against the domain system (cited or `OPEN:`) + the question list for the next meeting; seeded by `/urd`, frozen when routed. |
 | `ROADMAP.template.md` | The rolling **plan sheet** → `.gravity/_roadmap/ROADMAP.md` — URD-derived chunks with basis-tagged estimates (traditional MM + agent-adjusted), the Design-decisions (A&D) ledger, and the one-way `active` transition that mints IMPLEMENTATION_PLAN rows just-in-time; seeded by `/urd`. |
@@ -65,7 +65,7 @@ Copied, never auto-loaded. Each stencil also self-describes in its header commen
 ## The portable instruments (`lib/`)
 
 Everything here is **stdlib-only and path-relative by rule**, because it doesn't stay here:
-`python .claude/scripts/install_lib.py <project>` copies this whole directory into
+`python .kepler/scripts/install_lib.py <project>` copies this whole directory into
 `<project>/.gravity/_lib/` with a `VERSION` stamp. The protocol card makes a repo
 self-*describing*; the lib makes it self-*rendering* — a clone that has never seen this
 workspace can scan, check and render itself.
@@ -83,14 +83,14 @@ workspace can scan, check and render itself.
   proposals — `/new-domain` still gates them.
 - `check_project.py` — the project-scoped structural checks (`consistency`, `spec`, `arch`,
   `intake`, `given`) plus a CLI. The workspace-scoped half (tiers, `PROJECTS.md`, the
-  golden-scenario harness) stays in `.claude/scenarios/check.py`, which re-exports this one.
+  golden-scenario harness) stays in `.kepler/scenarios/check.py`, which re-exports this one.
 - `generate_observatory.py` — the seven-tab page, written to `<project>/.gravity/_observatory/`.
   `generate_cosmos.py` (Orbit 3D + the five-palette `THEMES` family) and `generate_boundary.py`
   (the seam graph) are its renderer modules; each keeps a debug CLI.
 - `doc_theme.py` — **the owner of the browser-read doc theme**: it GENERATES the stylesheet for
   `MISSION.html` / `ARCHITECTURE.html` (five themes, the switcher, the shared status vocabulary,
   the inline-SVG flow-diagram `fd-` classes) from `palette.py`'s anchors. It travels precisely so a clone can re-theme its own docs; the
-  human-facing explanation is `gravity/DESIGN.docs.md`, and `.claude/scripts/apply_doc_theme.py`
+  human-facing explanation is `gravity/DESIGN.docs.md`, and `.kepler/scripts/apply_doc_theme.py`
   (workspace-side) writes the generated block into real files, preserving per-doc CSS.
 - `palette.py` — **the owner of the five-theme palette family**: the anchor hues (`bg` · `ink` ·
   `dim` · CSS-only `h1-grad`) every themed surface must agree on, plus the vocabulary map and the
@@ -109,11 +109,11 @@ workspace can scan, check and render itself.
   Spec Health tab, with the captured output on hover so a misclassification is always auditable.
 
 Every one of them takes a project **path**; the workspace's alias resolution
-(`.claude/scripts/resolve_project.py`) is manager-side sugar reached only when present. Installed
+(`.kepler/scripts/resolve_project.py`) is manager-side sugar reached only when present. Installed
 in a project, they need no argument at all — the lib's own location names its project.
 
 **Never hand-edit an installed copy.** It's verbatim, like the card: fix it here and re-install
 (`/sync-gravity`). `check_project` WARNs `LIB_MISSING` / `LIB_STALE` when a project has no lib or
 an older one than the distribution, and `MACHINERY_UNMIGRATED` when a pre-v4 bare-named machinery
 dir (`lib/`, `observatory/`, `inbox/`, `given/`) is still on disk — the fix is
-`python .claude/scripts/migrate_gravity_v4.py <project>`, never a hand-`mv`.
+`python .kepler/scripts/migrate_gravity_v4.py <project>`, never a hand-`mv`.

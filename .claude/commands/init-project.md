@@ -12,10 +12,10 @@ All the work lives in one deterministic script — **do not** run the steps by h
 Run from the workspace root:
 
 ```bash
-python .claude/scripts/new_project.py "$ARGUMENTS"
+python .kepler/scripts/new_project.py "$ARGUMENTS"
 ```
 
-If `python` isn't found, retry with `py .claude/scripts/new_project.py "$ARGUMENTS"`.
+If `python` isn't found, retry with `py .kepler/scripts/new_project.py "$ARGUMENTS"`.
 
 The script handles everything in one shot:
 - **Validates** the name (kebab-case; not already in repos/active/stable/dormant/archive; templates present) and stops with a clear `ERROR:` if anything is off.

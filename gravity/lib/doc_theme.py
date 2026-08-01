@@ -358,6 +358,13 @@ _SVG = """
      never hue alone (the colour-blind rule the status marks follow). */
   .fd-seam { stroke:var(--blue); }
   .fd-gap  { stroke:var(--red); stroke-dasharray:5 4; }
+
+  /* the delta vocabulary — a walkthrough figure shows the SAME flow the
+     architecture draws, with what this slice changed made loud: new/changed
+     carries the accent AND a heavier stroke, removed is faint AND dashed —
+     weight/dash alongside hue, same colour-blind rule as above. */
+  .fd-new { stroke:var(--accent); stroke-width:2; }
+  .fd-old { stroke:var(--faint); stroke-dasharray:3 4; opacity:.7; }
 """
 
 _SWITCHER = """

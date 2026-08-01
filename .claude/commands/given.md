@@ -45,7 +45,7 @@ Per confirmed row: move the original to `_given/raw/` (or leave a `private` poin
 
 ## Step 3 — Prove & report
 
-1. `python .claude/scenarios/check.py given --project <project>` — green: inbox empty, every file manifested, no ghost rows.
+1. `python .kepler/scenarios/check.py given --project <project>` — green: inbox empty, every file manifested, no ghost rows.
 2. Report the routing table as executed, plus any `OPEN:` provenance still awaiting the user.
 
 ## The consumption rules (what routing buys)

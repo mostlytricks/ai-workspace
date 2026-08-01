@@ -7,7 +7,7 @@ its own docs, so it runs identically from the workspace (`/triage`, the
 observatory drift card) and from a bare clone that carries `.gravity/_lib/` and
 has never seen the workspace. The workspace-scoped half (tier/index drift over
 `PROJECTS.md`, the golden-scenario fixtures, the CLI) stays manager-side in
-`.claude/scenarios/check.py`, which imports this module.
+`.kepler/scenarios/check.py`, which imports this module.
 
 That boundary is the workspace's own rule applied to its checker: **workspace
 rules (tiers, junctions, PROJECTS.md) are never embedded in a project.**
@@ -283,7 +283,7 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
                 WARN, "MACHINERY_UNMIGRATED", "", "",
                 f"{hit.relative_to(project)} uses the pre-v4 name — gravity v4 "
                 f"renamed machinery dirs with a `_` sigil ({old}/ -> {new}/); "
-                f"run python .claude/scripts/migrate_gravity_v4.py <project>"))
+                f"run python .kepler/scripts/migrate_gravity_v4.py <project>"))
 
     # LIB — the installed instruments (.gravity/_lib/, copied by install_lib.py).
     # The card makes the repo self-describing; the lib makes it self-rendering,
@@ -296,12 +296,12 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
             findings.append(Finding(
                 WARN, "LIB_MISSING", "", "",
                 "no .gravity/_lib/ — the repo can't render or check itself off-workspace; "
-                "run python .claude/scripts/install_lib.py <project>"))
+                "run python .kepler/scripts/install_lib.py <project>"))
     elif not lib_ver:
         findings.append(Finding(
             WARN, "LIB_STALE", "", "",
             ".gravity/_lib/ has no VERSION stamp (hand-copied?) — reinstall with "
-            "python .claude/scripts/install_lib.py <project>"))
+            "python .kepler/scripts/install_lib.py <project>"))
     else:
         # Only judged when a NEWER distribution is doing the judging. Run from
         # the installed lib itself the two are equal and this never fires — a
@@ -317,7 +317,7 @@ def check_gravity_consistency(project_dir: str | Path) -> list[Finding]:
                     WARN, "LIB_STALE", "", "",
                     f".gravity/_lib/ is v{lib_ver} but the gravity distribution is "
                     f"v{running} — reinstall with "
-                    f"python .claude/scripts/install_lib.py <project>"))
+                    f"python .kepler/scripts/install_lib.py <project>"))
 
     # UNDERWIRED — a folder missing from an index it's *required* to be in.
     # Required everywhere: Doc Map (navigation), MISSION row (why), PLAN spine (status).
@@ -876,7 +876,7 @@ def check_given(project_dir: str | Path) -> list[Finding]:
 
 # --------------------------------------------------------------------------- #
 # CLI — so a project carrying .gravity/_lib/ can check itself off-workspace.
-# The workspace door (.claude/scenarios/check.py) adds the workspace checks,
+# The workspace door (.kepler/scenarios/check.py) adds the workspace checks,
 # the golden-scenario fixtures, and the selftest; this one is project-only.
 # --------------------------------------------------------------------------- #
 

@@ -42,7 +42,7 @@ Usage:
     python gravity/lib/generate_observatory.py [<project-path-or-alias>]
 
 From inside a project that carries .gravity/_lib/ (installed by
-.claude/scripts/install_lib.py), no argument is needed — the lib's own
+.kepler/scripts/install_lib.py), no argument is needed — the lib's own
 location names the project it belongs to, so a clone that has never seen
 the workspace renders itself:
 
@@ -464,7 +464,7 @@ def timeline_html(facts: dict, project_path: Path) -> str:
         return ('<div class="pad"><div class="ocard"><div class="ohead">no walkthroughs</div>'
                 '<div class="okv">Nothing under <span class="mono">docs/walkthroughs/</span>. '
                 'A walkthrough is the per-slice trust artifact (what changed + the proof it '
-                'works) — copy <span class="mono">WALKTHROUGH.template.md</span> when a '
+                'works) — copy <span class="mono">WALKTHROUGH.template.html</span> when a '
                 'reviewable slice ships; skip it for trivial fixes.</div></div></div>')
 
     rows, last_month = [], ""

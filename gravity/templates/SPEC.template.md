@@ -8,7 +8,7 @@
      explaining "why", that prose belongs in the facet HTML.
 
      RATE-OF-CHANGE BOUNDARY (so this doesn't eat PLAN): SPEC holds what is true of EVERY valid unit, forever.
-     The intent of THIS change lives in PLAN.*.md; the proof THIS change works lives in WALKTHROUGH.md.
+     The intent of THIS change lives in PLAN.*.md; the proof THIS change works lives in its walkthrough (docs/walkthroughs/).
      Test: "true of every valid unit?" → SPEC.  "true of this change?" → PLAN.
 
      INTEGRATION VARIANT (one template, two shapes): when <domain> is `integration`, this same sheet describes
@@ -30,8 +30,8 @@ This is the compact agent-loadable **change contract** for `<domain>` — enough
 **Gate:** `<FILL: the one command that proves a change, e.g. `npm run test:<domain> && npm run lint:docs`>` — exits non-zero on a violation, so run it after touching anything this spec governs.
 
 <!-- OPTIONAL — delete if this domain owns no gitignored state. Names the paths git can't
-     protect (SQLite DBs, ledgers, generated state) so the patch loop (ai-workspace
-     docs/PLAN.patch-loop.md, step 3) snapshots them to `.patch-snap/<sha>/` before a patch
+     protect (SQLite DBs, ledgers, generated state) so the patch loop (`/patch-slice`,
+     STATE-SNAP step) snapshots them to `.patch-snap/<sha>/` before a patch
      and restores them on rollback. No line = nothing to snapshot. -->
 **Stateful paths:** `<FILL: gitignored paths a patch could mutate, e.g. `data/index.sqlite`, `ledger/`>`
 
@@ -63,7 +63,7 @@ This is the compact agent-loadable **change contract** for `<domain>` — enough
 
 1. Copy the **Minimal Shape**.
 2. Satisfy every tagged **Rule** + the **Behavioral Contract**.
-3. Run the **Gate** → green. (Then record the change + proof in `WALKTHROUGH.md`; intent stays in `PLAN.*.md`.)
+3. Run the **Gate** → green. (Then record the change + proof in the walkthrough; intent stays in `PLAN.*.md`.)
 
 <!-- ============================================================================
      INTEGRATION VARIANT — use ONLY when <domain> is `integration`; delete this
@@ -98,7 +98,7 @@ This is the compact agent-loadable **change contract** for `<domain>` — enough
 1. `<FILL: change the backend entity / DTO / schema first>`
 2. `<FILL: run the schema or type export, if one exists>`
 3. `<FILL: regenerate / update the client types + frontend models>`
-4. Run the **Gate** → green; the contract holds. (Proof → `WALKTHROUGH.md`; intent → `PLAN.*.md`.)
+4. Run the **Gate** → green; the contract holds. (Proof → the walkthrough; intent → `PLAN.*.md`.)
 
 <!-- Lift these into the **Rules** section below and tag each HONESTLY (a generated-types check is [test]
      or [type] only if it really runs; otherwise [review]). These are the typical integration walls: -->

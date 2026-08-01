@@ -23,7 +23,7 @@ Human-facing guide for working in `ai-workspace/` — **Kepler** is the workspac
 | Feed domain knowledge / production-data docs to a project | drop in `.gravity/_inbox/`, then `/given <name>` |
 | Turn an agreed user-requirements doc (URD) into an improvement plan | `/urd <name>` ([Analyze a URD into the plan sheet](#analyze-a-urd-into-the-plan-sheet-urd)) |
 | Hand stakeholders the proposal / a progress report | `/report <name>` — the engagement book: one calm HTML, proposal + report tabs |
-| Set the workspace up on a new machine, or repair broken junctions | `python .claude/scripts/bootstrap.py` ([Set up on a new machine](#set-up-on-a-new-machine)) |
+| Set the workspace up on a new machine, or repair broken junctions | `python .kepler/scripts/bootstrap.py` ([Set up on a new machine](#set-up-on-a-new-machine)) |
 | Update a sibling Kepler workspace on another drive | `/deploy-kepler <path>` ([Propagate Kepler](#propagate-kepler-to-a-sibling-workspace)) |
 | Know what exists right now | Read `PROJECTS.md` |
 
@@ -49,6 +49,7 @@ Run from the `ai-workspace/` root in Claude Code. One line each — **the full p
 | `/urd <name>` | Analyze an agreed URD against the domain system: cited classification, plan-sheet chunks + basis-tagged estimates, question list for the next meeting. Never slices, never touches IMPLEMENTATION_PLAN. |
 | `/report <name>` | Maintain the engagement book (single calm-UI HTML): Proposal tab + one report tab per cycle (SRS × clearance) from the plan sheet + walkthroughs. Evidence-bound: "verified" only with a named proof; delivered tabs immutable. |
 | `/patch-slice <name> [slug]` | Land one slice under the patch-loop walls: anchor → bare-gated verify (N=3) → proven rollback. Merge/push stays yours. |
+| `/debrief <name> [slug]` | The report for work just finished: a themed walkthrough — why asked · how handled · key idea · flow-delta figure · real proof · suggested next move. Ask it after any slice; written once, frozen. |
 | `/cut-release [name]` | One release Change Order (no arg = gravity itself): confirmed bump from `[Unreleased]`, green gate required, stops before push. |
 | `/retire <name>` | End of life: read-only risk card, then **archive** (reversible) or **delete** (permanent). |
 | `/dashboard` · `/open-dashboard` | Status across tiers: terminal report · regenerate + open the HTML dashboard in the browser. |
@@ -144,7 +145,7 @@ git init
 ```bash
 name="<name>"
 mkdir -p "repos/$name"
-python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
+python .kepler/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
 cp gravity/templates/CLAUDE.template.md  "repos/$name/CLAUDE.md"
 cp gravity/templates/CONTEXT.template.md "repos/$name/CONTEXT.md"
 cd "active/$name"
@@ -187,7 +188,7 @@ src="C:/path/to/old-thing"
 name="old-thing"
 rm -rf "$src/node_modules" "$src/.venv" "$src/target" "$src/build"
 mv "$src" "repos/$name"
-python .claude/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
+python .kepler/scripts/link_project.py "active/$name" "repos/$name"   # junction (Win) / symlink (POSIX)
 [ -f "repos/$name/CLAUDE.md" ]  || cp gravity/templates/CLAUDE.template.md  "repos/$name/CLAUDE.md"
 [ -f "repos/$name/CONTEXT.md" ] || cp gravity/templates/CONTEXT.template.md "repos/$name/CONTEXT.md"
 cd "active/$name"
@@ -213,7 +214,7 @@ if (-not (Test-Path "$src\CONTEXT.md")) { Copy-Item templates\CONTEXT.template.m
 ```bash
 src="C:/path/to/old-thing"
 name="old-thing"
-python .claude/scripts/link_project.py "active/$name" "$src"   # junction (Win) / symlink (POSIX)
+python .kepler/scripts/link_project.py "active/$name" "$src"   # junction (Win) / symlink (POSIX)
 [ -f "$src/CLAUDE.md" ]  || cp gravity/templates/CLAUDE.template.md  "$src/CLAUDE.md"
 [ -f "$src/CONTEXT.md" ] || cp gravity/templates/CONTEXT.template.md "$src/CONTEXT.md"
 ```
@@ -380,21 +381,21 @@ Gravity itself is versioned (`VERSION` + `CHANGELOG.md` + git tag), and each ado
 
 **Run `/sync-gravity <name>`** to bring one project current. It does the two layers differently on purpose:
 
-- **Mechanical (applied for you):** re-copies the protocol card fresh from the template (it's a verbatim copy by contract — never hand-merged), re-installs `.gravity/_lib/` (`install_lib.py` — same verbatim contract, so upgrading means re-copying, never patching), bumps both stamps to the current `VERSION`, verifies with `check.py consistency`, and reconciles the adoption-table row. For a pre-v4 project it first offers `python .claude/scripts/migrate_gravity_v4.py <name>` (dry-run by default) — the one convention change with a dedicated migrator, because a directory rename carries no judgment; run before anything else touches the tree, it subsumes the whole mechanical layer.
+- **Mechanical (applied for you):** re-copies the protocol card fresh from the template (it's a verbatim copy by contract — never hand-merged), re-installs `.gravity/_lib/` (`install_lib.py` — same verbatim contract, so upgrading means re-copying, never patching), bumps both stamps to the current `VERSION`, verifies with `check.py consistency`, and reconciles the adoption-table row. For a pre-v4 project it first offers `python .kepler/scripts/migrate_gravity_v4.py <name>` (dry-run by default) — the one convention change with a dedicated migrator, because a directory rename carries no judgment; run before anything else touches the tree, it subsumes the whole mechanical layer.
 - **Judgment (reported, never auto-applied):** it reads every `CHANGELOG.md` section between the project's old stamp and now, and hands you a checklist of convention changes the project might violate — quoted from the changelog, one line each. Restructuring to satisfy a new convention is its own task; a sync never does it as a side effect.
 
-A minor-only delta usually means an empty checklist — re-copy, bump, done. It never commits (except the v4 migrator, which commits its own rename by design); the diff is your review checkpoint. (Manual fallback: **first**, on a pre-v4 project, `python .claude/scripts/migrate_gravity_v4.py <name>` from a clean worktree — running `install_lib.py` before it deletes the old `lib/` and strands the other machinery dirs half-migrated; then `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, fill the stamp from `VERSION`, `python .claude/scripts/install_lib.py <name>`, edit the router's stamp line, run `/triage`.)
+A minor-only delta usually means an empty checklist — re-copy, bump, done. It never commits (except the v4 migrator, which commits its own rename by design); the diff is your review checkpoint. (Manual fallback: **first**, on a pre-v4 project, `python .kepler/scripts/migrate_gravity_v4.py <name>` from a clean worktree — running `install_lib.py` before it deletes the old `lib/` and strands the other machinery dirs half-migrated; then `cp gravity/GRAVITY-PROTOCOL.md <project>/.gravity/GRAVITY.md`, fill the stamp from `VERSION`, `python .kepler/scripts/install_lib.py <name>`, edit the router's stamp line, run `/triage`.)
 
 ---
 
 ## Set up on a new machine
 
-The root repo tracks only the **skeleton** — the meta files, `gravity/`, and `.claude/` tooling. Every tier folder is denied and `PROJECTS.md` is git-ignored (it names private work), which is exactly the "no umbrella repo" boundary. The consequence: a fresh clone has the rules and the instruments but no `repos/`, no tiers, no index, and no junctions.
+The root repo tracks only the **skeleton** — the meta files, `gravity/`, and the `.claude/` + `.kepler/` tooling. Every tier folder is denied and `PROJECTS.md` is git-ignored (it names private work), which is exactly the "no umbrella repo" boundary. The consequence: a fresh clone has the rules and the instruments but no `repos/`, no tiers, no index, and no junctions.
 
 ```bash
 git clone https://github.com/mostlytricks/ai-workspace.git
 cd ai-workspace
-python .claude/scripts/bootstrap.py          # --dry-run to preview
+python .kepler/scripts/bootstrap.py          # --dry-run to preview
 ```
 
 That creates `repos/` + the four tier folders and seeds `PROJECTS.md` from `PROJECTS.sample.md`. Then clone your projects into `repos/`, add their rows to `PROJECTS.md`, and **run it again** — it links each one into the tier its row names (junction on Windows, relative symlink on POSIX, both through `link_project.py`).
@@ -409,11 +410,11 @@ Three things it deliberately refuses:
 
 ## Propagate Kepler to a sibling workspace
 
-For **several Kepler workspaces on one machine** (per-purpose, on different drives) that were created as plain copies rather than clones: `/deploy-kepler <target-path>` (script: `.claude/scripts/deploy_kepler.py`). It updates a sibling's *skeleton* from this workspace's HEAD — never its projects, never its private state.
+For **several Kepler workspaces on one machine** (per-purpose, on different drives) that were created as plain copies rather than clones: `/deploy-kepler <target-path>` (script: `.kepler/scripts/deploy_kepler.py`). It updates a sibling's *skeleton* from this workspace's HEAD — never its projects, never its private state.
 
 ```bash
-python .claude/scripts/deploy_kepler.py D:/work-workspace              # dry-run report
-python .claude/scripts/deploy_kepler.py D:/work-workspace --apply     # do it
+python .kepler/scripts/deploy_kepler.py D:/work-workspace              # dry-run report
+python .kepler/scripts/deploy_kepler.py D:/work-workspace --apply     # do it
 ```
 
 How it stays safe, mechanically:
@@ -428,7 +429,7 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 
 ## Glossary
 
-- **Junction** — Windows directory pointer (`mklink /J`). Same-volume only; no admin or Developer Mode. Used throughout the tier folders. **Always create one via `.claude/scripts/link_project.py <link> <target>`** or PowerShell `New-Item -ItemType Junction` — never the Git-Bash `cmd //c "mklink …"` form, whose MSYS quoting silently eats the `$name` variable.
+- **Junction** — Windows directory pointer (`mklink /J`). Same-volume only; no admin or Developer Mode. Used throughout the tier folders. **Always create one via `.kepler/scripts/link_project.py <link> <target>`** or PowerShell `New-Item -ItemType Junction` — never the Git-Bash `cmd //c "mklink …"` form, whose MSYS quoting silently eats the `$name` variable.
 - **Symbolic link (symlink)** — `mklink /D` on Windows; `ln -s` on POSIX. On Windows requires admin or Developer Mode. Crosses volumes; has full POSIX semantics under WSL. Use only when junctions aren't enough.
 - **Tier** — one of `active/`, `stable/`, `dormant/`, `archive/`. A project's tier = which tier folder its junction lives in. The lifecycle reads *being worked · works · paused · over*.
 - **Reactivation trigger** — the one-line Next Step a `stable/` project's CONTEXT.md must carry: *"Reactivate when X."* The mirror of dormant's resume blocker — but nothing is blocked; the project simply works and is waiting for a reason to change.
@@ -448,15 +449,15 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 - **Protocol card (`.gravity/GRAVITY.md`)** — the canonical project-side protocol, copied verbatim from `gravity/GRAVITY-PROTOCOL.md` and version-stamped; never hand-edited (upgrade = re-copy). Makes each repo self-describing off-workspace. `/triage` flags a missing or stale card (📡).
 - **Engineer's guide (`.gravity/GRAVITY.html` + `.gravity/GRAVITY.ko.html`)** — the card's **human twin**, copied verbatim from `gravity/GRAVITY-GUIDE.html` (+ the Korean sibling `GRAVITY-GUIDE.ko.html`). Same protocol, browser-read: diagrams, the full arc, and a phrasebook of asks. Carries no stamp of its own (the card covers the family, and they are always copied together), so a pre-v4.2 project picks it up on its next `/sync-gravity` — flagged by the same stale-card 📡.
 - **Domain (`.gravity/`)** — a durable subject area with its own principle and non-goal, earning a `.gravity/<domain>/` folder; most features are just a `PLAN.*.md` slice. Two axes, capability first — the gate lives in `.gravity/ROUTER.md`. Vs DDD: a gravity domain is a documentation facet, looser than a bounded context.
-- **Machinery sigil (`_`)** — a leading underscore on a `.gravity/` folder marks gravity's own machinery, never a subject domain: `_lib/` (installed instruments), `_observatory/` (generated page), `_inbox/` (drop zone), `_given/` (received knowledge, root and per-domain), `_roadmap/` (the plan sheet + URD analyses — authored and committed, unlike the observatory). Replaces v3's prose list; machinery sorts apart from the alphabetized domains and can't collide with one. A pre-v4 project reports `MACHINERY_UNMIGRATED`; `python .claude/scripts/migrate_gravity_v4.py <name>` fixes it.
+- **Machinery sigil (`_`)** — a leading underscore on a `.gravity/` folder marks gravity's own machinery, never a subject domain: `_lib/` (installed instruments), `_observatory/` (generated page), `_inbox/` (drop zone), `_given/` (received knowledge, root and per-domain), `_roadmap/` (the plan sheet + URD analyses — authored and committed, unlike the observatory). Replaces v3's prose list; machinery sorts apart from the alphabetized domains and can't collide with one. A pre-v4 project reports `MACHINERY_UNMIGRATED`; `python .kepler/scripts/migrate_gravity_v4.py <name>` fixes it.
 - **URD (User Request Document)** — the agreed record of functional requirements from user/stakeholder meetings. Enters through the inbox as **evidence** (`_given/`, verbatim, frozen — an agreement record); `/urd` analyzes it against the domain system. The future-facing sibling of a bug batch.
 - **Plan sheet / chunk (`.gravity/_roadmap/ROADMAP.md`)** — the business layer above `IMPLEMENTATION_PLAN.md`: one rolling sheet of URD-derived **chunks** (deliberately bigger than slices, never pre-cut). Statuses run one-way `proposed → agreed → active → shipped`; the `active` transition mints IMPLEMENTATION_PLAN track/queue rows just-in-time. Estimates carry **basis tags** (`[measured]` from slice actuals · `[drivers]` from domain/crossing/OPEN counts · `[guess]`) — the estimation-side twin of SPEC enforcement tags.
 - **`SPEC.md` — the change contract** — the per-domain agent-loadable contract: Minimal Shape + enforcement-tagged Rules (anatomy in the card). Vs industry "spec-driven development": **spec-governed change, not spec-generated scaffolding**.
 - **Integration domain** — optional `.gravity/integration/` for contracts *between* services/domains (Boundary Map + Change Order). Promote from `CONTRACT.md` when agents repeatedly cross boundaries; never for a service's internals.
 - **Doc ownership** — each concern has one canonical owner doc; other docs *link*, never restate. `/triage` flags collisions. The ownership table is workspace `CLAUDE.md` §6; the protocol side is the card.
-- **`gravity/DESIGN.docs.md`** — the guide to the browser-read HTML-doc theme, which `gravity/lib/doc_theme.py` generates and `.claude/scripts/apply_doc_theme.py` applies (distinct from a project's app-design `DESIGN.md`).
+- **`gravity/DESIGN.docs.md`** — the guide to the browser-read HTML-doc theme, which `gravity/lib/doc_theme.py` generates and `.kepler/scripts/apply_doc_theme.py` applies (distinct from a project's app-design `DESIGN.md`).
 - **`RUNBOOK.md`** — optional operations doc for projects that deploy: the *"would you need this at 2am?"* test. Secrets stay pointers, never values.
-- **Patch-loop** — the 7-step safe-patching ritual behind `/patch-slice` (`docs/PLAN.patch-loop.md`; walls in `.claude/scripts/patch_slice.py`). Bug intake is its front door: a bug enters as a currently-false `given/when/then`, and the fix leaves the regression test that graduates it.
+- **Patch-loop** — the 7-step safe-patching ritual behind `/patch-slice` (`.kepler/PLAN.patch-loop.md`; walls in `.kepler/scripts/patch_slice.py`). Bug intake is its front door: a bug enters as a currently-false `given/when/then`, and the fix leaves the regression test that graduates it.
 - **`PROJECTS.md`** — workspace-level project index at the root. Source of truth for which tier each project lives in.
 - **`HANDBOOK.md`** — this file. Human-facing guide. Not auto-loaded into agent context.
 - **Stale** — for `active/` projects, untouched >14 days. `/triage` flags these. Very stale (>30 days) should probably move to `dormant/`.
@@ -474,5 +475,5 @@ Gravity is deliberately not this command's job: after a deploy, run `/sync-gravi
 - `gravity/GRAVITY-PROTOCOL.md` — **the protocol card**: the canonical project-side doctrine, copied to `.gravity/GRAVITY.md` at adoption. Its human twin `gravity/GRAVITY-GUIDE.html` → `.gravity/GRAVITY.html` is copied in the same breath and refreshed with it; only the card is stamped.
 - `gravity/README.md` — the catalog of every stencil and lib instrument, one line each.
 - `.claude/commands/` — the slash-command definitions: the one home for what each command actually does.
-- `.claude/scenarios/README.md` — finding meanings and severity bars for every `check.py` checker.
+- `.kepler/scenarios/README.md` — finding meanings and severity bars for every `check.py` checker.
 - `PROJECTS.md` — the current project index.

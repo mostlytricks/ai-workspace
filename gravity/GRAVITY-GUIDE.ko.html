@@ -241,6 +241,13 @@
   .fd-seam { stroke:var(--blue); }
   .fd-gap  { stroke:var(--red); stroke-dasharray:5 4; }
 
+  /* the delta vocabulary — a walkthrough figure shows the SAME flow the
+     architecture draws, with what this slice changed made loud: new/changed
+     carries the accent AND a heavier stroke, removed is faint AND dashed —
+     weight/dash alongside hue, same colour-blind rule as above. */
+  .fd-new { stroke:var(--accent); stroke-width:2; }
+  .fd-old { stroke:var(--faint); stroke-dasharray:3 4; opacity:.7; }
+
   /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
   .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
   .themebar button {
@@ -566,6 +573,7 @@
       <tr><td>문서·덤프·스키마 반입</td><td>"<code>.gravity/_inbox/</code>에 파일 넣어놨어 — 라우팅해줘."</td><td>provenance 행이 달린 증거 — 이후 무엇도 유령을 인용하지 않는다</td></tr>
       <tr><td>고객 미팅을 계획으로</td><td>"이 요구사항 문서를 도메인 시스템에 대고 분석해줘."</td><td>인용 달린 분석, 추정이 붙은 로드맵 청크, 다음 미팅용 질문 목록</td></tr>
       <tr><td>실제로 증명된 것 파악</td><td>"검사와 게이트 돌리고, 검증 안 된 걸 보여줘."</td><td>안심시키는 말이 아니라 발견 사항과 게이트 결과</td></tr>
+      <tr><td>방금 끝난 작업의 리포트 받기</td><td>"방금 한 작업 디브리핑해줘 — 내가 왜 요청했는지, 어떻게 처리했는지, 핵심 아이디어, 바뀐 흐름, 증거, 다음 제안까지."</td><td>변경된 흐름 위에 델타를 그린 날짜 박힌 워크스루 페이지 — 한 번 쓰이면 동결</td></tr>
       <tr><td>대외 보고</td><td>"이번 사이클을 engagement book에 추가해."</td><td>HTML 한 파일, 증거 기반 배지, 이전 납품 탭은 그대로</td></tr>
       <tr><td>작업 재개</td><td>"<code>CONTEXT.md</code> 읽고 next step부터 이어서 해."</td><td>프로젝트를 다시 설명할 필요 없는 연속성</td></tr>
       <tr><td>세션 잘 끝내기</td><td>"멈추기 전에 <code>CONTEXT.md</code> 업데이트해."</td><td>상태와 다음 한 걸음 — 다음에 여는 사람을 위해</td></tr>
@@ -581,7 +589,7 @@
   </ul>
 
   <div class="note">
-    <span class="lbl">이 저장소가 Kepler 워크스페이스 안에 있다면.</span> gravity를 만든 워크스페이스는 위 행 대부분의 슬래시 커맨드 단축을 함께 갖고 있다 — <code>/preflight</code>, <code>/intake</code>, <code>/given</code>, <code>/urd</code>, <code>/report</code>, <code>/patch-slice</code>, <code>/observatory</code>. 이들은 이 저장소가 아니라 워크스페이스에 살기 때문에, 다른 곳의 클론에는 없다. 프로토콜은 어느 쪽에서든 동작한다 — 위의 요청들이 곧 그 커맨드들이 줄여 쓰던 내용이기 때문이다.
+    <span class="lbl">이 저장소가 Kepler 워크스페이스 안에 있다면.</span> gravity를 만든 워크스페이스는 위 행 대부분의 슬래시 커맨드 단축을 함께 갖고 있다 — <code>/preflight</code>, <code>/intake</code>, <code>/given</code>, <code>/urd</code>, <code>/report</code>, <code>/patch-slice</code>, <code>/debrief</code>, <code>/observatory</code>. 이들은 이 저장소가 아니라 워크스페이스에 살기 때문에, 다른 곳의 클론에는 없다. 프로토콜은 어느 쪽에서든 동작한다 — 위의 요청들이 곧 그 커맨드들이 줄여 쓰던 내용이기 때문이다.
   </div>
 
   <h2 id="checked"><span class="n">08</span>기계적으로 검사되는 것</h2>

@@ -45,7 +45,7 @@ regenerate its own doc CSS.
 |---|---|---|
 | [`lib/palette.py`](lib/palette.py) | the **anchor hues** — chrome (`bg`/`ink`/`dim`/`h1_grad`) and status (`accent`/`ok`/`plan`/`guard`/`sat`) for all five themes | a hue is retuned |
 | [`lib/doc_theme.py`](lib/doc_theme.py) | the **stylesheet** — layout, type, glass treatment, status classes, the flow-diagram (`fd-`) vocabulary, the switcher | the docs' *look* changes |
-| `.claude/scripts/apply_doc_theme.py` | **applying** it to real files (workspace-side; not part of the protocol) | never, ideally |
+| `.kepler/scripts/apply_doc_theme.py` | **applying** it to real files (workspace-side; not part of the protocol) | never, ideally |
 
 Anything not in that table — panel translucency, hairline weights, blur radius, the ambient glow
 geometry — is **docs-local** and lives in `doc_theme.CHROME`. It's how a *reading* surface differs
@@ -113,6 +113,8 @@ own three rules applied to vectors:
 | `.fd-edge` | `path`/`line` | an arrow that exists |
 | `.fd-seam` | an edge or node | crosses a runtime boundary (the `.flow` list's `li.seam`) |
 | `.fd-gap` | an edge | does **not** exist yet — red *and* dashed, never hue alone |
+| `.fd-new` | a node or edge | added/changed **by this slice** (walkthrough figures) — accent *and* heavier stroke |
+| `.fd-old` | a node or edge | removed by this slice — faint *and* dashed |
 | `.fd-label` / `.fd-file` | `text` | step name / the anchored file path (mono) |
 | `.fd-arrow` | the marker's `path` | arrowhead — one neutral hue (markers don't inherit edge stroke cross-browser) |
 
@@ -195,9 +197,9 @@ python gravity/lib/doc_theme.py --parts    # head init · themebar · switcher s
 **After changing the theme** — regenerate every doc in place:
 
 ```bash
-python .claude/scripts/apply_doc_theme.py                    # dry run, everything
-python .claude/scripts/apply_doc_theme.py --skeleton          # stencils only, no repo touched
-python .claude/scripts/apply_doc_theme.py <project> --apply   # write one project
+python .kepler/scripts/apply_doc_theme.py                    # dry run, everything
+python .kepler/scripts/apply_doc_theme.py --skeleton          # stencils only, no repo touched
+python .kepler/scripts/apply_doc_theme.py <project> --apply   # write one project
 ```
 
 Dry run is the **default**; nothing is written without `--apply`.
@@ -213,7 +215,7 @@ the exact docs this exists to improve.
 
 ```bash
 python gravity/lib/doc_theme.py --self-test   # the generated CSS carries every anchor
-python .claude/scenarios/check.py theme       # all surfaces agree, chrome and status
+python .kepler/scenarios/check.py theme       # all surfaces agree, chrome and status
 ```
 
 ---
@@ -228,7 +230,7 @@ merging them:
 |---|---|---|---|
 | **docs** (this) | reading | `--panel` · `--text-hi` · `--st-ok` | `lib/doc_theme.py` |
 | **observatory** | instrument density | `--card` · `--ink` · `--ok` | `lib/generate_observatory.py` |
-| **dashboard** | scanning the fleet | `--surface` · `--ink` · `--muted` | `.claude/dashboard/generate_dashboard.py` |
+| **dashboard** | scanning the fleet | `--surface` · `--ink` · `--muted` | `.kepler/dashboard/generate_dashboard.py` |
 
 The dashboard vendors Outfit/Inter/Fira Code and Chart.js and animates; docs fall back to the
 system stack and stay still. When you restyle one, decide deliberately whether the others follow —

@@ -233,6 +233,13 @@
   .fd-seam { stroke:var(--blue); }
   .fd-gap  { stroke:var(--red); stroke-dasharray:5 4; }
 
+  /* the delta vocabulary — a walkthrough figure shows the SAME flow the
+     architecture draws, with what this slice changed made loud: new/changed
+     carries the accent AND a heavier stroke, removed is faint AND dashed —
+     weight/dash alongside hue, same colour-blind rule as above. */
+  .fd-new { stroke:var(--accent); stroke-width:2; }
+  .fd-old { stroke:var(--faint); stroke-dasharray:3 4; opacity:.7; }
+
   /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
   .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
   .themebar button {
@@ -300,7 +307,7 @@
 
   <h2 id="principles"><span class="n">03</span>Principles</h2>
   <ul>
-    <li><strong>The root versions the shell, never the contents.</strong> The root <em>is</em> a git repo, but its <code>.gitignore</code> denies <code>*</code> and whitelists only the portable skeleton — the meta files, <code>gravity/</code>, and <code>.claude/</code> tooling. Every tier folder stays denied, so the workspace can be replicated onto another machine without ever becoming an umbrella repo of your projects. Project version control lives <em>per project</em>, inside <code>repos/&lt;name&gt;/</code>, with its own remote. <span style="color:var(--faint)">(The live index, <code>PROJECTS.md</code>, is git-ignored — it names private work; only the sanitized sample ships.)</span></li>
+    <li><strong>The root versions the shell, never the contents.</strong> The root <em>is</em> a git repo, but its <code>.gitignore</code> denies <code>*</code> and whitelists only the portable skeleton — the meta files, <code>gravity/</code>, and the <code>.claude/</code> + <code>.kepler/</code> tooling. Every tier folder stays denied, so the workspace can be replicated onto another machine without ever becoming an umbrella repo of your projects. Project version control lives <em>per project</em>, inside <code>repos/&lt;name&gt;/</code>, with its own remote. <span style="color:var(--faint)">(The live index, <code>PROJECTS.md</code>, is git-ignored — it names private work; only the sanitized sample ships.)</span></li>
     <li><strong>Storage vs views.</strong> <code>repos/</code> is the one canonical store; tiers are cheap junction views. Changing a project's tier is a metadata move, never a file copy.</li>
     <li><strong>The docs are the memory.</strong> <code>CLAUDE.md</code> is stable identity (auto-loads); <code>CONTEXT.md</code> is a rolling snapshot of <em>now</em>. git is the changelog — so <code>CONTEXT.md</code> stays small and never becomes a log.</li>
     <li><strong>One venv per project.</strong> No shared or root-level <code>.venv</code>; silent version collisions are the enemy.</li>
@@ -316,7 +323,7 @@
 repos/&lt;project&gt;/
       <span class="b">^</span>
       <span class="b">|</span>  directory junction  (<b>mklink /J</b> on Windows  ·  symlink on Linux/WSL)
-      <span class="b">|</span>     via <b>.claude/scripts/link_project.py</b> — argv-driven, no shell quoting
+      <span class="b">|</span>     via <b>.kepler/scripts/link_project.py</b> — argv-driven, no shell quoting
       <span class="b">|</span>
 active/  stable/  dormant/  archive/   <span class="c"># views — a project's tier = its lifecycle state</span>
       <span class="b">|</span>
@@ -341,7 +348,7 @@ slash commands · /triage · /dashboard · /mission   <span class="c"># all read
       <tr><td><code>.gravity/&lt;domain&gt;/</code></td><td>per project</td><td>Where the heavy docs go when a project outgrows a flat root — one folder per subject domain, routed by <code>.gravity/ROUTER.md</code>. Recognized only when present, never mandated.</td></tr>
     </tbody>
   </table>
-  <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/ship</code>, <code>/retire</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.claude/scripts/</code>.</p>
+  <p>Lifecycle is driven by workspace slash commands — <code>/init-project</code>, <code>/ship</code>, <code>/retire</code>, <code>/triage</code>, <code>/dashboard</code>, <code>/mission</code> — defined in <code>.claude/commands/</code> and backed by helper scripts in <code>.kepler/scripts/</code>.</p>
 
   <h2 id="non-goals"><span class="n">06</span>Non-Goals</h2>
   <ul>

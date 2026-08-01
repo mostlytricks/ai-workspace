@@ -242,6 +242,13 @@
   .fd-seam { stroke:var(--blue); }
   .fd-gap  { stroke:var(--red); stroke-dasharray:5 4; }
 
+  /* the delta vocabulary — a walkthrough figure shows the SAME flow the
+     architecture draws, with what this slice changed made loud: new/changed
+     carries the accent AND a heavier stroke, removed is faint AND dashed —
+     weight/dash alongside hue, same colour-blind rule as above. */
+  .fd-new { stroke:var(--accent); stroke-width:2; }
+  .fd-old { stroke:var(--faint); stroke-dasharray:3 4; opacity:.7; }
+
   /* theme switcher — fixed top-right pills, one swatch each (matches the dashboard) */
   .themebar { position:fixed; top:14px; right:14px; z-index:60; display:flex; flex-wrap:wrap; gap:6px; }
   .themebar button {
@@ -353,7 +360,7 @@
     <li><strong>A tier move is instant.</strong> <code>mv stable/orbit active/</code> re-points one junction — metadata only, never a copy, never touching <code>node_modules</code> or <code>.venv</code>.</li>
     <li><strong>Git sees through junctions.</strong> Commands run inside <code>active/orbit</code> operate on the real <code>.git</code> in <code>repos/orbit</code> — each project stays its own independent repo with its own remote.</li>
   </ul>
-  <div class="note"><span class="lbl">The one hard invariant.</span> Tier folders hold junctions <em>only</em> — never real files. An existing repo elsewhere (another drive, a path an IDE hardcodes) joins by junctioning straight from the tier folder to its external path; the files never move. And links are created only via <code>python .claude/scripts/link_project.py</code> — argv-driven, so no shell quoting bug can silently create a broken link.</div>
+  <div class="note"><span class="lbl">The one hard invariant.</span> Tier folders hold junctions <em>only</em> — never real files. An existing repo elsewhere (another drive, a path an IDE hardcodes) joins by junctioning straight from the tier folder to its external path; the files never move. And links are created only via <code>python .kepler/scripts/link_project.py</code> — argv-driven, so no shell quoting bug can silently create a broken link.</div>
 
   <h2 id="lifecycle"><span class="n">04</span>The lifecycle — four tiers, one reading</h2>
   <p>The tiers read as a sentence: <strong>being worked · works · paused · over.</strong> Every transition is one move plus one honest line in the project's <code>CONTEXT.md</code>:</p>
@@ -445,7 +452,7 @@
       <tr><td>run the weekly health check</td><td>"<code>/triage</code>"</td><td>a read-only drift report: stale CONTEXT files, unwired domains, stale protocol cards, aged deferrals</td></tr>
       <tr><td>re-orient on one project</td><td>"<code>/mission orbit-notes</code>"</td><td>what it's for, where it stands, what to ask next — off the four docs, not memory</td></tr>
       <tr><td>put a project on the protocol</td><td>"<code>/adopt-gravity orbit-notes</code>"</td><td>heavy docs relocate into <code>.gravity/</code> by domain; card + guide seeded; indexes wired</td></tr>
-      <tr><td>rebuild on a fresh machine</td><td>"clone, then <code>python .claude/scripts/bootstrap.py --dry-run</code>"</td><td>tiers and junctions rebuilt from the index — it repairs dangling links and never guesses a tier</td></tr>
+      <tr><td>rebuild on a fresh machine</td><td>"clone, then <code>python .kepler/scripts/bootstrap.py --dry-run</code>"</td><td>tiers and junctions rebuilt from the index — it repairs dangling links and never guesses a tier</td></tr>
       <tr><td>update a sibling workspace</td><td>"<code>/deploy-kepler D:\ai-workspace</code>"</td><td>the skeleton propagates by manifest (<code>git ls-files</code>); dry-run first; local index and settings untouchable by construction</td></tr>
       <tr><td>keep sessions continuous</td><td>"read <code>CONTEXT.md</code> first" · "update <code>CONTEXT.md</code> before you stop"</td><td>the ritual — the same two sentences inside every project, whatever its tier</td></tr>
     </tbody>

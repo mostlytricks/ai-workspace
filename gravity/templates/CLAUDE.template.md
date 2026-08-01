@@ -2,7 +2,7 @@
 
 One-sentence description of what this project is and who it serves.
 
-> **alias:** `<short-name>` — optional per-project short name; gravity tooling (`.claude/scripts/resolve_project.py`) resolves it so you can type it instead of the full folder name. Delete this line to fall back to the derived acronym (e.g. `architecture-memory-os` → `amos`).
+> **alias:** `<short-name>` — optional per-project short name; gravity tooling (`.kepler/scripts/resolve_project.py`) resolves it so you can type it instead of the full folder name. Delete this line to fall back to the derived acronym (e.g. `architecture-memory-os` → `amos`).
 
 ---
 
