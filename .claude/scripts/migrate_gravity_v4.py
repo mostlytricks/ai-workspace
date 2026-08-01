@@ -17,7 +17,8 @@ What it does, in order (per project):
      (`\\.gravity/lib\\b` can never touch a domain named `library`); historical
      files (project CHANGELOG.md, docs/walkthroughs/) stay verbatim
   4. reinstall the lib (install_lib.py -> `_lib/`, drops a stale `lib/`),
-     re-copy the protocol card, bump the router fences to the current version
+     re-copy the protocol family (card + both HTML guides — they never
+     separate), bump the router fences to the current version
   5. run `check.py consistency` and report
   6. commit `gravity v4.0.0 migration: machinery dirs -> _sigil` (--apply only)
 
@@ -169,15 +170,39 @@ def bump_fences(project: Path, version_mm: str, apply: bool) -> list[str]:
     return done
 
 
+# The protocol family travels together (v4.2.0): the stamped card plus the two
+# unstamped browser-read guides — the card carries the version for all three.
+# Copying the card without the guides leaves a project at the current stamp
+# with its human half missing, which no checker catches (PROTOCOL_STALE only
+# reads the card).
+PROTOCOL_FAMILY = [
+    ("GRAVITY-PROTOCOL.md", "GRAVITY.md"),
+    ("GRAVITY-GUIDE.html", "GRAVITY.html"),
+    ("GRAVITY-GUIDE.ko.html", "GRAVITY.ko.html"),
+]
+
+
+def strip_header_comment(text: str) -> str:
+    """Drop the source's own copy-note comment, keeping anything before it
+    (the guides open with `<!doctype html>` ahead of theirs)."""
+    start = text.find("<!--")
+    end = text.find("-->", start)
+    if start == -1 or end == -1:
+        sys.exit("protocol source carries no header comment — refusing to copy raw")
+    head = text[:start].rstrip("\n")
+    body = text[end + 3:].lstrip("\n")
+    return (head + "\n" + body) if head else body
+
+
 def recopy_card(project: Path, version_mm: str, apply: bool) -> bool:
-    card = project / ".gravity" / "GRAVITY.md"
-    if not card.exists():
+    if not (project / ".gravity" / "GRAVITY.md").exists():
         return False
-    src = (WORKSPACE / "gravity" / "GRAVITY-PROTOCOL.md").read_text(encoding="utf-8")
-    body = src.split("-->\n", 1)[1].lstrip("\n")             # drop the copy-note
-    body = body.replace("v<X.Y>", f"v{version_mm}")
-    if apply:
-        card.write_text(body, encoding="utf-8")
+    for src_name, dst_name in PROTOCOL_FAMILY:
+        body = strip_header_comment(
+            (WORKSPACE / "gravity" / src_name).read_text(encoding="utf-8"))
+        body = body.replace("v<X.Y>", f"v{version_mm}")
+        if apply:
+            (project / ".gravity" / dst_name).write_text(body, encoding="utf-8")
     return True
 
 
@@ -220,7 +245,8 @@ def migrate(token: str, apply: bool) -> int:
         print(f"  would reinstall lib -> .gravity/_lib/ (v{version})")
 
     if recopy_card(project, version_mm, apply):
-        print(f"  card: .gravity/GRAVITY.md re-copied, stamped v{version_mm}")
+        print(f"  protocol family: GRAVITY.md + GRAVITY.html + GRAVITY.ko.html "
+              f"re-copied, card stamped v{version_mm}")
     fences = bump_fences(project, version_mm, apply)
     if fences:
         print(f"  fences -> v{version_mm}: {', '.join(fences)}")

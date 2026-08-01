@@ -19,6 +19,11 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [4.2.2] - 2026-08-01
+
+### Fixed
+- **`migrate_gravity_v4.py` re-copied the card without the guides — the protocol family could separate** (found 2026-08-01 migrating `cosmos` and `knowledge-viewer` v3.6 → v4.2: both landed at stamp v4.2 with `.gravity/GRAVITY.html`/`.ko.html` missing, installed by hand afterward). The script was written for v4.0.0, before the guides existed, and its `recopy_card` knew only `GRAVITY-PROTOCOL.md`; nothing caught the gap because `PROTOCOL_STALE` reads only the card — the exact half-synced state the v4.2.0 "copied and refreshed together" contract forbids, produced by gravity's own tooling. The card step is now a **protocol-family copy**: one `PROTOCOL_FAMILY` list drives card + both guides through a shared header-comment strip (doctype-preserving, refuses a source with no header rather than shipping the copy-note), so the three can no longer separate in this code path. Proven on a fixture repo: migrated v3.6 → v4.2 with guides landing byte-identical to the workspace-installed reference and included in the migration commit. Known residual, deliberately unbuilt: a current-stamp project that *loses* its guides trips no checker — a `GUIDE_MISSING` WARN waits on a second real incident (the meta-gravity bar).
+
 ## [4.2.1] - 2026-08-01
 
 ### Changed
@@ -392,7 +397,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.1...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.2...HEAD
+[4.2.2]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.2
 [4.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.1
 [4.2.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.0
 [4.1.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.1.0
