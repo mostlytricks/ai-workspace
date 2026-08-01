@@ -121,6 +121,14 @@ def do_delete(name, views, real):
 
 
 def main():
+    # A Korean-Windows console is cp949, which cannot encode the em dash in the
+    # announce line below — without this the script dies on its own status print
+    # before doing (or finishing) any work. Mirrors migrate_gravity_v4.py.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     if len(sys.argv) != 3 or sys.argv[1] not in ("archive", "delete"):
         fail("usage: retire_project.py <archive|delete> <name>")
     disposition, name = sys.argv[1], sys.argv[2].strip()

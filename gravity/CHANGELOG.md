@@ -19,6 +19,9 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+### Fixed
+- **`retire_project.py` died on its own status line on a Korean-Windows console** (found archiving `lecture-note`). The announce print carries an em dash, the console is cp949, and the script never reconfigured its streams — so `/retire` was simply unusable here, crashing before `do_archive`/`do_delete` ran. Harmless on this run by luck of ordering (the print precedes all mutation, so nothing was half-done), but the same crash sits in front of `delete`, where a future reordering would make it far less benign. Now reconfigures `stdout`/`stderr` to UTF-8 with `errors="replace"` at entry, mirroring `migrate_gravity_v4.py` — the third script to need this (constellation's five hit it in v0.2.1). Manager-side, so no protocol rule changed.
+
 ## [4.2.2] - 2026-08-01
 
 ### Fixed
