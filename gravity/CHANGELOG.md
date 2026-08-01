@@ -19,6 +19,8 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-08-02
+
 ### Added
 - **The walkthrough is now the debrief — themed HTML with the change drawn on the flow it changed** (from the user asking for an on-demand report after a slice: "why/what purpose I request, how did u handle it, key idea, suggested next move… gravity.html style, use svg properly"). `WALKTHROUGH.template.html` supersedes `WALKTHROUGH.template.md`: same home (`docs/walkthroughs/<date>-<domain>-<slug>`), same append-only lifecycle, but browser-read in the doc theme, with three sections the md sheet never had — **Request** (why it was asked), **Key idea**, **Suggested next move** — beside the existing what-changed/proof. Existing `.md` walkthroughs stay valid history: `scan_project.py`'s `scan_walkthroughs` now reads both generations (html title from `<title>`, domains from a machine-readable `gravity-domains` meta — the visible Domain(s) line is markup-riddled in HTML, so the md line-regex doesn't port). The figure contract: draw the *same flow* the architecture page draws with the delta made loud — two new `fd-` classes, **`.fd-new`** (added/changed by this slice — accent *and* heavier stroke) and **`.fd-old`** (removed — faint *and* dashed), same colour-blind rule as `fd-gap`. New ⊙ `/debrief <project> [slug]` authors one on demand from the session that just happened (evidence-honest: proof is pasted output from commands actually run; "gate not run" is a valid line, a green claim without output is not). `apply_doc_theme.py` discovers `docs/walkthroughs/*.html` — refreshing the generated theme block is re-theming, not rewriting history; the record itself stays frozen. Follow-through sweep (post-review): the `WALKTHROUGH.md` shorthand in the IMPLEMENTATION_PLAN/PLAN/SPEC stencils (a filename that never existed — walkthroughs are dated files in `docs/walkthroughs/`) reworded to the extension-agnostic doc kind, and the stale template pointers in `/patch-slice` + `/observatory` updated.
 
@@ -409,7 +411,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.2.3...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.3.0
 [4.2.3]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.3
 [4.2.2]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.2
 [4.2.1]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.1
