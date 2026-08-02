@@ -19,6 +19,11 @@ root-`CLAUDE.md` router (seeded from `GRAVITY.template.md`), so drift is detecta
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-08-02
+
+### Changed
+- **Figures are SVG: the system template's glance map flips from ASCII to the `fd-` vocabulary** (from the user watching an agent author an ARCHITECTURE.html on another project and get an ASCII drawing — "acceptable, but not imagine the case"). The agent wasn't improvising: the §01 "System at a Glance" slot in `ARCHITECTURE.template.html` *was* a `pre` ASCII sketch with a FILL instruction, while the `fd-` SVG block sat below as an OPTIONAL comment nobody escalates to. Three reasons the default flips rather than just re-weighting the comment: the v4.3.0 walkthrough contract draws *the same flow the architecture page draws* with `fd-new`/`fd-old` deltas — a vocabulary that only exists in SVG, so an ASCII glance map is a flow no debrief can echo; SVG file labels anchor `data-path` and are validated by `check.py arch`, while `pre` nodes silently rot when files move; and a themed browser-read page shouldn't open with what reads as a terminal paste. The §01 slot is now a three-node `fd-` skeleton (entry → core across an `.fd-seam` → output) with its own unique marker id (`fdarr-glance`), and `DESIGN.docs.md` opens "Flow-diagram vocabulary" with the rule stated as doctrine: **figures are SVG** — a `.flow` ordered list stays valid for strictly linear traces (it's HTML: it wraps and its `code` cells anchor), and `pre` is for genuinely textual content (code, config, directory trees), never a figure. The domain template needed no change (its traces are `.flow` lists + the same optional SVG). No checker change: existing ASCII pages break nothing — they just stop being what the stencil teaches.
+
 ## [4.3.0] - 2026-08-02
 
 ### Added
@@ -411,7 +416,8 @@ evolution is in `git log`.
 - **Self-versioning** — this `CHANGELOG.md`, the `VERSION` file, and the `> gravity: vX.Y` project stamp; the root git repo tracks only the portable skeleton via the deny-all/whitelist `.gitignore`.
 - **Codex interop** — `AGENTS.md` (workspace) + `AGENTS.template.md` (per-project), pure pointers to the canonical `CLAUDE.md` (no rule duplication). Rolled out: `/init-project` + `/promote` + `/adopt-gravity` seed the shim, all current `active/` projects backfilled, `/triage` flags any project missing it.
 
-[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.3.0...HEAD
+[Unreleased]: https://github.com/mostlytricks/ai-workspace/compare/v4.4.0...HEAD
+[4.4.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.4.0
 [4.3.0]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.3.0
 [4.2.3]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.3
 [4.2.2]: https://github.com/mostlytricks/ai-workspace/releases/tag/v4.2.2

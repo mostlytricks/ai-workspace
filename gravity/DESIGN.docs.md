@@ -84,16 +84,20 @@ Layout and reading furniture:
 - `.toc` — boxed two-column glass contents
 - `.cards` → `.card` (+ `.pill.live` / `.pill.mock`) · `.phase` (+ `.tag.done` / `.next` / `.todo`)
 - `.note` (+ `.warn`, `.red`) — left-bordered callout; `.lbl` for the lead-in
-- `pre` — glass code/diagram block; inside it `<b>`, `.c` (comment), `.a` (accent), `.b` (blue)
+- `pre` — glass code block, for genuinely textual content only (code, config, directory trees — never a figure; figures are `fd-` SVG); inside it `<b>`, `.c` (comment), `.a` (accent), `.b` (blue)
 - `table`, `footer`
 
 ---
 
 ## Flow-diagram vocabulary — inline SVG
 
-When a flow outgrows the `.flow` ordered list (branches, fan-in, parallel paths), draw it as
-**hand-authored inline SVG** — never an external JS diagram library. The reasons are the theme's
-own three rules applied to vectors:
+**Figures are SVG.** Any architecture drawing — the system page's §01 glance map, any flow with
+branches, fan-in or parallel paths — is **hand-authored inline SVG**: never ASCII art in a `pre`
+(a `pre` sketch reads no theme token, anchors no `data-path`, and a walkthrough's delta figure
+can't echo it), and never an external JS diagram library. A strictly *linear* trace may stay a
+`.flow` ordered list — it's HTML, so it wraps and its `<code>` cells anchor; `pre` is for
+genuinely textual content (code, config, directory trees), not figures. The SVG rules are the
+theme's own three rules applied to vectors:
 
 1. **No CDN, no scripts.** Same rule as fonts: a doc opened from `file://` on a plane still
    renders. Inline SVG is part of the document; mermaid/d3 from a CDN is a trust and availability

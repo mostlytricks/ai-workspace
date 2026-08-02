@@ -380,16 +380,29 @@
   </header>
 
   <h2 id="glance"><span class="n">01</span>System at a Glance</h2>
-  <!-- The one diagram that orients someone in 30 seconds: the major parts and how data flows between them. -->
+  <!-- The one diagram that orients someone in 30 seconds: the major parts and how data flows
+       between them. Draw it as an `fd-` SVG figure (doctrine + boundaries in gravity/DESIGN.docs.md
+       "Flow-diagram vocabulary") — never ASCII art in a pre block: the SVG reads the theme's tokens,
+       its file labels anchor with data-path (validated by check.py arch), and a walkthrough's delta
+       figure (fd-new/fd-old) can echo the same drawing. pre stays for genuinely textual content
+       (directory trees, config excerpts) — never for a figure. One flow, ~12 nodes max; mark the
+       load-bearing seam with .fd-seam (see §02); keep the marker id unique per figure. -->
   <p><!-- FILL: 2-3 sentences — the shape of the system and the path a request/job takes through it. --></p>
-  <pre><span class="c"># FILL: component / data-flow map — use <b>accent</b> for the load-bearing piece, <span class="b">.b</span> for actors.</span>
-   client / input
-        |
-        v
-   <b>core component</b>        <span class="c">the seam — see §02</span>
-        |
-        v
-   output / store</pre>
+  <svg class="fd" viewBox="0 0 710 100" role="img" aria-label="system at a glance">
+    <defs><marker id="fdarr-glance" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7"
+      markerHeight="7" orient="auto"><path class="fd-arrow" d="M0 0L8 4L0 8z"/></marker></defs>
+    <rect class="fd-node" x="8" y="24" width="170" height="54" rx="10"/>
+    <text class="fd-label" x="24" y="46"><!-- FILL: client / input --></text>
+    <text class="fd-file" x="24" y="65"><!-- FILL: actor or entry path --></text>
+    <line class="fd-edge" x1="178" y1="51" x2="268" y2="51" marker-end="url(#fdarr-glance)"/>
+    <rect class="fd-node" x="270" y="24" width="170" height="54" rx="10"/>
+    <text class="fd-label" x="286" y="46"><!-- FILL: core component --></text>
+    <text class="fd-file" x="286" y="65" data-path="<!-- FILL: path -->"><!-- FILL: path --></text>
+    <line class="fd-edge fd-seam" x1="440" y1="51" x2="530" y2="51" marker-end="url(#fdarr-glance)"/>
+    <rect class="fd-node" x="532" y="24" width="170" height="54" rx="10"/>
+    <text class="fd-label" x="548" y="46"><!-- FILL: output / store --></text>
+    <text class="fd-file" x="548" y="65"><!-- FILL: path --></text>
+  </svg>
 
   <h2 id="grid"><span class="n">02</span>Domain &times; Layer</h2>
   <!-- THE MAP. Rows = the vertical (business/capability) domains, i.e. the .gravity/<domain>/ folders.
