@@ -88,6 +88,16 @@ The page lands at **`.gravity/_observatory/index.html`** — seven tabs over one
 
 **A leading `_` marks gravity machinery, never a domain**: `_lib/`, `_observatory/`, `_inbox/`, `_given/` and `_roadmap/` are the five sigiled `.gravity/` directories — machinery, evidence doors and the plan sheet, so they carry no SPEC and are never wired into the indexes. The sigil is the rule: an agent minting a domain never needs the list, and no domain can collide with (or be mistaken for) the machinery. Provenance differs inside the family: `_observatory/` is generated and git-ignored; `_roadmap/` is *authored analysis* and committed, like `_given/`'s manifests.
 
+## Language policy
+
+The conversation's language never decides a doc's language — the doc's **audience and provenance** do. Reply to the user in the user's language; the docs follow these three lanes:
+
+- **Agent-loadable docs are English, always** — `SPEC.md`, `PLAN.*.md`, `ROUTER.md`, `IMPLEMENTATION_PLAN.md`, root `CLAUDE.md`/`CONTEXT.md`, intake/URD analysis columns, `ROADMAP.md`. They are loaded into context on every change (non-English prose costs a multiple of the tokens, every session), and their anchors — paths, identifiers, enforcement tags, commands, `given/when/then` — are English already. When the user asks in Korean (or Japanese, Chinese, any language), **author these directly in English** — never draft-then-translate: the round-trip is where the time, the tokens and the paraphrase drift leak in.
+- **Human-facing docs are English-first** — `MISSION.html`, `ARCHITECTURE.html`, walkthroughs. A translated sibling (`MISSION.ko.html`, `ARCHITECTURE.ko.html`, … — `<name>.<lang>.html`, ISO code) is minted **only on the user's explicit request**, never inferred from the conversation's language. In a sibling the prose translates but every command, path, tag and identifier stays English — they are what the reader will type — and the English copy stays canonical: content disputes between siblings resolve against it. Outward stakeholder artifacts (the engagement book) use the stakeholders' language, and agreed requirement wording is kept verbatim whatever language it was agreed in.
+- **Evidence is verbatim** — `_given/` raw material, intake report text and URDs stay in the language they arrived in; disputes resolve against `raw/`, and a translation is a paraphrase. A rendered copy may translate, with the fidelity mark saying so.
+
+Domain jargon that doesn't translate cleanly (business, legal, vendor terms) stays in its original language with an English gloss on first use.
+
 ## What never to do
 
 - Don't create doc files at the project root — the root holds only `CLAUDE.md`, `CONTEXT.md`, `README.md` (plus code/config).
